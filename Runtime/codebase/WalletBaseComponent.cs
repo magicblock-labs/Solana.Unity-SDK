@@ -438,6 +438,24 @@ namespace AllArt.Solana
         }
 
         /// <summary>
+        /// Initializes a transaction to mint tokens to a destination account.
+        /// </summary>
+        /// <param name="mint">The token mint.</param>
+        /// <param name="destination">The account to mint tokens to.</param>
+        /// <param name="amount">The amount of tokens.</param>
+        /// <returns></returns>
+        public async Task<RequestResult<string>> MintTo(string mint, string destination, long amount = 1)
+        {
+            RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
+            Account fromAccount = wallet.GetAccount(0);
+
+            var transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
+                AddInstruction(TokenProgram.MintTo(mint, destination, amount, fromAccount.GetPublicKey)).Build(fromAccount);
+
+            return await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
+        }
+
+        /// <summary>
         /// The key of the account on which we want to execute the transaction
         /// </summary>
         /// <param name="toPublicKey"> Public key of wallet on which we want to execute the transaction </param>
