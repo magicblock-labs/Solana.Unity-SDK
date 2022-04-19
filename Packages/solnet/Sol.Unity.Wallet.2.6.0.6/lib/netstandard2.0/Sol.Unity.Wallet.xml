@@ -1,0 +1,1465 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sol.Unity.Wallet</name>
+    </assembly>
+    <members>
+        <member name="T:Sol.Unity.Wallet.Account">
+            <summary>
+            Implements account functionality.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Account.PrivateKey">
+            <summary>
+            The private key.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Account.PublicKey">
+            <summary>
+            The public key.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.#ctor">
+            <summary>
+            Initialize an account. Generating a random seed for the Ed25519 key pair.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.#ctor(System.String,System.String)">
+            <summary>
+            Initialize an account with the passed private and public keys.
+            </summary>
+            <param name="privateKey">The private key.</param>
+            <param name="publicKey">The public key.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.#ctor(System.Byte[],System.Byte[])">
+            <inheritdoc cref="M:Sol.Unity.Wallet.Account.#ctor(System.String,System.String)"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.Verify(System.Byte[],System.Byte[])">
+            <summary>
+            Verify the signed message.
+            </summary>
+            <param name="message">The signed message.</param>
+            <param name="signature">The signature of the message.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.Sign(System.Byte[])">
+            <summary>
+            Sign the data.
+            </summary>
+            <param name="message">The data to sign.</param>
+            <returns>The signature of the data.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.GenerateRandomSeed">
+            <summary>
+            Generates a random seed for the Ed25519 key pair.
+            </summary>
+            <returns>The seed as byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.Equals(System.Object)">
+            <inheritdoc cref="M:Sol.Unity.Wallet.Account.Equals(System.Object)"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.op_Implicit(Sol.Unity.Wallet.Account)~Sol.Unity.Wallet.PrivateKey">
+            <summary>
+            Conversion between a <see cref="T:Sol.Unity.Wallet.Account"/> object and the corresponding private key.
+            </summary>
+            <param name="account">The Account object.</param>
+            <returns>The private key.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.op_Implicit(Sol.Unity.Wallet.Account)~Sol.Unity.Wallet.PublicKey">
+            <summary>
+            Conversion between a <see cref="T:Sol.Unity.Wallet.Account"/> object and the corresponding public key.
+            </summary>
+            <param name="account">The Account object.</param>
+            <returns>The public key as a byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.ToString">
+            <inheritdoc cref="M:Sol.Unity.Wallet.Account.ToString"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Account.GetHashCode">
+            <inheritdoc cref="M:Sol.Unity.Wallet.Account.GetHashCode"/>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.HardcodedWordlistSource">
+            <summary>
+            Implements a hardcoded word list source.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.HardcodedWordlistSource.WordLists">
+            <summary>
+            The word lists.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.HardcodedWordlistSource.#cctor">
+            <summary>
+            Initialize the static instance of the hardcoded word list source.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.HardcodedWordlistSource.LoadAsync(System.String)">
+            <summary>
+            Load the word list for the given name. This is an asynchronous operation.
+            </summary>
+            <param name="name">The name.</param>
+            <returns>A task which returns the word list.</returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.IWordlistSource">
+            <summary>
+            Specifies functionality for the wordlist source.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.IWordlistSource.LoadAsync(System.String)">
+            <summary>
+            Load the wordlist.
+            </summary>
+            <param name="name">The name of the wordlist.</param>
+            <returns>A task that returns the wordlist.</returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.KdTable">
+            <summary>
+            Implements the functionality for normalization.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.KdTable.NormalizeKd(System.String)">
+            <summary>
+            Normalizes the passed string.
+            </summary>
+            <param name="str">The string to normalize.</param>
+            <returns>The normalized string.</returns>
+            <exception cref="T:System.PlatformNotSupportedException">Thrown if the input string could not be normalized.</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.KdTable.Substitute(System.Char,System.Text.StringBuilder)">
+            <summary>
+            Substitutes the given character according to the substitution table.
+            </summary>
+            <param name="c">The character to substitute.</param>
+            <param name="builder">The string builder.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.KdTable.Substitute(System.Int32,System.Text.StringBuilder)">
+            <summary>
+            Substitutes the given position according to the substitution table.
+            </summary>
+            <param name="pos">The position.</param>
+            <param name="builder">The string builder.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.KdTable.Supported(System.Char)">
+            <summary>
+            Checks if the character is supported.
+            </summary>
+            <param name="c">The character to check.</param>
+            <returns>True if it is, otherwise false.</returns>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.KdTable.SupportedChars">
+            <summary>
+            The supported characters.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.KdTable.SubstitutionTable">
+            <summary>
+            The substitution table for normalization.
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.Language">
+            <summary>
+            Specifies the available languages for mnemonic generation.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.English">
+            <summary>
+            English.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.Japanese">
+            <summary>
+            Japanese.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.Spanish">
+            <summary>
+            Spanish.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.ChineseSimplified">
+            <summary>
+            Simplified Chinese.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.ChineseTraditional">
+            <summary>
+            Traditional Chinese.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.French">
+            <summary>
+            French.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.PortugueseBrazil">
+            <summary>
+            Brazilian portuguese.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.Czech">
+            <summary>
+            Czech.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Language.Unknown">
+            <summary>
+            Unknown.
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.Mnemonic">
+            <summary>
+            A .NET implementation of the Bitcoin Improvement Proposal - 39 (BIP39)
+            BIP39 specification used as reference located here: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
+            This implementation was taken from NBitcoin: https://github.com/MetacoSA/NBitcoin/
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.#ctor(System.String,Sol.Unity.Wallet.Bip39.WordList)">
+            <summary>
+            Initialize a mnemonic from the given string and wordList type.
+            </summary>
+            <param name="mnemonic">The mnemonic string.</param>
+            <param name="wordList">The word list type.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when the mnemonic string is null.</exception>
+            <exception cref="T:System.FormatException">Thrown when the word count of the mnemonic is invalid.</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.#ctor(Sol.Unity.Wallet.Bip39.WordList,System.Byte[])">
+            <summary>
+            Generate a mnemonic
+            </summary>
+            <param name="wordList">The word list of the mnemonic.</param>
+            <param name="entropy">The entropy.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.#ctor(Sol.Unity.Wallet.Bip39.WordList,Sol.Unity.Wallet.Bip39.WordCount)">
+            <summary>
+            Initialize a mnemonic from the given word list and word count..
+            </summary>
+            <param name="wordList">The word list.</param>
+            <param name="wordCount">The word count.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.GenerateEntropy(Sol.Unity.Wallet.Bip39.WordCount)">
+            <summary>
+            Generate entropy for the given word count.
+            </summary>
+            <param name="wordCount"></param>
+            <returns></returns>
+            <exception cref="T:System.ArgumentException">Thrown when the word count is invalid.</exception>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic.MsArray">
+            <summary>
+            The word count array.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic.CsArray">
+            <summary>
+            The bit count array.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic.EntArray">
+            <summary>
+            The entropy value array.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic._isValidChecksum">
+            <summary>
+            Whether the checksum of the mnemonic is valid.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.Mnemonic.IsValidChecksum">
+            <summary>
+            Whether the checksum of the mnemonic is valid.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.CorrectWordCount(System.Int32)">
+            <summary>
+            Whether the word count is correct.
+            </summary>
+            <param name="ms">The number of words.</param>
+            <returns>True if it is, otherwise false.</returns>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.Mnemonic.WordList">
+            <summary>
+            The word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.Mnemonic.Indices">
+            <summary>
+            The indices.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.Mnemonic.Words">
+            <summary>
+            The words of the mnemonic.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic._noBomutf8">
+            <summary>
+            Utf8 encoding.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.DeriveSeed(System.String)">
+            <summary>
+            Derives the mnemonic seed.
+            </summary>
+            <param name="passphrase">The passphrase.</param>
+            <returns>The seed.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.GenerateSeed(System.Byte[],System.Byte[])">
+            <summary>
+            Generate the seed using pbkdf with sha 512.
+            </summary>
+            <param name="password">The password to derive the key from.</param>
+            <param name="salt">The salt to use for key derivation.</param>
+            <returns>The derived key.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.Normalize(System.String)">
+            <summary>
+            Get the normalized the string as a byte array.
+            </summary>
+            <param name="str">The string to normalize.</param>
+            <returns>The byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.NormalizeString(System.String)">
+            <summary>
+            Normalize the string.
+            </summary>
+            <param name="word">The string to normalize.</param>
+            <returns>The normalized string.</returns>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic._supportOsNormalization">
+            <summary>
+            Whether the OS normalization is supported.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.SupportOsNormalization">
+            <summary>
+            Checks for OS normalization support.
+            </summary>
+            <returns>True if available, otherwise false.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.Concat(System.Byte[],System.Byte[])">
+            <summary>
+            Concatenate an array of bytes.
+            </summary>
+            <param name="source1">The first array.</param>
+            <param name="source2">The second array.</param>
+            <returns>The concatenated array of bytes.</returns>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.Mnemonic._mnemonic">
+            <summary>
+            The mnemonic string.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.Mnemonic.ToString">
+            <summary>
+            Gets the mnemonic string.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.WordCount">
+            <summary>
+            Specifies the available lengths for the mnemonic.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordCount.Twelve">
+            <summary>
+            Twelve words.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordCount.Fifteen">
+            <summary>
+            Fifteen words.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordCount.Eighteen">
+            <summary>
+            Eighteen words.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordCount.TwentyOne">
+            <summary>
+            Twenty one words.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordCount.TwentyFour">
+            <summary>
+            Twenty four words.
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Bip39.WordList">
+            <summary>
+            Implements the word list functionality.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.#cctor">
+            <summary>
+            Initialize the static word list instance.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._japanese">
+            <summary>
+            The japanese word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.Japanese">
+            <summary>
+            The japanese word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._chineseSimplified">
+            <summary>
+            The simplified chinese word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.ChineseSimplified">
+            <summary>
+            The simplified chinese word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._chineseTraditional">
+            <summary>
+            The traditional chinese word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.ChineseTraditional">
+            <summary>
+            The traditional chinese word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._spanish">
+            <summary>
+            The spanish word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.Spanish">
+            <summary>
+            The spanish word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._english">
+            <summary>
+            The english word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.English">
+            <summary>
+            The english word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._french">
+            <summary>
+            The french word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.French">
+            <summary>
+            The french word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._portugueseBrazil">
+            <summary>
+            The brazilian portuguese word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.PortugueseBrazil">
+            <summary>
+            The brazilian portuguese word list.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._czech">
+            <summary>
+            The czech word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.Czech">
+            <summary>
+            The czech word list.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.LoadWordList(Sol.Unity.Wallet.Bip39.Language)">
+            <summary>
+            Load the word list for the given language. This operation is asynchronous.
+            </summary>
+            <param name="language">The language.</param>
+            <returns>A task which returns the word list.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.GetLanguageFileName(Sol.Unity.Wallet.Bip39.Language)">
+            <summary>
+            Gets the name of the file for the given language.
+            </summary>
+            <param name="language">The language.</param>
+            <returns>The file name.</returns>
+            <exception cref="T:System.NotSupportedException">Thrown when the language is not supported.</exception>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList.LoadedLists">
+            <summary>
+            The loaded word lists.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.LoadWordList(System.String)">
+            <summary>
+            Loads a word list by name.
+            </summary>
+            <param name="name">The name of the word list.</param>
+            <returns>A task which returns the word list.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when the word list name is null.</exception>
+            <exception cref="T:System.InvalidOperationException">Thrown when the word list source is not initialized.</exception>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.WordlistSource">
+            <summary>
+            The word list source.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._words">
+            <summary>
+            The words of the word list.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.#ctor(System.Collections.Generic.IEnumerable{System.String},System.Char,System.String)">
+            <summary>
+            Constructor used by inheritance only.
+            </summary>
+            <param name="words">The words to be used in the wordlist</param>
+            <param name="space">The words to be used in the wordlist</param>
+            <param name="name">The words to be used in the wordlist</param>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Bip39.WordList._name">
+            <summary>
+            The name of the word list.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.Space">
+            <summary>
+            The space character of the word list.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.WordExists(System.String,System.Int32@)">
+            <summary>
+            Method to determine if word exists in word list, great for auto language detection
+            </summary>
+            <param name="word">The word to check for existence</param>
+            <param name="index">The index of the word.</param>
+            <returns>True if it exists, otherwise false.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.GetWordAtIndex(System.Int32)">
+            <summary>
+            Returns a string containing the word at the specified index of the wordlist
+            </summary>
+            <param name="index">Index of word to return</param>
+            <returns>Word</returns>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Bip39.WordList.WordCount">
+            <summary>
+            The number of all the words in the wordlist
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.AutoDetect(System.String)">
+            <summary>
+            Auto detects the language of the word list.
+            </summary>
+            <param name="sentence">The sentence to detect language from.</param>
+            <returns>The word list.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.AutoDetectLanguage(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Auto detects the language of the word list given as an enumerable of strings.
+            </summary>
+            <param name="words">The sentence to detect language from.</param>
+            <returns>The language.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.AutoDetectLanguage(System.String)">
+            <summary>
+            Auto detects the language of the word list.
+            </summary>
+            <param name="sentence">The sentence to detect language from.</param>
+            <returns>The language.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.ToString">
+            <summary>
+            Gets the name of the word list.
+            </summary>
+            <returns>A string.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.GetWords">
+            <summary>
+            Gets the words of the word list.
+            </summary>
+            <returns>The words.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.GetWords(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Gets the words for the given indices.
+            </summary>
+            <param name="indices">The indices.</param>
+            <returns>An array of strings.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.GetSentence(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Gets the sentence for the given indices.
+            </summary>
+            <param name="indices">The indices.</param>
+            <returns>A string.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.ToIndices(System.String[])">
+            <summary>
+            Converts the array of strings to indices.
+            </summary>
+            <param name="words">The words.</param>
+            <returns>The indices of the words.</returns>
+            <exception cref="T:System.FormatException">Thrown when a word is not in the word list.</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Bip39.WordList.ToBits(System.Int32[])">
+            <summary>
+            Converts the given array of integers to a bit array.
+            </summary>
+            <param name="values">The array of integers to convert.</param>
+            <returns>The bit array.</returns>
+            <exception cref="T:System.ArgumentException">Thrown when values are invalid.</exception>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Ed25519Bip32">
+            <summary>
+            An implementation of Ed25519 based BIP32 key generation.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Ed25519Bip32.Curve">
+            <summary>
+            The seed for the Ed25519 BIP32 HMAC-SHA512 master key calculation.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Ed25519Bip32.HardenedOffset">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Ed25519Bip32._masterKey">
+            <summary>
+            The computed master key.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Ed25519Bip32._chainCode">
+            <summary>
+            The computed chain code.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Ed25519Bip32.#ctor(System.Byte[])">
+            <summary>
+            Initialize the ed25519 based bip32 key generator with the passed seed.
+            </summary>
+            <param name="seed">The seed.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Ed25519Bip32.GetMasterKeyFromSeed(System.Byte[])">
+            <summary>
+            Gets the master key used for key generation from the passed seed.
+            </summary>
+            <param name="seed">The seed used to calculate the master key.</param>
+            <returns>A tuple consisting of the key and corresponding chain code.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Ed25519Bip32.GetChildKeyDerivation(System.Byte[],System.Byte[],System.UInt32)">
+            <summary>
+            Computes the child key.
+            </summary>
+            <param name="key">The key used to derive from.</param>
+            <param name="chainCode">The chain code for derivation.</param>
+            <param name="index">The index of the key to the derive.</param>
+            <returns>A tuple consisting of the key and corresponding chain code.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Ed25519Bip32.HmacSha512(System.Byte[],System.Byte[])">
+            <summary>
+            Computes the HMAC SHA 512 of the byte array passed into <c>data</c>.
+            </summary>
+            <param name="keyBuffer">The byte array to be used as the HMAC SHA512 key.</param>
+            <param name="data">The data to calculate the HMAC SHA512 on.</param>
+            <returns>A tuple consisting of the key and corresponding chain code.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Ed25519Bip32.IsValidPath(System.String)">
+            <summary>
+            Checks if the derivation path is valid.
+            <remarks>Returns true if the path is valid, otherwise false.</remarks>
+            </summary>
+            <param name="path">The derivation path.</param>
+            <returns>A boolean.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Ed25519Bip32.DerivePath(System.String)">
+            <summary>
+            Derives a child key from the passed derivation path.
+            </summary>
+            <param name="path">The derivation path.</param>
+            <returns>The key and chaincode.</returns>
+            <exception cref="T:System.FormatException">Thrown when the passed derivation path is invalid.</exception>
+        </member>
+        <member name="T:Sol.Unity.Wallet.PrivateKey">
+            <summary>
+            Implements the private key functionality.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.PrivateKey.PrivateKeyLength">
+            <summary>
+            Private key length.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.PrivateKey.Key">
+            <summary>
+            The key as base-58 encoded string.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.PrivateKey.KeyBytes">
+            <summary>
+            The bytes of the key.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.#ctor(System.Byte[])">
+            <summary>
+            Initialize the public key from the given byte array.
+            </summary>
+            <param name="key">The public key as byte array.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.#ctor(System.String)">
+            <summary>
+            Initialize the public key from the given string.
+            </summary>
+            <param name="key">The public key as base58 encoded string.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.#ctor(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Initialize the public key from the given string.
+            </summary>
+            <param name="key">The public key as base58 encoded string.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.Sign(System.Byte[])">
+            <summary>
+            Sign the data.
+            </summary>
+            <param name="message">The data to sign.</param>
+            <returns>The signature of the data.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.Equals(System.Object)">
+            <inheritdoc cref="M:Sol.Unity.Wallet.PrivateKey.Equals(System.Object)"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.op_Implicit(Sol.Unity.Wallet.PrivateKey)~System.String">
+            <summary>
+            Conversion between a <see cref="T:Sol.Unity.Wallet.PrivateKey"/> object and the corresponding base-58 encoded private key.
+            </summary>
+            <param name="privateKey">The PrivateKey object.</param>
+            <returns>The base-58 encoded private key.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.op_Explicit(System.String)~Sol.Unity.Wallet.PrivateKey">
+            <summary>
+            Conversion between a base-58 encoded private key and the <see cref="T:Sol.Unity.Wallet.PrivateKey"/> object.
+            </summary>
+            <param name="address">The base-58 encoded private key.</param>
+            <returns>The PrivateKey object.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.op_Implicit(Sol.Unity.Wallet.PrivateKey)~System.Byte[]">
+            <summary>
+            Conversion between a <see cref="T:Sol.Unity.Wallet.PrivateKey"/> object and the private key as a byte array.
+            </summary>
+            <param name="privateKey">The PrivateKey object.</param>
+            <returns>The private key as a byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.op_Explicit(System.Byte[])~Sol.Unity.Wallet.PrivateKey">
+            <summary>
+            Conversion between a private key as a byte array and the corresponding <see cref="T:Sol.Unity.Wallet.PrivateKey"/> object.
+            </summary>
+            <param name="keyBytes">The private key as a byte array.</param>
+            <returns>The PrivateKey object.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.ToString">
+            <inheritdoc cref="M:Sol.Unity.Wallet.PrivateKey.ToString"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PrivateKey.GetHashCode">
+            <inheritdoc cref="M:Sol.Unity.Wallet.PrivateKey.GetHashCode"/>
+        </member>
+        <member name="T:Sol.Unity.Wallet.PublicKey">
+            <summary>
+            Implements the public key functionality.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.PublicKey.PublicKeyLength">
+            <summary>
+            Public key length.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.PublicKey.Key">
+            <summary>
+            The key as base-58 encoded string.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.PublicKey.KeyBytes">
+            <summary>
+            The bytes of the key.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.#ctor(System.Byte[])">
+            <summary>
+            Initialize the public key from the given byte array.
+            </summary>
+            <param name="key">The public key as byte array.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.#ctor(System.String)">
+            <summary>
+            Initialize the public key from the given string.
+            </summary>
+            <param name="key">The public key as base58 encoded string.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.#ctor(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Initialize the public key from the given string.
+            </summary>
+            <param name="key">The public key as base58 encoded string.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.Verify(System.Byte[],System.Byte[])">
+            <summary>
+            Verify the signed message.
+            </summary>
+            <param name="message">The signed message.</param>
+            <param name="signature">The signature of the message.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.Equals(System.Object)">
+            <inheritdoc cref="M:Sol.Unity.Wallet.PublicKey.Equals(System.Object)"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.op_Equality(Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey)">
+            <inheritdoc />
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.op_Inequality(Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey)">
+            <inheritdoc />
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.op_Implicit(Sol.Unity.Wallet.PublicKey)~System.String">
+            <summary>
+            Conversion between a <see cref="T:Sol.Unity.Wallet.PublicKey"/> object and the corresponding base-58 encoded public key.
+            </summary>
+            <param name="publicKey">The PublicKey object.</param>
+            <returns>The base-58 encoded public key.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.op_Explicit(System.String)~Sol.Unity.Wallet.PublicKey">
+            <summary>
+            Conversion between a base-58 encoded public key and the <see cref="T:Sol.Unity.Wallet.PublicKey"/> object.
+            </summary>
+            <param name="address">The base-58 encoded public key.</param>
+            <returns>The PublicKey object.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.op_Implicit(Sol.Unity.Wallet.PublicKey)~System.Byte[]">
+            <summary>
+            Conversion between a <see cref="T:Sol.Unity.Wallet.PublicKey"/> object and the public key as a byte array.
+            </summary>
+            <param name="publicKey">The PublicKey object.</param>
+            <returns>The public key as a byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.op_Explicit(System.Byte[])~Sol.Unity.Wallet.PublicKey">
+            <summary>
+            Conversion between a public key as a byte array and the corresponding <see cref="T:Sol.Unity.Wallet.PublicKey"/> object.
+            </summary>
+            <param name="keyBytes">The public key as a byte array.</param>
+            <returns>The PublicKey object.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.ToString">
+            <inheritdoc cref="M:Sol.Unity.Wallet.PublicKey.ToString"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.GetHashCode">
+            <inheritdoc cref="M:Sol.Unity.Wallet.PublicKey.GetHashCode"/>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.IsOnCurve">
+            <summary>
+            Checks if this object is a valid Ed25519 PublicKey.
+            </summary>
+            <returns>Returns true if it is a valid key, false otherwise.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.IsValid">
+            <summary>
+            Checks if this object is a valid Solana PublicKey.
+            </summary>
+            <returns>Returns true if it is a valid key, false otherwise.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.IsValid(System.String,System.Boolean)">
+            <summary>
+            Checks if a given string forms a valid PublicKey in base58.
+            </summary>
+            <remarks>
+            Any set of 32 bytes can constitute a valid solana public key. However, not all 32-byte public keys are valid Ed25519 public keys. <br/>
+            Two concrete examples: <br/>
+            - A user wallet key must be on the curve (otherwise a user wouldn't be able to sign transactions).  <br/>
+            - A program derived address must NOT be on the curve.
+            </remarks>
+            <param name="key">The base58 encoded public key.</param>
+            <param name="validateCurve">Whether or not to validate if the public key belongs to the Ed25519 curve.</param>
+            <returns>Returns true if the input is a valid key, false otherwise.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.IsValid(System.Byte[],System.Boolean)">
+            <summary>
+            Checks if a given set of bytes forms a valid PublicKey.
+            </summary>
+            <remarks>
+            Any set of 32 bytes can constitute a valid solana public key. However, not all 32-byte public keys are valid Ed25519 public keys. <br/>
+            Two concrete examples: <br/>
+            - A user wallet key must be on the curve (otherwise a user wouldn't be able to sign transactions).  <br/>
+            - A program derived address must NOT be on the curve.
+            </remarks>
+            <param name="key">The key bytes.</param>
+            <param name="validateCurve">Whether or not to validate if the public key belongs to the Ed25519 curve.</param>
+            <returns>Returns true if the input is a valid key, false otherwise.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.IsValid(System.ReadOnlySpan{System.Byte},System.Boolean)">
+            <summary>
+            Checks if a given set of bytes forms a valid PublicKey.
+            </summary>
+            <remarks>
+            Any set of 32 bytes can constitute a valid solana public key. However, not all 32-byte public keys are valid Ed25519 public keys. <br/>
+            Two concrete examples: <br/>
+            - A user wallet key must be on the curve (otherwise a user wouldn't be able to sign transactions).  <br/>
+            - A program derived address must NOT be on the curve.
+            </remarks>
+            <param name="key">The key bytes.</param>
+            <param name="validateCurve">Whether or not to validate if the public key belongs to the Ed25519 curve.</param>
+            <returns>Returns true if the input is a valid key, false otherwise.</returns>
+        </member>
+        <member name="F:Sol.Unity.Wallet.PublicKey.ProgramDerivedAddressBytes">
+            <summary>
+            The bytes of the `ProgramDerivedAddress` string.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.TryCreateProgramAddress(System.Collections.Generic.ICollection{System.Byte[]},Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey@)">
+            <summary>
+            Derives a program address.
+            </summary>
+            <param name="seeds">The address seeds.</param>
+            <param name="programId">The program Id.</param>
+            <param name="publicKey">The derived public key, returned as inline out.</param>
+            <returns>true if it could derive the program address for the given seeds, otherwise false..</returns>
+            <exception cref="T:System.ArgumentException">Throws exception when one of the seeds has an invalid length.</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.TryFindProgramAddress(System.Collections.Generic.IEnumerable{System.Byte[]},Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey@,System.Byte@)">
+            <summary>
+            Attempts to find a program address for the passed seeds and program Id.
+            </summary>
+            <param name="seeds">The address seeds.</param>
+            <param name="programId">The program Id.</param>
+            <param name="address">The derived address, returned as inline out.</param>
+            <param name="bump">The bump used to derive the address, returned as inline out.</param>
+            <returns>True whenever the address for a nonce was found, otherwise false.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.PublicKey.TryCreateWithSeed(Sol.Unity.Wallet.PublicKey,System.String,Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey@)">
+            <summary>
+            Derives a new public key from an existing public key and seed
+            </summary>
+            <param name="fromPublicKey">The extant pubkey</param>
+            <param name="seed">The seed</param>
+            <param name="programId">The programid</param>
+            <param name="publicKeyOut">The derived public key</param>
+            <returns>True whenever the address was successfully created, otherwise false.</returns>
+            <remarks>To fail address creation, means the created address was a PDA.</remarks>
+        </member>
+        <member name="T:Sol.Unity.Wallet.SeedMode">
+            <summary>
+            Specifies the available seed modes for key generation.
+            <remarks>
+            Available modes:
+            <para> <see cref="F:Sol.Unity.Wallet.SeedMode.Ed25519Bip32"/> </para>
+            <para> <see cref="F:Sol.Unity.Wallet.SeedMode.Bip39"/> </para>
+            </remarks>
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.SeedMode.Ed25519Bip32">
+            <summary>
+            Generates Ed25519 based BIP32 keys.
+            <remarks>This seed mode is compatible with the keys generated in the Sollet/SPL Token Wallet, it does not use a passphrase to harden the mnemonic seed.</remarks>
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.SeedMode.Bip39">
+            <summary>
+            Generates BIP39 keys.
+            <remarks>This seed mode is compatible with the keys generated in the solana-keygen cli, it uses a passphrase to harden the mnemonic seed.</remarks>
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.Base58Encoder">
+            <summary>
+            Implements a base58 encoder.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.Base58Encoder.PszBase58">
+            <summary>
+            The base58 characters.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.Base58Encoder.MapBase58">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Base58Encoder.IsMaybeEncoded(System.String)">
+            <summary>
+            Fast check if the string to know if base58 str
+            </summary>
+            <param name="str"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Base58Encoder.EncodeData(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Encode the data.
+            </summary>
+            <param name="data">The data to encode.</param>
+            <param name="offset">The offset at which to start encoding.</param>
+            <param name="count">The number of bytes to encode.</param>
+            <returns>The encoded data.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if the data array is null.</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Base58Encoder.DecodeData(System.String)">
+            <summary>
+            Decode the data.
+            </summary>
+            <param name="encoded">The data to decode.</param>
+            <returns>The decoded data.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if the encoded data is null.</exception>
+            <exception cref="T:System.FormatException">Thrown if the data is invalid.</exception>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.BitWriter">
+            <summary>
+            Implements a bit writer.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.BitWriter._values">
+            <summary>
+            The values of the bit writer.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Utilities.BitWriter.Count">
+            <summary>
+            The number of values.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.Write(System.Boolean)">
+            <summary>
+            Writes a value to the writer buffer.
+            </summary>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.Write(System.Byte[])">
+            <summary>
+            Writes a byte array to the writer buffer.
+            </summary>
+            <param name="bytes">The byte array.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.Write(System.Byte[],System.Int32)">
+            <summary>
+            Writes a byte array to the writer buffer.
+            </summary>
+            <param name="bytes">The byte array.</param>
+            <param name="bitCount">The bit count.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.ToBytes">
+            <summary>
+            Gets the bit writer's buffer as a byte array.
+            </summary>
+            <returns>The byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.ToByteArray(System.Collections.BitArray)">
+            <summary>
+            Convert a bit array to a byte array.
+            </summary>
+            <param name="bits">The bit array to convert.</param>
+            <returns>The byte array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.ToBitArray">
+            <summary>
+            Gets the bit writer's buffer as a bit array.
+            </summary>
+            <returns>The bit array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.ToIntegers">
+            <summary>
+            Gets the bit writer's buffer as an array of integers.
+            </summary>
+            <returns>The array of integers.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.SwapEndianBytes(System.Collections.Generic.IReadOnlyList{System.Byte})">
+            <summary>
+            Swaps the endianness of the bytes.
+            </summary>
+            <param name="bytes">The bytes to swap.</param>
+            <returns>The swapped byte array.</returns>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Utilities.BitWriter.Position">
+            <summary>
+            The current position of the bit writer.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.Write(System.Collections.BitArray,System.Int32)">
+            <summary>
+            Write
+            </summary>
+            <param name="bitArray"></param>
+            <param name="bitCount"></param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.ToIntegers(System.Collections.BitArray)">
+            <summary>
+            Convert the bit array to integers.
+            </summary>
+            <param name="bits">The bit array.</param>
+            <returns>The int array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.BitWriter.ToString">
+            <summary>
+            Encode the writer as string.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.DataEncoder">
+            <summary>
+            Abstract data encoder class.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.DataEncoder.IsSpace(System.Char)">
+            <summary>
+            Check if the character is a space...
+            </summary>
+            <param name="c">The character.</param>
+            <returns>True if it is, otherwise false.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.DataEncoder.#ctor">
+            <summary>
+            Initialize the data encoder.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.DataEncoder.EncodeData(System.Byte[])">
+            <summary>
+            Encode the data.
+            </summary>
+            <param name="data">The data to encode.</param>
+            <returns>The data encoded.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.DataEncoder.EncodeData(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Encode the data.
+            </summary>
+            <param name="data">The data to encode.</param>
+            <param name="offset">The offset at which to start encoding.</param>
+            <param name="count">The number of bytes to encode.</param>
+            <returns>The encoded data.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.DataEncoder.DecodeData(System.String)">
+            <summary>
+            Decode the data.
+            </summary>
+            <param name="encoded">The data to decode.</param>
+            <returns>The decoded data.</returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.Encoders">
+            <summary>
+            A static encoder instance.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.Encoders._base58">
+            <summary>
+            The encoder.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Utilities.Encoders.Base58">
+            <summary>
+            The encoder.
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.Ed25519Extensions">
+            <summary>
+            Helper methods for ED25519 checks
+            Edwards-curve Digital Signature Algorithm (EdDSA)
+            https://en.wikipedia.org/wiki/EdDSA#Ed25519
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Ed25519Extensions.IsOnCurve(System.Byte[])">
+            <summary>
+            Checks whether the PublicKey bytes are 'On The Curve'
+            </summary>
+            <param name="key">PublicKey as byte array</param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Ed25519Extensions.IsOnCurve(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Checks whether the PublicKey bytes are 'On The Curve'
+            </summary>
+            <param name="key">PublicKey as byte array</param>
+            <returns></returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.RngCryptoServiceProviderRandom">
+            <summary>
+            Implements a random number generator using the crypto service provider.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.RngCryptoServiceProviderRandom._instance">
+            <summary>
+            The instance of the crypto service provider.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RngCryptoServiceProviderRandom.#ctor">
+            <summary>
+            Initialize the random number generator.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RngCryptoServiceProviderRandom.GetBytes(System.Byte[])">
+            <inheritdoc cref="M:Sol.Unity.Wallet.Utilities.IRandom.GetBytes(System.Byte[])"/>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.IRandom">
+            <summary>
+            Specifies functionality for a random number generator.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.IRandom.GetBytes(System.Byte[])">
+            <summary>
+            Get bytes.
+            </summary>
+            <param name="output">The output array of bytes.</param>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.RandomUtils">
+            <summary>
+            Implements utilities to be used with random number generation.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Utilities.RandomUtils.UseAdditionalEntropy">
+            <summary>
+            Whether to use additional entropy or not.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RandomUtils.#cctor">
+            <summary>
+            Initialize the static instance of the random number generator.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Utilities.RandomUtils.Random">
+            <summary>
+            The random number generator.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RandomUtils.GetBytes(System.Int32)">
+            <summary>
+            Get random bytes.
+            </summary>
+            <param name="length">The number of bytes to get.</param>
+            <returns>The byte array.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown when the random number generator has not been initialized</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RandomUtils.GetBytes(System.Byte[])">
+            <summary>
+            Get random bytes.
+            </summary>
+            <param name="output">The array of bytes to write the random bytes to.</param>
+            <returns>The byte array.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown when the random number generator has not been initialized</exception>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RandomUtils.PushEntropy(System.Byte[])">
+            <summary>
+            Pushes entropy to the given array of bytes.
+            </summary>
+            <param name="data">The array of bytes.</param>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.RandomUtils._additionalEntropy">
+            <summary>
+            The additional entropy.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Utilities.RandomUtils._entropyIndex">
+            <summary>
+            The entropy index..
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.RandomUtils.AddEntropy(System.Byte[])">
+            <summary>
+            Add entropy to the given data.
+            </summary>
+            <param name="data">The data to add entropy to.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if the data array is null.</exception>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Utilities.Utils">
+            <summary>
+            Implements utility methods to be used in the wallet.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.AddOrReplace``2(System.Collections.Generic.IDictionary{``0,``1},``0,``1)">
+            <summary>
+            Adds or replaces a value in a dictionary.
+            </summary>
+            <param name="dictionary">The dictionary.</param>
+            <param name="key">The key to add or replace.</param>
+            <param name="value">The value.</param>
+            <typeparam name="TKey">The type of the key.</typeparam>
+            <typeparam name="TValue">The type of the value.</typeparam>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.TryGet``2(System.Collections.Generic.IDictionary{``0,``1},``0)">
+            <summary>
+            Attempts to get a value from a dictionary.
+            </summary>
+            <param name="dictionary">The dictionary to get the value from.</param>
+            <param name="key">The key to get.</param>
+            <typeparam name="TKey">The type of the key.</typeparam>
+            <typeparam name="TValue">The type of the value.</typeparam>
+            <returns>The value.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.Slice``1(``0[],System.Int32,System.Int32)">
+            <summary>
+            Slices the array, returning a new array starting at <c>start</c> index and ending at <c>end</c> index.
+            </summary>
+            <param name="source">The array to slice.</param>
+            <param name="start">The starting index of the slicing.</param>
+            <param name="end">The ending index of the slicing.</param>
+            <typeparam name="T">The array type.</typeparam>
+            <returns>The sliced array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.Slice``1(``0[],System.Int32)">
+            <summary>
+            Slices the array, returning a new array starting at <c>start</c>.
+            </summary>
+            <param name="source">The array to slice.</param>
+            <param name="start">The starting index of the slicing.</param>
+            <typeparam name="T">The array type.</typeparam>
+            <returns>The sliced array.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.Sha256(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Calculates the Sha256 of the given data.
+            </summary>
+            <param name="data">The data to hash.</param>
+            <returns>The hash.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.Sha256(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Calculates the SHA256 of the given data.
+            </summary>
+            <param name="data">The data to hash.</param>
+            <param name="offset">The offset at which to start.</param>
+            <param name="count">The number of bytes to in the array to use as data.</param>
+            <returns>The hash.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Utilities.Utils.EdKeyPairFromSeed(System.Byte[])">
+            <summary>
+            Gets the corresponding ed25519 key pair from the passed seed.
+            </summary>
+            <param name="seed">The seed</param>
+            <returns>The key pair.</returns>
+        </member>
+        <member name="T:Sol.Unity.Wallet.Wallet">
+            <summary>
+            Represents a wallet.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Wallet.DerivationPath">
+            <summary>
+            The derivation path.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Wallet._seedMode">
+            <summary>
+            The seed mode used for key generation.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Wallet._seed">
+            <summary>
+            The seed derived from the mnemonic and/or passphrase.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Wallet.Wallet._ed25519Bip32">
+            <summary>
+            The method used for <see cref="F:Sol.Unity.Wallet.SeedMode.Ed25519Bip32"/> key generation.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Wallet.Passphrase">
+            <summary>
+            The passphrase string.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Wallet.Account">
+            <summary>
+            The key pair.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Wallet.Wallet.Mnemonic">
+            <summary>
+            The mnemonic words.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.#ctor(Sol.Unity.Wallet.Bip39.WordCount,Sol.Unity.Wallet.Bip39.WordList,System.String,Sol.Unity.Wallet.SeedMode)">
+            <summary>
+            Initialize a wallet from passed word count and word list for the mnemonic and passphrase.
+            </summary>
+            <param name="wordCount">The mnemonic word count.</param>
+            <param name="wordList">The language of the mnemonic words.</param>
+            <param name="passphrase">The passphrase.</param>
+            <param name="seedMode">The seed generation mode.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.#ctor(Sol.Unity.Wallet.Bip39.Mnemonic,System.String,Sol.Unity.Wallet.SeedMode)">
+            <summary>
+            Initialize a wallet from the passed mnemonic and passphrase.
+            </summary>
+            <param name="mnemonic">The mnemonic.</param>
+            <param name="passphrase">The passphrase.</param>
+            <param name="seedMode">The seed generation mode.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.#ctor(System.String,Sol.Unity.Wallet.Bip39.WordList,System.String,Sol.Unity.Wallet.SeedMode)">
+            <summary>
+            Initialize a wallet from the passed mnemonic and passphrase.
+            </summary>
+            <param name="mnemonicWords">The mnemonic words.</param>
+            <param name="wordList">The language of the mnemonic words. Defaults to <see cref="P:Sol.Unity.Wallet.Bip39.WordList.English"/>.</param>
+            <param name="passphrase">The passphrase.</param>
+            <param name="seedMode">The seed generation mode.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.#ctor(System.Byte[],System.String,Sol.Unity.Wallet.SeedMode)">
+            <summary>
+            Initializes a wallet from the passed seed byte array.
+            </summary>
+            <param name="seed">The seed used for key derivation.</param>
+            <param name="passphrase">The passphrase.</param>
+            <param name="seedMode">The seed mode.</param>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.Verify(System.Byte[],System.Byte[],System.Int32)">
+            <summary>
+            Verify the signed message.
+            </summary>
+            <param name="message">The signed message.</param>
+            <param name="signature">The signature of the message.</param>
+            <param name="accountIndex">The index of the account used to verify the signed message.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.Verify(System.Byte[],System.Byte[])">
+            <summary>
+            Verify the signed message.
+            </summary>
+            <param name="message">The signed message.</param>
+            <param name="signature">The signature of the message.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.Sign(System.Byte[],System.Int32)">
+            <summary>
+            Sign the data.
+            </summary>
+            <param name="message">The data to sign.</param>
+            <param name="accountIndex">The account used to sign the data.</param>
+            <returns>The signature of the data.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.Sign(System.Byte[])">
+            <summary>
+            Sign the data.
+            </summary>
+            <param name="message">The data to sign.</param>
+            <returns>The signature of the data.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.GetAccount(System.Int32)">
+            <summary>
+            Gets the account at the passed index using the ed25519 bip32 derivation path.
+            </summary>
+            <param name="index">The index of the account.</param>
+            <returns>The account.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.DeriveMnemonicSeed">
+            <summary>
+            Derive a seed from the passed mnemonic and/or passphrase, depending on <see cref="T:Sol.Unity.Wallet.SeedMode"/>.
+            </summary>
+            <returns>The seed.</returns>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.InitializeFirstAccount">
+            <summary>
+            Initializes the first account with a key pair derived from the initialized seed.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Wallet.Wallet.InitializeSeed">
+            <summary>
+            Derive the mnemonic seed and generate the key pair for the configured wallet.
+            </summary>
+        </member>
+    </members>
+</doc>

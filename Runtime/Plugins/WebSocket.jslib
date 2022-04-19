@@ -135,7 +135,7 @@ var WebSocketLibrary =
 			if (webSocketManager.debug)
 				console.log("[JSLIB WebSocket] Connected.");
 			if (webSocketManager.onOpen)
-				Runtime.dynCall('vi', webSocketManager.onOpen, [ instanceId ]);
+				Module['dynCall_vi'](webSocketManager.onOpen, instanceId);
 		};
 
 		instance.ws.onmessage = function(ev)
@@ -153,7 +153,7 @@ var WebSocketLibrary =
 				HEAPU8.set(dataBuffer, buffer);
 				try
 				{
-					Runtime.dynCall('viii', webSocketManager.onMessage, [ instanceId, buffer, dataBuffer.length ]);
+					Module['dynCall_viii'](webSocketManager.onMessage, instanceId, buffer, dataBuffer.length);
 				}
 				finally
 				{
@@ -170,7 +170,7 @@ var WebSocketLibrary =
 						HEAPU8.set(dataBuffer, buffer);
 						try
 						{
-							Runtime.dynCall('viii', webSocketManager.onMessage, [ instanceId, buffer, dataBuffer.length ]);
+							Module['dynCall_viii'](webSocketManager.onMessage, instanceId, buffer, dataBuffer.length);
 						}
 						finally
 						{
@@ -187,7 +187,7 @@ var WebSocketLibrary =
 				stringToUTF8(ev.data, buffer, length);
 				try
 				{
-					Runtime.dynCall('vii', webSocketManager.onMessageStr, [ instanceId, buffer ]);
+					Module['dynCall_vii'](webSocketManager.onMessageStr, instanceId, buffer);
 				}
 				finally
 				{
@@ -213,7 +213,7 @@ var WebSocketLibrary =
 				stringToUTF8(msg, buffer, length);
 				try
 				{
-					Runtime.dynCall('vii', webSocketManager.onError, [ instanceId, buffer ]);
+					Module['dynCall_vii'](webSocketManager.onError, instanceId, buffer);
 				}
 				finally
 				{
@@ -235,7 +235,7 @@ var WebSocketLibrary =
 				stringToUTF8(msg, buffer, length);
 				try
 				{
-					Runtime.dynCall('viii', webSocketManager.onClose, [ instanceId, ev.code, buffer ]);
+					Module['dynCall_viii'](webSocketManager.onClose, instanceId, ev.code, buffer);
 				}
 				finally
 				{

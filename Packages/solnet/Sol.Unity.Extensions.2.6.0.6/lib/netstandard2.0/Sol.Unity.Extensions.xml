@@ -1,0 +1,956 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sol.Unity.Extensions</name>
+    </assembly>
+    <members>
+        <member name="T:Sol.Unity.Extensions.ITokenMintResolver">
+            <summary>
+            Contains the method used to resolve mint public key addresses into TokenDef objects.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.ITokenMintResolver.Resolve(System.String)">
+            <summary>
+            Resolve a mint public key address into a TokenDef object.
+            </summary>
+            <param name="tokenMint"></param>
+            <returns>An instance of the TokenDef containing known info about this token or a constructed unknown entry.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.ITokenWalletRpcProxy">
+            <summary>
+            This interface contains the subset of methods from RPC client used by TokenWallet.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.ITokenWalletRpcProxy.GetBalanceAsync(System.String,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Gets the balance <b>asynchronously</b> for a certain public key.
+            <remarks>
+            The <c>commitment</c> parameter is optional, the default value <see cref="F:Sol.Unity.Rpc.Types.Commitment.Finalized"/> is not sent.
+            </remarks>
+            </summary>
+            <param name="pubKey">The public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>A task which may return a request result holding the context and address balance.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.ITokenWalletRpcProxy.GetTokenAccountsByOwnerAsync(System.String,System.String,System.String,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Gets all SPL Token accounts by token owner.
+            </summary>
+            <param name="ownerPubKey">Public key of account owner query, as base-58 encoded string.</param>
+            <param name="tokenMintPubKey">Public key of the specific token Mint to limit accounts to, as base-58 encoded string.</param>
+            <param name="tokenProgramId">Public key of the Token program ID that owns the accounts, as base-58 encoded string.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>Returns a task that holds the asynchronous operation result and state.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.ITokenWalletRpcProxy.GetRecentBlockHashAsync(Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Gets a recent block hash.
+            </summary>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>Returns a task that holds the asynchronous operation result and state.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.ITokenWalletRpcProxy.SendTransactionAsync(System.Byte[],System.Boolean,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Sends a transaction.
+            </summary>
+            <param name="transaction">The signed transaction as byte array.</param>
+            <param name="skipPreflight">If true skip the prflight transaction checks (default false).</param>
+            <param name="commitment">The block commitment used to retrieve block hashes and verify success.</param>
+            <returns>Returns a task that holds the asynchronous operation result and state.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenMint.TokenDef">
+            <summary>
+            Token Definition object used by the TokenMintResolver
+            <para>TokenMint uniquely identifies a token on the Solana blockchain.
+            Symbol is purley cosmetic and is not sufficient to uniquely identify a token by itself.</para>
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.#ctor(System.String,System.String,System.String,System.Int32)">
+            <summary>
+            Constructs a TokenDef instance.
+            </summary>
+            <param name="mint">The public key of the token mint address.</param>
+            <param name="name">The display name for this token.</param>
+            <param name="symbol">The token symbol used to display balances of this token.</param>
+            <param name="decimalPlaces"></param>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.TokenMint">
+            <summary>
+            The public key of the token mint address.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.TokenName">
+            <summary>
+            The display name of this token, either user supplied or loaded from tokenlist.json
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.Symbol">
+            <summary>
+            The symbol to use when displaying balances of this token to a user.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.DecimalPlaces">
+            <summary>
+            The number of decimal places this token uses.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.CoinGeckoId">
+            <summary>
+            The Coingecko identifier as supplied by the standard Solana token list or null
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.TokenProjectUrl">
+            <summary>
+            The token project / more info url as supplied by the standard Solana token list or null
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMint.TokenDef.TokenLogoUrl">
+            <summary>
+            The token logo url as supplied by the standard Solana token list or null
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.CreateQuantity(System.Decimal,System.UInt64)">
+            <summary>
+            Create an instance of the TokenQuantity object with the raw token quanity value provided.
+            </summary>
+            <param name="valueDecimal">Value as decimal.</param>
+            <param name="valueRaw">Value as ulong.</param>
+            <returns>A TokenQuantity instance.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.CreateQuantityWithRaw(System.UInt64)">
+            <summary>
+            Create an instance of the TokenQuantity object with the raw token quanity value provided.
+            </summary>
+            <param name="value">Value as ulong.</param>
+            <returns>A TokenQuantity instance.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.CreateQuantityWithDecimal(System.Decimal)">
+            <summary>
+            Create an instance of the TokenQuantity object with the decimal token quanity value provided.
+            </summary>
+            <param name="value"></param>
+            <returns>A TokenQuantity instance.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.ConvertDecimalToUlong(System.Decimal)">
+            <summary>
+            Helper method to convert a decimal value to ulong value for this token's number of decimal places.
+            based on the number of decimal places
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.ConvertUlongToDecimal(System.UInt64)">
+            <summary>
+            Helper method to convert a raw ulong to decimal value for this token's number of decimal places.
+            based on the number of decimal places
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMint.TokenDef.CloneWithKnownDecimals(System.Int32)">
+            <summary>
+            Creates a clone of this TokenDef instance setting the decimalPlaces.
+            Used to go from a TokenDef with unknown decimal places (-1) to known decimal places.
+            </summary>
+            <param name="decimalPlaces">Number of decimal places for this token.</param>
+            <returns>A new TokenDef instance.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenMint.TokenListDoc">
+            <summary>
+            Internal class used to deserialize tokenlist.json
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenMint.TokenListItem">
+            <summary>
+            Internal class used to deserialize tokenlist.json
+            </summary>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenQuantity">
+            <summary>
+            Represents a token quantity of a known mint with a known number of decimal places.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenQuantity.#ctor(Sol.Unity.Extensions.TokenMint.TokenDef,System.Decimal,System.UInt64)">
+            <summary>
+            Constructs a TokenQuantity instance.
+            </summary>
+            <param name="tokenDef">A TokenDef instance that describes this token.</param>
+            <param name="balanceDecimal">Token balance in decimal.</param>
+            <param name="balanceRaw">Token balance in raw ulong.</param>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.TokenDef">
+            <summary>
+            The origin TokenDef instance
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.TokenMint">
+            <summary>
+            The token mint public key address.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.Symbol">
+            <summary>
+            The symbol this token uses.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.TokenName">
+            <summary>
+            The name of this token.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.DecimalPlaces">
+            <summary>
+            The number of decimal places this token uses.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.QuantityDecimal">
+            <summary>
+            Token balance in decimal.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenQuantity.QuantityRaw">
+            <summary>
+            Token balance in raw ulong.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenQuantity.ToString">
+            <summary>
+            Provide a friendly to read balance with symbol and name.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenQuantity.AddQuantity(System.Decimal,System.UInt64)">
+            <summary>
+            Add the value of another TokenQuantity to this TokenQuantity.
+            </summary>
+            <param name="valueDecimal">Number of tokens as decimal to add to this TokenQuantity.</param>
+            <param name="valueRaw">Number of tokens as ulong to add to this TokenQuantity.</param>
+            <returns>A new instance with this TokenQuantity added to the accumulators.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenWalletAccount">
+            <summary>
+            A token balance for an individual token account.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWalletAccount.PublicKey">
+            <summary>
+            The public key of the account.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWalletAccount.Owner">
+            <summary>
+            The owner public key of the account.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWalletAccount.IsAssociatedTokenAccount">
+            <summary>
+            A flag to indicate whether this account is an Associated Token Account.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletAccount.#ctor(Sol.Unity.Extensions.TokenMint.TokenDef,System.Decimal,System.UInt64,System.UInt64,System.String,System.String,System.Boolean)">
+            <summary>
+            Construct an instance of the TokenWalletAccount.
+            </summary>
+            <param name="tokenDef">A TokenDef instance that describes this token.</param>
+            <param name="balanceDecimal">Token balance in decimal.</param>
+            <param name="balanceRaw">Token balance in raw ulong.</param>
+            <param name="lamportsRaw">How many lamports does this balance represent.</param>
+            <param name="publicKey">The public key of the account.</param>
+            <param name="owner">The owner public key of the account.</param>
+            <param name="isAta">A flag to indicate whether this account is an Associated Token Account.</param>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletAccount.ToString">
+            <summary>
+            Provide a friendly to read balance with symbol and name and an ATA indicator.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenWalletBalance">
+            <summary>
+            A consolidated token balance for a number of accounts of a given mint.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletBalance.#ctor(Sol.Unity.Extensions.TokenMint.TokenDef,System.Decimal,System.UInt64,System.UInt64,System.Int32)">
+            <summary>
+            Constructs a TokenWalletBalance instance.
+            </summary>
+            <param name="tokenDef">A TokenDef instance that describes this token.</param>
+            <param name="balanceDecimal">Token balance in decimal.</param>
+            <param name="balanceRaw">Token balance in raw ulong.</param>
+            <param name="lamportsRaw">How many lamports does this balance represent.</param>
+            <param name="accountCount">The number of accounts this balance represents. Start with 1.</param>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWalletBalance.Lamports">
+            <summary>
+            How many lamports does this balance represent.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWalletBalance.AccountCount">
+            <summary>
+            The number of accounts this balance represents. 
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletBalance.ToString">
+            <summary>
+            Provide a friendly to read balance with symbol and name.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletBalance.AddAccount(System.Decimal,System.UInt64,System.UInt64,System.Int32)">
+            <summary>
+            Add the value of an account to this consolidated balance.
+            </summary>
+            <param name="valueDecimal">Number of tokens as decimal to add to this consolidated balance.</param>
+            <param name="valueRaw">Number of tokens as ulong to add to this consolidated balance.</param>
+            <param name="lamportsRaw">Number of lamports to add to this consolidated balance.</param>
+            <param name="accountCount">Number of accounts to add to this consolidated balance.</param>
+            <returns>A new instance with this account provdided added to the accumulators.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.Models.TokenWalletFilterList">
+            <summary>
+            A filterable list of TokenWalletAccounts.
+            <para>Use the filter methods to select the accounts that you want to interact with.</para>
+            <para>To filter a subset of accounts, see ForToken, WithSymbol, WithMint, WithAtLeast, WhichAreAssociatedTokenAccounts, </para>
+            <para>To select individual accounts, see: WithPublicKey, AssociatedTokenAccount</para>
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.Models.TokenWalletFilterList._list">
+            <summary>
+            Private list storage.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.#ctor(System.Collections.Generic.IEnumerable{Sol.Unity.Extensions.TokenWalletAccount})">
+            <summary>
+            Constructs an instance of TokenWalletFilterList with a list of accounts.
+            </summary>
+            <param name="accounts">Some accounts to add to the list.</param>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.GetEnumerator">
+            <summary>
+            Get an enumerator for this list.
+            </summary>
+            <returns>An enumerator for this list.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.System#Collections#IEnumerable#GetEnumerator">
+            <summary>
+            Get an enumerator for this list.
+            </summary>
+            <returns>An enumerator for this list.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.ForToken(Sol.Unity.Extensions.TokenMint.TokenDef)">
+            <summary>
+            Keeps all accounts that match the TokenDef provided.
+            </summary>
+            <param name="token">An instance of TokenDef to use for filtering.</param>
+            <returns>A filtered list of accounts that match the supplied TokenDef.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithSymbol(System.String)">
+            <summary>
+            Keeps all accounts with the token symbol supplied.
+            <para>Be aware that token symbol does not guarentee you are interacting with the TokenMint you think. 
+            It is much safer to identify tokens using their token mint public key address.</para>
+            </summary>
+            <param name="symbol">A token symbol, e.g. USDC</param>
+            <returns>A filtered list of accounts for the given token symbol.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithPublicKey(System.String)">
+            <summary>
+            Get the TokenWalletAccount for the public key provided.
+            </summary>
+            <param name="publicKey">Public key for the account</param>
+            <returns>The account with the matching public key or null if not found.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithMint(System.String)">
+            <summary>
+            Keeps all accounts for the given token mint address.
+            </summary>
+            <param name="mint">Token mint public key address.</param>
+            <returns>A filtered list of accounts for the given mint.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithAtLeast(System.Decimal)">
+            <summary>
+            Keeps all accounts with at least the supplied minimum balance.
+            </summary>
+            <param name="minimumBalance">A minimum balance value as decimal.</param>
+            <returns>A filtered list of accounts with at least the balance as decimal supplied.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithAtLeast(System.UInt64)">
+            <summary>
+            Keeps all accounts with at least the supplied minimum balance.
+            </summary>
+            <param name="minimumBalance">A minimum balance value as ulong.</param>
+            <returns>A filtered list of accounts with at least the balance as raw ulong supplied.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithNonZero">
+            <summary>
+            Keeps all accounts with a non-zero balance.
+            </summary>
+            <returns>A filtered list of accounts with at least the balance as raw ulong supplied.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WhichAreAssociatedTokenAccounts">
+            <summary>
+            Keeps all Associated Token Account instances in the list.
+            </summary>
+            <returns>A filtered list that only contains Associated Token Accounts.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.AssociatedTokenAccount">
+            <summary>
+            Return the first associated account found in the list or null.
+            <para>Typically this would be used immediately after a WithMint 
+            for ForToken filter to identify the Associated Token Account for that token.</para>
+            </summary>
+            <returns>The first matching Assocated Token Accounts in the list or null if none were found.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.Models.TokenWalletFilterList.WithCustomFilter(System.Predicate{Sol.Unity.Extensions.TokenWalletAccount})">
+            <summary>
+            Keeps all instances that satisfy the filter provided.
+            </summary>
+            <param name="filter">The filter to use.</param>
+            <returns>A filtered list that only contains matching.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenMintResolver">
+            <summary>
+            The default implementation of the TokenMintResolver.
+            <para>You can create your own by implementing ITokenMintResolver.</para>
+            <para>You can use the Load method to load the Solana ecosystem's standard token list or 
+            populate your own instance with TokenDef objects.</para>
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.TokenMintResolver.TOKENLIST_GITHUB_URL">
+            <summary>
+            The URL of the standard token list
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.TokenMintResolver._tokens">
+            <summary>
+            Internal lookfor for resolving mint public key addresses to TokenDef objects.
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenMintResolver.KnownTokens">
+            <summary>
+            Map of known tokens.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.#ctor">
+            <summary>
+            Constructs an empty TokenMintResolver object.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.#ctor(Sol.Unity.Extensions.TokenMint.TokenListDoc)">
+            <summary>
+            Constructs an empty TokenMintResolver and populates with deserialized TokenListDoc.
+            </summary>
+            <param name="tokenList">A deserialised token list.</param>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.Load">
+            <summary>
+            Return an instance of the TokenMintResolver loaded with the Solana token list.
+            </summary>
+            <returns>An instance of the TokenMintResolver populated with Solana token list definitions.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.Load(System.String)">
+            <summary>
+            Return an instance of the TokenMintResolver loaded dererialised token list JSON from the specified URL.
+            </summary>
+            <param name="url"></param>
+            <returns>An instance of the TokenMintResolver populated with Solana token list definitions.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.LoadAsync">
+            <summary>
+            Return an instance of the TokenMintResolver loaded with the Solana token list.
+            </summary>
+            <returns>A task that will result in an instance of the TokenMintResolver populated with Solana token list definitions.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.LoadAsync(System.String)">
+            <summary>
+            Return an instance of the TokenMintResolver loaded with the Solana token list.
+            </summary>
+            <returns>A task that will result in an instance of the TokenMintResolver populated with Solana token list definitions.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.ParseTokenList(System.String)">
+            <summary>
+            Return an instance of the TokenMintResolver loaded with the dererialised JSON string supplied.
+            </summary>
+            <param name="json">The JSON to parse - should be shaped the same as the Solana token list.</param>
+            <returns>An instance of the TokenMintResolver populated with the deserialized JSON provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.Resolve(System.String)">
+            <summary>
+            Resolve a token mint public key address into the token def.
+            <para>
+            If a token is not known, a default Unknown TokenDef instance with be created for that mint and stashed for any future lookups.
+            </para>
+            <para>
+            Unknown tokens will have decimal places of -1 by design. 
+            This will prevent their use when converting decimal balance values into lamports for TransactionBuilder.
+            It is unlikely this scenario will be encountered often as Unknown token are encounted by the TokenWallet Load method
+            when processing TokenAccountInfo RPC results that do contain the decimal places.
+            </para>
+            </summary>
+            <param name="tokenMint"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.Add(Sol.Unity.Extensions.TokenMint.TokenDef)">
+            <summary>
+            Add a token to the TokenMintResolver lookup.
+            Any collisions on token mint will replace the previous instance.
+            </summary>
+            <param name="token">An instance of TokenDef to be added.</param>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenMintResolver.Add(Sol.Unity.Extensions.TokenMint.TokenListItem)">
+            <summary>
+            Construct a TokenDef instance populated with extension goodies from the Solana token list.
+            </summary>
+            <param name="tokenItem">A TokenListItem instance.</param>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenWallet">
+            <summary>
+            An object that represents the token wallet accounts that belong to a wallet address and methods to send tokens 
+            to other wallets whilst transparantly handling the complexities of Associated Token Accounts.
+            <para>Use Load method to get started and Send method to send tokens.</para>
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWallet.RpcClient">
+            <summary>
+            RPC client instance
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWallet.MintResolver">
+            <summary>
+            Resolver for token mint
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWallet.PublicKey">
+            <summary>
+            PublicKey for the wallet
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.TokenWallet._ataCache">
+            <summary>
+            Cache of computed ATAs for mints
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWallet.Lamports">
+            <summary>
+            Native SOL balance in lamports
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWallet.Sol">
+            <summary>
+            Native SOL balance as decimal
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.TokenWallet._tokenAccounts">
+            <summary>
+            List of TokenAccounts
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.#ctor(Sol.Unity.Extensions.ITokenWalletRpcProxy,Sol.Unity.Extensions.ITokenMintResolver,Sol.Unity.Wallet.PublicKey)">
+            <summary>
+            Private constructor, get your instances via Load methods
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Load(Sol.Unity.Rpc.IRpcClient,Sol.Unity.Extensions.ITokenMintResolver,System.String,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Load a TokenWallet instance for a given public key.
+            </summary>
+            <param name="client">An instance of the RPC client.</param>
+            <param name="mintResolver">An instance of a mint resolver.</param>
+            <param name="publicKey">The account public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>An instance of TokenWallet loaded with the token accounts of the publicKey provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Load(Sol.Unity.Rpc.IRpcClient,Sol.Unity.Extensions.ITokenMintResolver,Sol.Unity.Wallet.PublicKey,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Load a TokenWallet instance for a given public key.
+            </summary>
+            <param name="client">An instance of the RPC client.</param>
+            <param name="mintResolver">An instance of a mint resolver.</param>
+            <param name="publicKey">The account public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>An instance of TokenWallet loaded with the token accounts of the publicKey provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Load(Sol.Unity.Extensions.ITokenWalletRpcProxy,Sol.Unity.Extensions.ITokenMintResolver,System.String,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Load a TokenWallet instance for a given public key.
+            </summary>
+            <param name="client">An instance of the RPC client.</param>
+            <param name="mintResolver">An instance of a mint resolver.</param>
+            <param name="publicKey">The account public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>An instance of TokenWallet loaded with the token accounts of the publicKey provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Load(Sol.Unity.Extensions.ITokenWalletRpcProxy,Sol.Unity.Extensions.ITokenMintResolver,Sol.Unity.Wallet.PublicKey,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Load a TokenWallet instance for a given public key.
+            </summary>
+            <param name="client">An instance of the RPC client.</param>
+            <param name="mintResolver">An instance of a mint resolver.</param>
+            <param name="publicKey">The account public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>An instance of TokenWallet loaded with the token accounts of the publicKey provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.LoadAsync(Sol.Unity.Rpc.IRpcClient,Sol.Unity.Extensions.ITokenMintResolver,Sol.Unity.Wallet.PublicKey,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Load a TokenWallet instance for a given public key.
+            </summary>
+            <param name="client">An instance of the RPC client.</param>
+            <param name="mintResolver">An instance of a mint resolver.</param>
+            <param name="publicKey">The account public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>An instance of TokenWallet loaded with the token accounts of the publicKey provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.LoadAsync(Sol.Unity.Extensions.ITokenWalletRpcProxy,Sol.Unity.Extensions.ITokenMintResolver,Sol.Unity.Wallet.PublicKey,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Load a TokenWallet instance for a given public key.
+            </summary>
+            <param name="client">An instance of the RPC client.</param>
+            <param name="mintResolver">An instance of a mint resolver.</param>
+            <param name="publicKey">The account public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>A task that results in an instance of TokenWallet loaded with the token accounts of the publicKey provided.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Refresh(Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Refresh balances and token accounts
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.RefreshAsync(Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Refresh balances and token accounts
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>A task that results true once complete.</returns>
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Balances">
+            <summary>
+            Get consolidated token balances across all sub-accounts for each token mint in this wallet.
+            </summary>
+            <returns>An array of TokenWalletBalance objects, one per token mint in this wallet.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.TokenAccounts">
+            <summary>
+            Returns a <c>TokenWalletFilterList</c> of sub-accounts in this wallet address.
+            <para>Use the filter methods <c>ForToken</c>, <c>WithSymbol</c>, <c>WithAtLeast</c>, <c>WithMint</c>, <c>AssociatedTokenAccount</c> methods 
+            to select the sub-account you want to use.
+            </para>
+            </summary>
+            <returns>Results a list of TokenWalletAccounts for filtering.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Send(Sol.Unity.Extensions.TokenWalletAccount,System.Decimal,Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey,System.Func{Sol.Unity.Rpc.Builders.TransactionBuilder,System.Byte[]})">
+            <summary>
+            Send tokens from source to target wallet Associated Token Account for the token mint.
+            </summary>
+            <para>
+            The <c>source</c> parameter is a TokenWalletAccount instance that tokens will be sent from. 
+            They will be deposited into an Associated Token Account in the destination wallet.
+            If an Associated Token Account does not exist, it will be created at the cost of feePayer.
+            </para>
+            <param name="source">Source account of tokens to be sent.</param>
+            <param name="amount">Human readable amount of tokens to send.</param>
+            <param name="destination">Destination wallet address.</param>
+            <param name="feePayer">PublicKey of the fee payer address.</param>
+            <param name="signTxCallback">Call back function used to sign the TransactionBuilder.</param>
+            <returns>A task that results in the transaction signature submitted to the RPC node.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.Send(Sol.Unity.Extensions.TokenWalletAccount,System.Decimal,System.String,Sol.Unity.Wallet.PublicKey,System.Func{Sol.Unity.Rpc.Builders.TransactionBuilder,System.Byte[]})">
+            <summary>
+            Send tokens from source to target wallet Associated Token Account for the token mint.
+            </summary>
+            <para>
+            The <c>source</c> parameter is a TokenWalletAccount instance that tokens will be sent from. 
+            They will be deposited into an Associated Token Account in the destination wallet.
+            If an Associated Token Account does not exist, it will be created at the cost of feePayer.
+            </para>
+            <param name="source">Source account of tokens to be sent.</param>
+            <param name="amount">Human readable amount of tokens to send.</param>
+            <param name="destination">Destination wallet address.</param>
+            <param name="feePayer">PublicKey of the fee payer address.</param>
+            <param name="signTxCallback">Call back function used to sign the TransactionBuilder.</param>
+            <returns>The transaction signature submitted to the RPC node.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.SendAsync(Sol.Unity.Extensions.TokenWalletAccount,System.Decimal,System.String,Sol.Unity.Wallet.PublicKey,System.Func{Sol.Unity.Rpc.Builders.TransactionBuilder,System.Byte[]})">
+            <summary>
+            Send tokens from source to target wallet Associated Token Account for the token mint.
+            </summary>
+            <para>
+            The <c>source</c> parameter is a TokenWalletAccount instance that tokens will be sent from. 
+            They will be deposited into an Associated Token Account in the destination wallet.
+            If an Associated Token Account does not exist, it will be created at the cost of feePayer.
+            </para>
+            <param name="source">Source account of tokens to be sent.</param>
+            <param name="amount">Human readable amount of tokens to send.</param>
+            <param name="destination">Destination wallet address.</param>
+            <param name="feePayer">PublicKey of the fee payer address.</param>
+            <param name="signTxCallback">Call back function used to sign the TransactionBuilder.</param>
+            <returns>A task that results in the transaction signature submitted to the RPC node.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.SendAsync(Sol.Unity.Extensions.TokenWalletAccount,System.Decimal,Sol.Unity.Wallet.PublicKey,Sol.Unity.Wallet.PublicKey,System.Func{Sol.Unity.Rpc.Builders.TransactionBuilder,System.Byte[]})">
+            <summary>
+            Send tokens from source to target wallet Associated Token Account for the token mint.
+            </summary>
+            <para>
+            The <c>source</c> parameter is a TokenWalletAccount instance that tokens will be sent from. 
+            They will be deposited into an Associated Token Account in the destination wallet.
+            If an Associated Token Account does not exist, it will be created at the cost of feePayer.
+            </para>
+            <param name="source">Source account of tokens to be sent.</param>
+            <param name="amount">Human readable amount of tokens to send.</param>
+            <param name="destination">Destination wallet address.</param>
+            <param name="feePayer">PublicKey of the fee payer address.</param>
+            <param name="signTxCallback">Call back function used to sign the TransactionBuilder.</param>
+            <returns>A task that results in the transaction signature submitted to the RPC node.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.JitCreateAssociatedTokenAccount(Sol.Unity.Rpc.Builders.TransactionBuilder,System.String,Sol.Unity.Wallet.PublicKey)">
+            <summary>
+            Checks for a target Associated Token Account for the given mint and prepares one if not found.
+            </summary>
+            <para>
+            Use this method to conditionally create a target Associated Token Account in this wallet as part of your own builder.
+            </para>
+            <param name="builder">The TransactionBuilder create account logic will be added to if required.</param>
+            <param name="mint">The public key of the mint for the Associated Token Account.</param>
+            <param name="feePayer">The account that will fund the account creation if required.</param>
+            <returns>The public key of the Associated Token Account that will be created.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.GetAssociatedTokenAddressForMint(System.String)">
+            <summary>
+            Compute the Associated Token Account address in this wallet for a given mint.
+            </summary>
+            <param name="mint">The public key of the mint for the Associated Token Account.</param>
+            <returns>The public key of the Associated Token Account.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.IsSubAccount(System.String)">
+            <summary>
+            Does a public key belong to a subaccount of this wallet?
+            </summary>
+            <param name="pubkey">The public key of the sub-account to query.</param>
+            <returns>True if this sub-account exists in this wallet.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWallet.IsSubAccount(Sol.Unity.Wallet.PublicKey)">
+            <summary>
+            Does a public key belong to a subaccount of this wallet?
+            </summary>
+            <param name="pubkey">The public key of the sub-account to query.</param>
+            <returns>True if this sub-account exists in this wallet.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenWalletException">
+            <summary>
+            An exception thrown brown the TokenWallet that includes the failing Solnet RPC call
+            </summary>
+        </member>
+        <member name="P:Sol.Unity.Extensions.TokenWalletException.RequestResult">
+            <summary>
+            The failing RequestResult that caused the Exception.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletException.#ctor(System.String,Sol.Unity.Rpc.Core.Http.IRequestResult)">
+            <summary>
+            An Exception generated by an RPC failure within the TokenWallet.
+            </summary>
+            <param name="message">The exception message.</param>
+            <param name="failedResult">The failing RequestResult that caused the exception.</param>
+        </member>
+        <member name="T:Sol.Unity.Extensions.TokenWalletRpcProxy">
+            <summary>
+            An internal RPC proxy that has everything required by TokenWallet.
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.TokenWalletRpcProxy._client">
+            <summary>
+            The RPC client to use.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletRpcProxy.#ctor(Sol.Unity.Rpc.IRpcClient)">
+            <summary>
+            Constructs an instance of the TokenWalletRpcProxy.
+            </summary>
+            <param name="client"></param>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletRpcProxy.GetBalanceAsync(System.String,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Gets the balance <b>asynchronously</b> for a certain public key.
+            <remarks>
+            The <c>commitment</c> parameter is optional, the default value <see cref="F:Sol.Unity.Rpc.Types.Commitment.Finalized"/> is not sent.
+            </remarks>
+            </summary>
+            <param name="pubKey">The public key.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>A task which may return a request result holding the context and address balance.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletRpcProxy.GetRecentBlockHashAsync(Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Gets a recent block hash.
+            </summary>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>Returns a task that holds the asynchronous operation result and state.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletRpcProxy.GetTokenAccountsByOwnerAsync(System.String,System.String,System.String,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Gets all SPL Token accounts by token owner.
+            </summary>
+            <param name="ownerPubKey">Public key of account owner query, as base-58 encoded string.</param>
+            <param name="tokenMintPubKey">Public key of the specific token Mint to limit accounts to, as base-58 encoded string.</param>
+            <param name="tokenProgramId">Public key of the Token program ID that owns the accounts, as base-58 encoded string.</param>
+            <param name="commitment">The state commitment to consider when querying the ledger state.</param>
+            <returns>Returns a task that holds the asynchronous operation result and state.</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.TokenWalletRpcProxy.SendTransactionAsync(System.Byte[],System.Boolean,Sol.Unity.Rpc.Types.Commitment)">
+            <summary>
+            Sends a transaction.
+            </summary>
+            <param name="transaction">The signed transaction as byte array.</param>
+            <param name="skipPreflight">If true skip the prflight transaction checks (default false).</param>
+            <param name="commitment">The block commitment used to retrieve block hashes and verify success.</param>
+            <returns>Returns an object that wraps the result along with possible errors with the request.</returns>
+        </member>
+        <member name="T:Sol.Unity.Extensions.WellKnownTokens">
+            <summary>
+            Defines well known tokens and their SPL Token Address, name, symbol and number of decimal places
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.WellKnownTokens.#cctor">
+            <summary>
+            Discover all well known tokens on class load.
+            </summary>
+        </member>
+        <member name="M:Sol.Unity.Extensions.WellKnownTokens.All">
+            <summary>
+            Get all TokenDefs in one list.
+            </summary>
+            <returns>A list of well known TokenDef</returns>
+        </member>
+        <member name="M:Sol.Unity.Extensions.WellKnownTokens.CreateTokenMintResolver">
+            <summary>
+            Create a TokenMintResolver pre-loaded with well known tokens.
+            </summary>
+            <returns>An instance of the TokenMintResolver bootstrapped with the well known tokens.</returns>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.WrappedSOL">
+            <summary>
+            Wrapped SOL
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.USDC">
+            <summary>
+            USDC
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.USDT">
+            <summary>
+            USDT
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Serum">
+            <summary>
+            SRM (Serum)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Raydium">
+            <summary>
+            RAY (Raydium)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Bonfida">
+            <summary>
+            FIDA (Bonfida)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Cope">
+            <summary>
+            COPE
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Kin">
+            <summary>
+            KIN
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Tulip">
+            <summary>
+            TULIP (Tulip/Solfarm)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Orca">
+            <summary>
+            Orca
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Mango">
+            <summary>
+            MNGO (Mango Markets)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Samoyed">
+            <summary>
+            SAMO (Samoyed Coin) 
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Saber">
+            <summary>
+            SBR (Saber)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Fabric">
+            <summary>
+            FAB (Fabric Protocol)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Boring">
+            <summary>
+            BOP (Boring Protocol)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Liquid">
+            <summary>
+            LIQ (Liquid)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Step">
+            <summary>
+            Step
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Solrise">
+            <summary>
+            SLRS (Solrise Finance)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Only1">
+            <summary>
+            LIKE (Only1)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.StarAtlas">
+            <summary>
+            ATLAS (Star Atlas)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.StarAtlasDao">
+            <summary>
+            POLIS (Star Atlas DAO)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.Woof">
+            <summary>
+            WOOF (WOOFENCOMICS)
+            </summary>
+        </member>
+        <member name="F:Sol.Unity.Extensions.WellKnownTokens.ShadowToken">
+            <summary>
+            Shadow Token (SHDW)
+            </summary>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.IsExternalInit">
+            <summary>
+                Reserved to be used by the compiler for tracking metadata.
+                This class should not be used by developers in source code.
+            </summary>
+            <remarks>
+                This definition is provided by the <i>IsExternalInit</i> NuGet package (https://www.nuget.org/packages/IsExternalInit).
+                Please see https://github.com/manuelroemer/IsExternalInit for more information.
+            </remarks>
+        </member>
+    </members>
+</doc>

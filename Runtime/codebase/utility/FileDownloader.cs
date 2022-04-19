@@ -38,7 +38,7 @@ namespace AllArt.Solana.Utility
                     await Task.Yield();
                 }
 
-                if (uwr.isNetworkError || uwr.isHttpError)
+                if (uwr.result == UnityWebRequest.Result.ConnectionError)
                 {
                     Debug.Log(uwr.error);
                     return default;
@@ -63,7 +63,7 @@ namespace AllArt.Solana.Utility
                     await Task.Yield();
                 }
 
-                if (uwr.isNetworkError || uwr.isHttpError)
+                if (uwr.result == UnityWebRequest.Result.ConnectionError)
                 {
                     Debug.Log(uwr.error);
                     return default(T);

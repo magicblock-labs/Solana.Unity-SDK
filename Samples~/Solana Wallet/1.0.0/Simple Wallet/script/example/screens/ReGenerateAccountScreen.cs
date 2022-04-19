@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SFB;
-using Solnet.Wallet;
+using Sol.Unity.Wallet;
 using System;
 using System.Collections;
 using System.Collections.Generic;

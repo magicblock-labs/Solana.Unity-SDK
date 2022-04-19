@@ -1,4 +1,4 @@
-
+using Sol.Unity.Wallet;
 ﻿namespace AllArt.Solana
 {   
     [System.Serializable]

@@ -1,5 +1,5 @@
-using Solnet.Rpc.Core.Http;
-using Solnet.Rpc.Models;
+using Sol.Unity.Rpc.Core.Http;
+using Sol.Unity.Rpc.Models;
 using TMPro;
 using UnityEngine.UI;
 

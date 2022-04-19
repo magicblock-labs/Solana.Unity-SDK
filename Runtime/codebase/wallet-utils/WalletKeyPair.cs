@@ -1,6 +1,6 @@
-﻿using Solnet.Wallet;
+﻿using Sol.Unity.Wallet;
 using System;
-using dotnetstandard_bip39;
+using Sol.Unity.Wallet.Bip39;
 
 namespace AllArt.Solana
 {
@@ -29,24 +29,9 @@ namespace AllArt.Solana
             return val - (val < 58 ? 48 : (val < 97 ? 55 : 87));
         }
 
-        public static string GenerateNewMnemonic()
+        public static Mnemonic GenerateNewMnemonic()
         {
-            //dotnetstandard_bip39.BIP39 p = new BIP39()
-            BIP p = new BIP();
-            string mnemonic = p.GenerateMnemonic(256, BIP39Wordlist.English);
-            return mnemonic;
-        }
-
-        public static byte[] GetBIP39SeedBytes(string seed)
-        {
-            return StringToByteArrayFastest(MnemonicToSeedHex(seed));
-        }
-
-        public static string MnemonicToSeedHex(string seed)
-        {
-
-            BIP39 p = new BIP39();
-            return p.MnemonicToSeedHex(seed, string.Empty);
+            return new Mnemonic(WordList.English, WordCount.Twelve);
         }
 
         public static byte[] GetBIP32SeedByte(byte[] seed)
@@ -55,21 +40,6 @@ namespace AllArt.Solana
 
             (byte[] key, byte[] chain) = bip.DerivePath(derivePath);
             return key;
-        }
-
-        public static byte[] GenerateSeedFromMnemonic(string mnemonic)
-        {
-            return GetBIP39SeedBytes(mnemonic);
-        }
-
-        public static Keypair GenerateKeyPairFromMnemonic(string mnemonics)
-        {
-            byte[] bip39seed = GetBIP39SeedBytes(mnemonics);
-
-            byte[] finalSeed = GetBIP32SeedByte(bip39seed);
-            (byte[] privateKey, byte[] publicKey) = Ed25519Extensions.EdKeyPairFromSeed(finalSeed);
-
-            return new Keypair(publicKey, privateKey);
         }
 
         public static bool CheckMnemonicValidity(string mnemonic)
@@ -87,11 +57,6 @@ namespace AllArt.Solana
             else
                 return false;
         }
-
-        public static void SaveKeyPair(Keypair keypair)
-        {
-            //save to playerPrefs for testing purposes
-            //make sure to change later for production
-        }
+        
     }
 }

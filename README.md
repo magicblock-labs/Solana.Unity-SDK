@@ -241,7 +241,7 @@ public void StartConnection(string address)
 - Then call SendParameter and forward parameter for account subscription.
 - Call example 
 ```C#
- webSocketService.SubscribeToWalletAccountEvents(wallet.Account.GetPublicKey);
+ webSocketService.SubscribeToWalletAccountEvents(wallet.Account.PublicKey);
 ```
 ### Unsubscribe to wallet account events
 ```C#
@@ -311,7 +311,7 @@ if (tryUseLocalContent)
 ```
 ### Create address
 ```C#
-public static Solnet.Wallet.PublicKey CreateAddress(List<byte[]> seed, string programId)
+public static Sol.Unity.Wallet.PublicKey CreateAddress(List<byte[]> seed, string programId)
 ```
 - Create NFT's public key from seed and programId
 - Call example
@@ -326,12 +326,12 @@ try
 
 ### Find program address
 ```C#
-public static Solnet.Wallet.PublicKey FindProgramAddress(string mintPublicKey, string programId = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+public static Sol.Unity.Wallet.PublicKey FindProgramAddress(string mintPublicKey, string programId = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
 ```
 - Returns metaplex data pubkey from mint pubkey and programId
 - Call example 
 ```C#
-Solnet.Wallet.PublicKey metaplexDataPubKey = FindProgramAddress(mint);
+Sol.Unity.Wallet.PublicKey metaplexDataPubKey = FindProgramAddress(mint);
 ```
 ### Get metaplex Json data
 ```C#

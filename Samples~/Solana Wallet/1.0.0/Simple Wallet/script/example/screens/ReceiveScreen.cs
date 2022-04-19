@@ -34,7 +34,7 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQR();
-        publicKey_txt.text = SimpleWallet.instance.wallet.GetAccount(0).GetPublicKey;
+        publicKey_txt.text = SimpleWallet.instance.wallet.GetAccount(0).PublicKey;
     }
 
     private void CheckAndToggleAirdrop()
@@ -47,7 +47,7 @@ public class ReceiveScreen : SimpleScreen
 
     private void GenerateQR()
     {
-        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.instance.wallet.GetAccount(0).GetPublicKey, 256, 256);
+        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.instance.wallet.GetAccount(0).PublicKey, 256, 256);
         qrCode_img.texture = tex;
     }
 

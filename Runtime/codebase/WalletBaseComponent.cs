@@ -1,17 +1,16 @@
 using AllArt.Solana.Utility;
-using dotnetstandard_bip39;
-using Solnet.Programs;
-using Solnet.Rpc;
-using Solnet.Rpc.Builders;
-using Solnet.Rpc.Core.Http;
-using Solnet.Rpc.Messages;
-using Solnet.Rpc.Models;
-using Solnet.Wallet;
+using Sol.Unity.Programs;
+using Sol.Unity.Rpc;
+using Sol.Unity.Rpc.Builders;
+using Sol.Unity.Rpc.Core.Http;
+using Sol.Unity.Rpc.Messages;
+using Sol.Unity.Rpc.Models;
+using Sol.Unity.Wallet;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Sol.Unity.Wallet.Bip39;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace AllArt.Solana
 {
@@ -31,9 +30,9 @@ namespace AllArt.Solana
         public static string testNetAdress = "https://api.testnet.solana.com";
         public static string mainNetAdress = "https://api.mainnet-beta.solana.com";
 
-        public static string webSocketDevNetAdress = "ws://api.devnet.solana.com";
-        public static string webSocketTestNetAdress = "ws://api.testnet.solana.com";
-        public static string webSocketMainNetAdress = "ws://api.mainnet-beta.solana.com";
+        public static string webSocketDevNetAdress = "wss://api.devnet.solana.com";
+        public static string webSocketTestNetAdress = "wss://api.testnet.solana.com";
+        public static string webSocketMainNetAdress = "wss://api.mainnet-beta.solana.com";
 
         public string customUrl = "http://192.168.0.22:8899";
 
@@ -48,7 +47,7 @@ namespace AllArt.Solana
         public EClientUrlSource clientSource;
         public bool autoConnectOnStartup = false;
 
-        public SolanaRpcClient activeRpcClient { get; private set; }
+        public IRpcClient activeRpcClient { get; private set; }
 
 
         public virtual void Awake()
@@ -136,22 +135,21 @@ namespace AllArt.Solana
         /// <param name="account">Account to create</param>
         /// <param name="toPublicKey">Public key of Account</param>
         /// <param name="ammount">SOL amount</param>
-        public async void CreateAccount(Account account, string toPublicKey = "", long ammount = 1000)
+        public async void CreateAccount(Account account, ulong ammount = 1000)
         {
             try
             {
-                Keypair keypair = WalletKeyPair.GenerateKeyPairFromMnemonic(WalletKeyPair.GenerateNewMnemonic());
-
-                toPublicKey = keypair.publicKey;
+                
+                Wallet keypair = new Wallet(WalletKeyPair.GenerateNewMnemonic());
 
                 RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
 
                 var transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                    AddInstruction(SystemProgram.CreateAccount(account.GetPublicKey, toPublicKey, ammount,
-                    (long)SystemProgram.AccountDataSize, SystemProgram.ProgramId))
+                    AddInstruction(SystemProgram.CreateAccount(account.PublicKey, wallet.Account.PublicKey, ammount,
+                    (long)TokenProgram.TokenAccountDataSize, SystemProgram.ProgramIdKey))
                     .Build(new List<Account>() {
                     account,
-                    new Account(keypair.privateKeyByte, keypair.publicKeyByte)
+                    new Account(keypair.Account.PrivateKey.Key, keypair.Account.PublicKey.Key)
                     });
 
                 RequestResult<string> firstSig = await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
@@ -169,7 +167,7 @@ namespace AllArt.Solana
         /// <returns></returns>
         public async Task<AccountInfo> GetAccountData(Account account)
         {
-            RequestResult<ResponseValue<AccountInfo>> result = await activeRpcClient.GetAccountInfoAsync(account.GetPublicKey);
+            RequestResult<ResponseValue<AccountInfo>> result = await activeRpcClient.GetAccountInfoAsync(account.PublicKey);
             if (result.Result != null && result.Result.Value != null)
             {
                 return result.Result.Value;
@@ -186,10 +184,10 @@ namespace AllArt.Solana
         /// <returns></returns>
         public async Task<TokenAccount[]> GetOwnedTokenAccounts(string walletPubKey, string tokenMintPubKey, string tokenProgramPublicKey)
         {
-            RequestResult<ResponseValue<TokenAccount[]>> result = await activeRpcClient.GetTokenAccountsByOwnerAsync(walletPubKey, tokenMintPubKey, tokenProgramPublicKey);
+            RequestResult<ResponseValue<List<TokenAccount>>> result = await activeRpcClient.GetTokenAccountsByOwnerAsync(walletPubKey, tokenMintPubKey, tokenProgramPublicKey);
             if (result.Result != null && result.Result.Value != null)
             {
-                return result.Result.Value;
+                return result.Result.Value.ToArray();
             }
             return null;
         }
@@ -203,14 +201,14 @@ namespace AllArt.Solana
         /// <returns></returns>
         public async Task<TokenAccount[]> GetOwnedTokenAccounts(Account account, string tokenMintPubKey, string tokenProgramPublicKey)
         {
-            RequestResult<ResponseValue<TokenAccount[]>> result = await activeRpcClient.GetTokenAccountsByOwnerAsync(
-                account.GetPublicKey,
+            RequestResult<ResponseValue<List<TokenAccount>>> result = await activeRpcClient.GetTokenAccountsByOwnerAsync(
+                account.PublicKey,
                 tokenMintPubKey,
                 tokenProgramPublicKey);
 
             if (result.Result != null && result.Result.Value != null)
             {
-                return result.Result.Value;
+                return result.Result.Value.ToArray();
             }
             return null;
         }
@@ -251,7 +249,7 @@ namespace AllArt.Solana
         /// <param name="clientUrlSource">Choosed client source</param>
         /// <param name="customUrl">Custom url for rpc connection</param>
         /// <returns></returns>
-        public SolanaRpcClient StartConnection(EClientUrlSource clientUrlSource, string customUrl = "")
+        public IRpcClient StartConnection(EClientUrlSource clientUrlSource, string customUrl = "")
         {
             if (!string.IsNullOrEmpty(customUrl))
                 this.customUrl = customUrl;
@@ -260,12 +258,17 @@ namespace AllArt.Solana
             {
                 if (activeRpcClient == null)
                 {
-                    activeRpcClient = new SolanaRpcClient(GetConnectionURL(clientUrlSource));
+                    
+                    if (!string.IsNullOrEmpty(this.customUrl))
+                    {
+                        
+                    }
+                    activeRpcClient = ClientFactory.GetClient(GetConnectionURL(clientUrlSource));
                 }
 
                 return activeRpcClient;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
@@ -291,10 +294,10 @@ namespace AllArt.Solana
                 this.mnemonics = mnemonics;
                 string encryptedMnemonics = cypher.Encrypt(this.mnemonics, password);
 
-                wallet = new Wallet(this.mnemonics, BIP39Wordlist.English);
-                privateKey = wallet.Account.GetPrivateKey;
+                wallet = new Wallet(this.mnemonics, WordList.English);
+                privateKey = wallet.Account.PrivateKey;
 
-                webSocketService.SubscribeToWalletAccountEvents(wallet.Account.GetPublicKey);
+                webSocketService.SubscribeToWalletAccountEvents(wallet.Account.PublicKey);
 
                 SavePlayerPrefs(mnemonicsKey, this.mnemonics);
                 SavePlayerPrefs(encryptedMnemonicsKey, encryptedMnemonics);
@@ -321,11 +324,11 @@ namespace AllArt.Solana
                 {
                     mnemonicWords = LoadPlayerPrefs(mnemonicsKey);
 
-                    wallet = new Wallet(mnemonicWords, BIP39Wordlist.English);
-                    webSocketService.SubscribeToWalletAccountEvents(wallet.Account.GetPublicKey);
+                    wallet = new Wallet(mnemonicWords, WordList.English);
+                    webSocketService.SubscribeToWalletAccountEvents(wallet.Account.PublicKey);
                     return true;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return false;
                 }
@@ -346,7 +349,7 @@ namespace AllArt.Solana
                 cypher.Decrypt(encryptedMnemonics, password);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -362,8 +365,7 @@ namespace AllArt.Solana
             AccountInfo result = await AccountUtility.GetAccountData(account, activeRpcClient);
             if (result != null)
                 return (double)result.Lamports / 1000000000;
-            else
-                return 0;
+            return 0;
         }
 
         /// <summary>
@@ -372,12 +374,12 @@ namespace AllArt.Solana
         /// <param name="fromAccount">The Account from which we perform the transaction</param>
         /// <param name="toPublicKey">The Account on which we perform the transaction</param>
         /// <param name="ammount">Ammount of sol</param>
-        public async void TransferSol(Account fromAccount, string toPublicKey, long ammount = 10000000)
+        public async void TransferSol(Account fromAccount, string toPublicKey, ulong ammount = 10000000)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
 
             var transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                AddInstruction(SystemProgram.Transfer(fromAccount.GetPublicKey, toPublicKey, ammount)).Build(fromAccount);
+                AddInstruction(SystemProgram.Transfer(fromAccount.PublicKey, new PublicKey(toPublicKey), ammount)).Build(fromAccount);
 
             RequestResult<string> firstSig = await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
         }
@@ -391,46 +393,46 @@ namespace AllArt.Solana
         /// <param name="tokenMint"></param>
         /// <param name="ammount">Ammount of tokens we want to send</param>
         /// <returns></returns>
-        public async Task<RequestResult<string>> TransferToken(string sourceTokenAccount, string toWalletAccount, Account sourceAccountOwner, string tokenMint, long ammount = 1)
+        public async Task<RequestResult<string>> TransferToken(string sourceTokenAccount, string toWalletAccount, Account sourceAccountOwner, string tokenMint, ulong ammount = 1)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
-            RequestResult<ulong> rentExemptionAmmount = await activeRpcClient.GetMinimumBalanceForRentExemptionAsync(SystemProgram.AccountDataSize);
+            RequestResult<ulong> rentExemptionAmmount = await activeRpcClient.GetMinimumBalanceForRentExemptionAsync(TokenProgram.TokenAccountDataSize);
             TokenAccount[] lortAccounts = await GetOwnedTokenAccounts(toWalletAccount, tokenMint, "");
             byte[] transaction;
             if (lortAccounts != null && lortAccounts.Length > 0)
             {
                 transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                    AddInstruction(TokenProgram.Transfer(sourceTokenAccount,
-                    lortAccounts[0].pubkey,
+                    AddInstruction(TokenProgram.Transfer(new PublicKey(sourceTokenAccount),
+                    new PublicKey(lortAccounts[0].PublicKey),
                     ammount,
-                    sourceAccountOwner.GetPublicKey))
+                    sourceAccountOwner.PublicKey))
                     .Build(sourceAccountOwner);
             }
             else
             {
-                Keypair newAccKeypair = WalletKeyPair.GenerateKeyPairFromMnemonic(WalletKeyPair.GenerateNewMnemonic());
+                Wallet newAccKeypair = new Wallet(WalletKeyPair.GenerateNewMnemonic());
                 transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
                     AddInstruction(
                     SystemProgram.CreateAccount(
-                        sourceAccountOwner.GetPublicKey,
-                        newAccKeypair.publicKey,
-                        (long)rentExemptionAmmount.Result,
-                        SystemProgram.AccountDataSize,
-                        TokenProgram.ProgramId)).
+                        sourceAccountOwner.PublicKey,
+                        newAccKeypair.Account.PublicKey,
+                        rentExemptionAmmount.Result,
+                        TokenProgram.TokenAccountDataSize,
+                        TokenProgram.ProgramIdKey)).
                     AddInstruction(
                     TokenProgram.InitializeAccount(
-                        newAccKeypair.publicKey,
-                        tokenMint,
-                        toWalletAccount)).
-                    AddInstruction(TokenProgram.Transfer(sourceTokenAccount,
-                        newAccKeypair.publicKey,
+                        newAccKeypair.Account.PublicKey,
+                        new PublicKey(tokenMint),
+                        new PublicKey(toWalletAccount))).
+                    AddInstruction(TokenProgram.Transfer(new PublicKey(sourceTokenAccount),
+                        newAccKeypair.Account.PublicKey,
                         ammount,
-                        sourceAccountOwner.GetPublicKey))
+                        sourceAccountOwner.PublicKey))
                     .Build(new List<Account>()
                     {
                         sourceAccountOwner,
-                        new Account(newAccKeypair.privateKeyByte,
-                        newAccKeypair.publicKeyByte)
+                        new Account(newAccKeypair.Account.PrivateKey.Key,
+                        newAccKeypair.Account.PublicKey.Key)
                     });
             }
 
@@ -444,13 +446,13 @@ namespace AllArt.Solana
         /// <param name="destination">The account to mint tokens to.</param>
         /// <param name="amount">The amount of tokens.</param>
         /// <returns></returns>
-        public async Task<RequestResult<string>> MintTo(string mint, string destination, long amount = 1)
+        public async Task<RequestResult<string>> MintTo(string mint, string destination, ulong amount = 1)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
             Account fromAccount = wallet.GetAccount(0);
 
             var transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                AddInstruction(TokenProgram.MintTo(mint, destination, amount, fromAccount.GetPublicKey)).Build(fromAccount);
+                AddInstruction(TokenProgram.MintTo(new PublicKey(mint), new PublicKey(destination), amount, fromAccount.PublicKey)).Build(fromAccount);
 
             return await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
         }
@@ -461,13 +463,13 @@ namespace AllArt.Solana
         /// <param name="toPublicKey"> Public key of wallet on which we want to execute the transaction </param>
         /// <param name="ammount"> Ammount of sol we want to send</param>
         /// <returns></returns>
-        public async Task<RequestResult<string>> TransferSol(string toPublicKey, long ammount = 10000000)
+        public async Task<RequestResult<string>> TransferSol(string toPublicKey, ulong ammount = 10000000)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
             Account fromAccount = wallet.GetAccount(0);
 
             var transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                AddInstruction(SystemProgram.Transfer(fromAccount.GetPublicKey, toPublicKey, ammount)).Build(fromAccount);
+                AddInstruction(SystemProgram.Transfer(fromAccount.PublicKey, new PublicKey(toPublicKey), ammount)).Build(fromAccount);
 
             return await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
         }
@@ -480,7 +482,7 @@ namespace AllArt.Solana
         /// <returns>Amount of sol</returns>
         public async Task<string> RequestAirdrop(Account account, ulong ammount = 1000000000)
         {
-            var result = await activeRpcClient.RequestAirdropAsync(account.GetPublicKey, ammount);
+            var result = await activeRpcClient.RequestAirdropAsync(account.PublicKey, ammount);
             return result.Result;
         }
 
@@ -493,10 +495,10 @@ namespace AllArt.Solana
         {
             try
             {
-                RequestResult<ResponseValue<TokenAccount[]>> result = await activeRpcClient.GetTokenAccountsByOwnerAsync(account.GetPublicKey, "", TokenProgram.ProgramId);
+                RequestResult<ResponseValue<List<TokenAccount>>> result = await activeRpcClient.GetTokenAccountsByOwnerAsync(account.PublicKey, null, TokenProgram.ProgramIdKey.Key);
                 if (result.Result != null && result.Result.Value != null)
                 {
-                    return result.Result.Value;
+                    return result.Result.Value.ToArray();
                 }
             }
             catch (Exception ex)
