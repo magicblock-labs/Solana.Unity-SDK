@@ -64,7 +64,7 @@ namespace AllArt.Solana
 
         public void OnDestroy()
         {
-            webSocketService.CloseConnection();
+            webSocketService?.CloseConnection();
         }
 
         /// <summary>
