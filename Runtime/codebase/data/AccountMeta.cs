@@ -1,5 +1,7 @@
 
-﻿namespace AllArt.Solana
+using Solana.Unity.Wallet;
+
+ namespace AllArt.Solana
 {   
     [System.Serializable]
     public class SignaturePubkeyPair

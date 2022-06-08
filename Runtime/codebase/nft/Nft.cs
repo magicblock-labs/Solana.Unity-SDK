@@ -1,17 +1,16 @@
 using AllArt.Solana.Utility;
-using Solnet.Rpc;
-using Solnet.Rpc.Models;
-using Solnet.Rpc.Utilities;
+using Solana.Unity.Rpc;
+using Solana.Unity.Rpc.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Solnet.Wallet;
+using Solana.Unity.Wallet;
+using Solana.Unity.Wallet.Utilities;
 
 namespace AllArt.Solana.Nft
 {
@@ -45,7 +44,7 @@ namespace AllArt.Solana.Nft
             this.metaplexData = metaplexData;
         }
 
-        public static async Task<NFTProData> TryGetNftPro(string mint, SolanaRpcClient connection) {
+        public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection) {
             
             AccountInfo data = await AccountUtility.GetAccountData(mint, connection);
 
@@ -67,9 +66,9 @@ namespace AllArt.Solana.Nft
         /// <param name="connection">Rpc client</param>
         /// <param name="tryUseLocalContent">If use local content for image</param>
         /// <returns></returns>
-        public static async Task<Nft> TryGetNftData(string mint, SolanaRpcClient connection, bool tryUseLocalContent = true)
+        public static async Task<Nft> TryGetNftData(string mint, IRpcClient connection, bool tryUseLocalContent = true)
         {
-            Solnet.Wallet.PublicKey metaplexDataPubKey = FindProgramAddress(mint);
+            PublicKey metaplexDataPubKey = FindProgramAddress(mint);
 
             if (metaplexDataPubKey != null)
             {
@@ -145,7 +144,7 @@ namespace AllArt.Solana.Nft
         /// <param name="programId"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static Solnet.Wallet.PublicKey CreateAddress(List<byte[]> seed, string programId)
+        public static PublicKey CreateAddress(List<byte[]> seed, string programId)
         {
             List<byte> buffer = new List<byte>();
 
@@ -166,12 +165,12 @@ namespace AllArt.Solana.Nft
             SHA256 sha256 = SHA256.Create();
             byte[] hash1 = sha256.ComputeHash(buffer.ToArray());
 
-            if (hash1.IsOnCurve() != 0)
+            if (hash1.IsOnCurve())
             {
                 throw new Exception("Not on curve");
             }
 
-            Solnet.Wallet.PublicKey publicKey = new Solnet.Wallet.PublicKey(hash1);
+            PublicKey publicKey = new PublicKey(hash1);
             return publicKey;
         }
 
@@ -181,17 +180,17 @@ namespace AllArt.Solana.Nft
         /// <param name="mintPublicKey"></param>
         /// <param name="programId"></param>
         /// <returns></returns>
-        public static Solnet.Wallet.PublicKey FindProgramAddress(string mintPublicKey, string programId = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        public static PublicKey FindProgramAddress(string mintPublicKey, string programId = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
         {
             List<byte[]> seeds = new List<byte[]>();
 
             int nonce = 255;
             seeds.Add(Encoding.UTF8.GetBytes("metadata"));
-            seeds.Add(new Solnet.Wallet.PublicKey(programId).KeyBytes);
-            seeds.Add(new Solnet.Wallet.PublicKey(mintPublicKey).KeyBytes);
+            seeds.Add(new PublicKey(programId).KeyBytes);
+            seeds.Add(new PublicKey(mintPublicKey).KeyBytes);
             seeds.Add(new[] { (byte)nonce });
 
-            Solnet.Wallet.PublicKey publicKey = null;
+            PublicKey publicKey = null;
 
             while (nonce != 0)
             {

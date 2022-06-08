@@ -6,7 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using Solnet.Wallet;
+using Solana.Unity.Wallet;
 using UnityEngine;
 using System.Collections;
 using System.Runtime.InteropServices;

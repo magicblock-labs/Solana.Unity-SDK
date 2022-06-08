@@ -1,4 +1,4 @@
-using Solnet.Wallet;
+using Solana.Unity.Wallet;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

@@ -1,18 +1,13 @@
-﻿using Solnet.Rpc.Models;
+﻿using Solana.Unity.Rpc.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
-using SFB;
 using System.Runtime.InteropServices;
-using System.Collections;
 using System.Text;
-using System;
 
 namespace AllArt.Solana.Example
 {
@@ -213,6 +208,7 @@ namespace AllArt.Solana.Example
                 }
             }
         }
+
 
         private void OnDestroy()
         {

@@ -30,3 +30,5 @@ test-results/
 
 /BUILD/
 *.DS_store
+*.meta
+*.meta
