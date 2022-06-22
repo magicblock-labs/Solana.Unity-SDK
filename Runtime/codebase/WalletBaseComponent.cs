@@ -443,13 +443,13 @@ namespace AllArt.Solana
         /// <param name="destination">The account to mint tokens to.</param>
         /// <param name="amount">The amount of tokens.</param>
         /// <returns></returns>
-        public async Task<RequestResult<string>> MintTo(string mint, string destination, long amount = 1)
+        public async Task<RequestResult<string>> MintTo(string mint, string destination, ulong amount = 1)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
             Account fromAccount = wallet.GetAccount(0);
 
             var transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                AddInstruction(TokenProgram.MintTo(mint, destination, amount, fromAccount.GetPublicKey)).Build(fromAccount);
+                AddInstruction(TokenProgram.MintTo(new PublicKey(mint), new PublicKey(destination), amount, fromAccount.PublicKey)).Build(fromAccount);
 
             return await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
         }
