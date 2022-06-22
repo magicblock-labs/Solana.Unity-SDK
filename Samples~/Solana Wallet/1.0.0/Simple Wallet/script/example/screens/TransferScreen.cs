@@ -1,5 +1,5 @@
-using Solnet.Rpc.Core.Http;
-using Solnet.Rpc.Models;
+using Solana.Unity.Rpc.Core.Http;
+using Solana.Unity.Rpc.Models;
 using TMPro;
 using UnityEngine.UI;
 
@@ -49,7 +49,7 @@ namespace AllArt.Solana.Example
 
         private async void TransferSol()
         {
-            RequestResult<string> result = await SimpleWallet.instance.TransferSol(toPublic_txt.text, long.Parse(ammount_txt.text));
+            RequestResult<string> result = await SimpleWallet.instance.TransferSol(toPublic_txt.text, ulong.Parse(ammount_txt.text));
             HandleResponse(result);
         }
 
@@ -90,11 +90,11 @@ namespace AllArt.Solana.Example
         private async void TransferToken()
         {
             RequestResult<string> result = await SimpleWallet.instance.TransferToken(
-                                transferTokenAccount.pubkey,
+                                transferTokenAccount.PublicKey,
                                 toPublic_txt.text,
                                 SimpleWallet.instance.wallet.GetAccount(0),
                                 transferTokenAccount.Account.Data.Parsed.Info.Mint,
-                                long.Parse(ammount_txt.text));
+                                ulong.Parse(ammount_txt.text));
 
             HandleResponse(result);
         }

@@ -13,9 +13,13 @@ namespace AllArt.Solana.Nft
 
     [System.Serializable]
     public class MetaplexJsonData {
+        public string name;
+        public string description;
         public string previewUrl;
         public string image;
         public Attributes[] attributes;
+        public Properties properties;
+
     }
 
     [System.Serializable]
@@ -35,6 +39,21 @@ namespace AllArt.Solana.Nft
         public string address;
         public bool verified;
         public int share;
+    }
+
+    [System.Serializable]
+    public class File
+    {
+        public string uri;
+        public string type;
+    }
+
+    [System.Serializable]
+    public class Properties
+    {
+        public File[] files;
+        public string category;
+        public CreatorData[] creators;
     }
 
     [System.Serializable]

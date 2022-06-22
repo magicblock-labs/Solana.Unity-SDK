@@ -1,6 +1,8 @@
-﻿using Solnet.Wallet;
+﻿using Solana.Unity.Wallet;
 using System;
 using dotnetstandard_bip39;
+using Solana.Unity.Wallet.Bip39;
+using Solana.Unity.Wallet.Utilities;
 
 namespace AllArt.Solana
 {
@@ -64,12 +66,8 @@ namespace AllArt.Solana
 
         public static Keypair GenerateKeyPairFromMnemonic(string mnemonics)
         {
-            byte[] bip39seed = GetBIP39SeedBytes(mnemonics);
-
-            byte[] finalSeed = GetBIP32SeedByte(bip39seed);
-            (byte[] privateKey, byte[] publicKey) = Ed25519Extensions.EdKeyPairFromSeed(finalSeed);
-
-            return new Keypair(publicKey, privateKey);
+            Wallet keypair = new Wallet(GenerateNewMnemonic());
+            return new Keypair(keypair.Account.PublicKey, keypair.Account.PrivateKey);
         }
 
         public static bool CheckMnemonicValidity(string mnemonic)

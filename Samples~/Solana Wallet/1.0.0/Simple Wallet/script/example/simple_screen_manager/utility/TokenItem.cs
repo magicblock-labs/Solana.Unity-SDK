@@ -1,4 +1,4 @@
-using Solnet.Rpc.Models;
+using Solana.Unity.Rpc.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
