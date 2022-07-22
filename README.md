@@ -2,13 +2,13 @@
 
 <p>
 
-# Unity-Solana Wallet
-The First Open-Source Unity-Solana Wallet with NFT support
+# Solana.Unity-SDK
 
-The Unity-Solana Wallet is an essential bridge connecting game developers and the Solana blockchain. With Solana’s quick and low-cost transactions, games can start using blockchain technology like never before - in real-time. Thousands of developers will bring millions of players into the Solana ecosystem. This will, in turn, make the Solana projects benefit from an increased number of participants, and cross-protocol interoperability in games will take us beyond the current understanding of DeFi.  
+The Solana.Unity-SDK is an essential bridge connecting game developers and the Solana blockchain. With Solana’s quick and low-cost transactions, games can start using blockchain technology like never before - in real-time. Thousands of developers will bring millions of players into the Solana ecosystem. This will, in turn, make the Solana projects benefit from an increased number of participants, and cross-protocol interoperability in games will take us beyond the current understanding of DeFi.  
   
-Unity-Solana Wallet uses Solnet's implementation .NET SDK, but we had to modify the library to make it Unity compatible with .NET Standard 2.0 and .NET 4.x.
-Solnet is Solana's .NET SDK to integrate with the .NET ecosystem.  [Solnet](https://blockmountain.io/Solnet/).
+Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 and Unity compatible with full RPC API coverage.
+
+Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have in the roadmap: Phantom integration, native SMS wallet, ...
 
 </p>
 
@@ -28,6 +28,10 @@ Solnet is Solana's .NET SDK to integrate with the .NET ecosystem.  [Solnet](http
 - Save private key in txt file
 
 ## Dependencies
+- Solana.Unity.Wallet
+- Solana.Unity.Rpc
+- Soalana.Unity.KeyStore
+- Soalana.Unity.Programs
 - Newtonsoft.Json
 - Chaos.NaCl.Standard
 - Portable.BouncyCastle
