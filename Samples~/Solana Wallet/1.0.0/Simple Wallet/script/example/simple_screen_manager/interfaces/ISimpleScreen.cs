@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     public interface ISimpleScreen 
     {

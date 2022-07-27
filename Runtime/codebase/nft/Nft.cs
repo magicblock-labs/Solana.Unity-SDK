@@ -1,4 +1,4 @@
-using AllArt.Solana.Utility;
+using Solana.Unity.SDK.Utility;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Models;
 using System;
@@ -12,7 +12,7 @@ using UnityEngine;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
 
-namespace AllArt.Solana.Nft
+namespace Solana.Unity.SDK.Nft
 {
     [System.Serializable]
     public class NftImage : iNftFile<Texture2D>
@@ -86,7 +86,7 @@ namespace AllArt.Solana.Nft
                 if (data != null && data.Data != null && data.Data.Count > 0)
                 {
                     Metaplex met = new Metaplex().ParseData(data.Data[0]);
-                    MetaplexJsonData jsonData = await AllArt.Solana.Utility.FileLoader.LoadFile<MetaplexJsonData>(met.data.url);
+                    MetaplexJsonData jsonData = await Solana.Unity.SDK.Utility.FileLoader.LoadFile<MetaplexJsonData>(met.data.url);
 
                     if (jsonData != null)
                     {

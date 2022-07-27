@@ -1,7 +1,7 @@
 using System;
-using AllArt.Solana.Utility;
+using Solana.Unity.SDK.Utility;
 
-namespace AllArt.Solana.Nft
+namespace Solana.Unity.SDK.Nft
 {
     [System.Serializable]
     public class NFTProData

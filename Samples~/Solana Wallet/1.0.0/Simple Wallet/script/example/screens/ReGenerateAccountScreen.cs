@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using SFB;
-using Solana.Unity.Wallet;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     [RequireComponent(typeof(TxtLoader))]
     public class ReGenerateAccountScreen : SimpleScreen
@@ -67,7 +65,7 @@ namespace AllArt.Solana.Example
         {
             SimpleWallet.instance.SavePlayerPrefs(SimpleWallet.instance.PasswordKey, password_input_field.text);
 
-            Wallet keypair = SimpleWallet.instance.GenerateWalletWithMenmonic(mnemonic_txt.text);
+            Wallet.Wallet keypair = SimpleWallet.instance.GenerateWalletWithMenmonic(mnemonic_txt.text);
             if (keypair != null)
             {
                 manager.ShowScreen(this, "wallet_screen");

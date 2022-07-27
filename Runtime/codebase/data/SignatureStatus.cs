@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AllArt.Solana
+namespace Solana.Unity.SDK
 {
     public class SignatureStatus {
         public string confirmationStatus;

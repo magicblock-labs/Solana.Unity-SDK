@@ -1,5 +1,5 @@
 
-﻿namespace AllArt.Solana
+﻿namespace Solana.Unity.SDK
 {
     using Chaos.NaCl;
 

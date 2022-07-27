@@ -1,6 +1,6 @@
-using AllArt.Solana.Example;
-using AllArt.Solana.Nft;
-using AllArt.Solana.Utility;
+using Solana.Unity.SDK.Example;
+using Solana.Unity.SDK.Nft;
+using Solana.Unity.SDK.Utility;
 using Solana.Unity.Rpc.Models;
 using System.Collections;
 using System.Collections.Generic;

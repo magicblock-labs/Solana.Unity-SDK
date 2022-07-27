@@ -11,7 +11,7 @@ using UnityEngine;
 using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace AllArt.Solana
+namespace Solana.Unity.SDK
 {
     public class BIP : MonoBehaviour
     {

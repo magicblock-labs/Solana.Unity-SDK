@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     [RequireComponent(typeof(TxtLoader))]
     public class WalletScreen : SimpleScreen
@@ -192,12 +192,12 @@ namespace AllArt.Solana.Example
                     {
                         Nft.Nft nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.instance.activeRpcClient, true);
 
-                        //Task<AllArt.Solana.Nft.Nft> t = Task.Run<AllArt.Solana.Nft.Nft>( async () => {
-                        //    return await AllArt.Solana.Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.instance.activeRpcClient, false);
+                        //Task<Solana.Unity.SDK.Nft.Nft> t = Task.Run<Solana.Unity.SDK.Nft.Nft>( async () => {
+                        //    return await Solana.Unity.SDK.Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.instance.activeRpcClient, false);
                         //}, stopTask.Token);
 
                         //Debug.Log("new");
-                        //AllArt.Solana.Nft.Nft nft = t.Result;
+                        //Solana.Unity.SDK.Nft.Nft nft = t.Result;
                         if (itemIndex >= token_items.Count) return;
                         if (token_items[itemIndex] == null) return;
 

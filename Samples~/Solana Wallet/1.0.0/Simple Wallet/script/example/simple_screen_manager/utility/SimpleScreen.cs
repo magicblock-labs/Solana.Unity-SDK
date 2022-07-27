@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     public class SimpleScreen : MonoBehaviour, ISimpleScreen
     {

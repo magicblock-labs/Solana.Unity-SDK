@@ -1,7 +1,7 @@
 
 using Solana.Unity.Wallet;
 
-namespace AllArt.Solana
+namespace Solana.Unity.SDK
 {
     public class Signer
     {

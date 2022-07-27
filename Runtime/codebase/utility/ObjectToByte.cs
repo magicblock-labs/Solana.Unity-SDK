@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
-namespace AllArt.Solana.Utility
+namespace Solana.Unity.SDK.Utility
 {
     public static class ObjectToByte
     {
