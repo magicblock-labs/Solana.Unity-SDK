@@ -10,7 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     [RequireComponent(typeof(TxtLoader))]
     public class GenerateAccountScreen : SimpleScreen

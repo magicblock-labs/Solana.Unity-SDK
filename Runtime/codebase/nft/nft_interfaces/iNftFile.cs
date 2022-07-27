@@ -1,5 +1,5 @@
 
-namespace AllArt.Solana.Nft { 
+namespace Solana.Unity.SDK.Nft { 
     public interface iNftFile<T> {
         string name { get; set; }
         string extension { get; set; }

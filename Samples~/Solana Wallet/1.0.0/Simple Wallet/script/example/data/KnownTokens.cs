@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 { 
     [CreateAssetMenu(fileName = "Tokens", menuName = "AllArt/Example/KnownTokensData", order = 1)]
     public class KnownTokens : ScriptableObject

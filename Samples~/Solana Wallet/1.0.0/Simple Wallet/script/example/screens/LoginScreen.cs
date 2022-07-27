@@ -1,15 +1,12 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
-using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Collections;
-using SFB;
 using System.Collections.Generic;
 using System;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     [RequireComponent(typeof(TxtLoader))]
     public class LoginScreen : SimpleScreen

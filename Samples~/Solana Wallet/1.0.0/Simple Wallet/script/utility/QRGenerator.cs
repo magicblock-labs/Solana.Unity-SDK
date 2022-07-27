@@ -3,7 +3,7 @@ using ZXing;
 using ZXing.QrCode;
 
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     public static class QRGenerator
     {

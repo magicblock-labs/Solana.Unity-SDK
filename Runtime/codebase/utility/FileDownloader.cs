@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace AllArt.Solana.Utility
+namespace Solana.Unity.SDK.Utility
 {
     public static class FileLoader
     {

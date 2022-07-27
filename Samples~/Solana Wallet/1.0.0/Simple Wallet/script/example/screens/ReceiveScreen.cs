@@ -1,5 +1,5 @@
-using AllArt.Solana;
-using AllArt.Solana.Example;
+using Solana.Unity.SDK;
+using Solana.Unity.SDK.Example;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;

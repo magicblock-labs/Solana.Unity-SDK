@@ -3,7 +3,7 @@ using Solana.Unity.Rpc.Models;
 using TMPro;
 using UnityEngine.UI;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     public class TransferScreen : SimpleScreen
     {

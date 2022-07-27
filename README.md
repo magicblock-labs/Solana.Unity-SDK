@@ -8,7 +8,7 @@ The Solana.Unity-SDK is an essential bridge connecting game developers and the S
   
 Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 and Unity compatible with full RPC API coverage.
 
-Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have in the roadmap: Phantom integration, native SMS wallet, ...
+Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made (e.g. full rpc coverage) and others we have in the roadmap, such as: Phantom integration, native SMS wallet, ...
 
 </p>
 
@@ -54,11 +54,11 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 ## Installation
 
-1. Clone this repository outside of the main Unity project
-2. Go to Package Manager in your project
-3. Click on the plus in the top left corner and select "Add package from disk"
-4. Select package.json file from a cloned dir
-5. Once the package is installed, in the Package Manager inspector you will have Samples. Click on Import
+1. Go to Window/Package Manager
+2. Click on the plus in the top left corner and select "Add package from git URL"
+3. Insert the repo git URL: https://github.com/garbles-labs/Solana.Unity-SDK.git and click "Add"
+4. Once the package is installed, in the Package Manager inspector you will have Samples. Click on Import
+5. You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.1/Simple Wallet/Solana Wallet/1.0.0/Simple Wallet/scenes/wallet_scene.unity`
 
 ## Step-by-step instructions
 1. If you have an older version of Unity that doesn't have imported Newtonsoft.Json just import it.

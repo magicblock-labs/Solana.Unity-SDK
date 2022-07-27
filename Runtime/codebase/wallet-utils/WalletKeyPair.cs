@@ -1,10 +1,8 @@
 ﻿using Solana.Unity.Wallet;
 using System;
 using dotnetstandard_bip39;
-using Solana.Unity.Wallet.Bip39;
-using Solana.Unity.Wallet.Utilities;
 
-namespace AllArt.Solana
+namespace Solana.Unity.SDK
 {
     public static class WalletKeyPair
     {
@@ -66,7 +64,7 @@ namespace AllArt.Solana
 
         public static Keypair GenerateKeyPairFromMnemonic(string mnemonics)
         {
-            Wallet keypair = new Wallet(GenerateNewMnemonic());
+            Wallet.Wallet keypair = new Wallet.Wallet(GenerateNewMnemonic());
             return new Keypair(keypair.Account.PublicKey, keypair.Account.PrivateKey);
         }
 

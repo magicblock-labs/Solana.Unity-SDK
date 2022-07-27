@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using AllArt.Solana.Utility;
+using Solana.Unity.SDK.Utility;
 
-namespace AllArt.Solana
+namespace Solana.Unity.SDK
 {
     [System.Serializable]
     public class AccountLayout

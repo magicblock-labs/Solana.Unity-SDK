@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace AllArt.Solana.Example
+namespace Solana.Unity.SDK.Example
 {
     public class MnemonicsModel
     {

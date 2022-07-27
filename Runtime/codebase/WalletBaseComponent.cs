@@ -1,4 +1,4 @@
-using AllArt.Solana.Utility;
+using Solana.Unity.SDK.Utility;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Builders;
@@ -9,11 +9,10 @@ using Solana.Unity.Wallet;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using CandyMachineV2;
 using Solana.Unity.Wallet.Bip39;
 using UnityEngine;
 
-namespace AllArt.Solana
+namespace Solana.Unity.SDK
 {
     [RequireComponent(typeof(Startup))]
     [RequireComponent(typeof(MainThreadDispatcher))]
@@ -121,7 +120,7 @@ namespace AllArt.Solana
         }
 
         #endregion
-        public Wallet wallet { get; set; }
+        public Wallet.Wallet wallet { get; set; }
         public string mnemonics { get; private set; }
         public string password { get; private set; }
         public string privateKey { get; private set; }
@@ -276,7 +275,7 @@ namespace AllArt.Solana
         /// </summary>
         /// <param name="mnemonics">Mnemonics by which we generate a wallet</param>
         /// <returns></returns>
-        public Wallet GenerateWalletWithMenmonic(string mnemonics)
+        public Wallet.Wallet GenerateWalletWithMenmonic(string mnemonics)
         {
             password = LoadPlayerPrefs(passwordKey);
             try
@@ -291,7 +290,7 @@ namespace AllArt.Solana
                 this.mnemonics = mnemonics;
                 string encryptedMnemonics = cypher.Encrypt(this.mnemonics, password);
 
-                wallet = new Wallet(this.mnemonics, WordList.English);
+                wallet = new Wallet.Wallet(this.mnemonics, WordList.English);
                 privateKey = wallet.Account.PrivateKey;
 
                 webSocketService.SubscribeToWalletAccountEvents(wallet.Account.PublicKey);
@@ -321,7 +320,7 @@ namespace AllArt.Solana
                 {
                     mnemonicWords = LoadPlayerPrefs(mnemonicsKey);
 
-                    wallet = new Wallet(mnemonicWords,  WordList.English);
+                    wallet = new Wallet.Wallet(mnemonicWords,  WordList.English);
                     webSocketService.SubscribeToWalletAccountEvents(wallet.Account.PublicKey);
                     return true;
                 }
@@ -390,8 +389,14 @@ namespace AllArt.Solana
         /// <param name="tokenMint"></param>
         /// <param name="ammount">Ammount of tokens we want to send</param>
         /// <returns></returns>
-        public async Task<RequestResult<string>> TransferToken(string sourceTokenAccount, string toWalletAccount, Account sourceAccountOwner, string tokenMint, ulong ammount = 1)
+        public async Task<RequestResult<string>> TransferToken(string sourceTokenAccount, string toWalletAccount, Account sourceAccountOwner, string tokenMint, ulong amount = 1)
         {
+            
+            PublicKey associatedTokenAccountOwner = new PublicKey(toWalletAccount);
+            PublicKey mint = new PublicKey(tokenMint);
+            Account ownerAccount = wallet.GetAccount(0);
+            PublicKey associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(associatedTokenAccountOwner, new PublicKey(tokenMint));
+            
             RequestResult<ResponseValue<BlockHash>> blockHash = await activeRpcClient.GetRecentBlockHashAsync();
             RequestResult<ulong> rentExemptionAmmount = await activeRpcClient.GetMinimumBalanceForRentExemptionAsync(TokenProgram.TokenAccountDataSize);
             TokenAccount[] lortAccounts = await GetOwnedTokenAccounts(toWalletAccount, tokenMint, "");
@@ -401,39 +406,33 @@ namespace AllArt.Solana
                 transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
                     AddInstruction(TokenProgram.Transfer(new PublicKey(sourceTokenAccount),
                     new PublicKey(lortAccounts[0].PublicKey),
-                    ammount,
+                    amount,
                     sourceAccountOwner.PublicKey))
                     .Build(sourceAccountOwner);
             }
             else
             {
-                Keypair newAccKeypair = WalletKeyPair.GenerateKeyPairFromMnemonic(WalletKeyPair.GenerateNewMnemonic());
-                transaction = new TransactionBuilder().SetRecentBlockHash(blockHash.Result.Value.Blockhash).
-                    AddInstruction(
-                    SystemProgram.CreateAccount(
-                        sourceAccountOwner.PublicKey,
-                        new PublicKey(newAccKeypair.publicKey),
-                        (ulong)rentExemptionAmmount.Result,
-                        TokenProgram.TokenAccountDataSize,
-                        TokenProgram.ProgramIdKey)).
-                    AddInstruction(
-                    TokenProgram.InitializeAccount(
-                        new PublicKey(newAccKeypair.publicKey),
-                        new PublicKey(tokenMint),
-                        new PublicKey(toWalletAccount))).
-                    AddInstruction(TokenProgram.Transfer(new PublicKey(sourceTokenAccount),
-                        new PublicKey(newAccKeypair.publicKey),
-                        ammount,
-                        sourceAccountOwner.PublicKey))
-                    .Build(new List<Account>()
-                    {
-                        sourceAccountOwner,
-                        new Account(newAccKeypair.privateKeyByte,
-                        newAccKeypair.publicKeyByte)
-                    });
+                Console.WriteLine($"AssociatedTokenAccountOwner: {associatedTokenAccountOwner}");
+                Console.WriteLine($"AssociatedTokenAccount: {associatedTokenAccount}");
+
+                transaction = new TransactionBuilder().
+                    SetRecentBlockHash(blockHash.Result.Value.Blockhash).
+                    SetFeePayer(ownerAccount).
+                    AddInstruction(AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
+                        ownerAccount,
+                        associatedTokenAccountOwner,
+                        mint)).
+                    AddInstruction(TokenProgram.TransferChecked(
+                        ownerAccount,
+                        associatedTokenAccount,
+                        amount,
+                        0,
+                        mint,
+                        ownerAccount)).// the ownerAccount was set as the mint authority
+                    Build(new List<Account> { ownerAccount });
             }
 
-            return await activeRpcClient.SendTransactionAsync(Convert.ToBase64String(transaction));
+            return await activeRpcClient.SendTransactionAsync(transaction);
         }
 
         /// <summary>
@@ -483,13 +482,6 @@ namespace AllArt.Solana
             return result.Result;
         }
         
-        private async Task MintOneToken()
-        {
-            Account account = wallet.GetAccount(0);
-            PublicKey candyMachineKey = new PublicKey("2P71T66nyTw5vMj6mK1CErNcxAWUZG1fY8goURmXnUVx");
-            var signature = await CandyMachineUtils.MintOneToken(account, candyMachineKey, activeRpcClient);
-            Debug.Log($"Mint transaction sent: {signature.Result}");
-        }
 
         /// <summary>
         /// Returns an array of tokens on the account

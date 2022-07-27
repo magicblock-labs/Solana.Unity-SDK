@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3580264c6631df4d851932bf91a83a2, type: 3}
   m_Name: Tokens
-  m_EditorClassIdentifier: Assembly-CSharp:AllArt.Solana.Example:Tokens
+  m_EditorClassIdentifier: Assembly-CSharp:Solana.Unity.SDK.Example:Tokens
   knownTokens:
   - name: Gold coins
     logo: {fileID: 21300000, guid: 34c95eaac0002654280ecbaf3ad6427c, type: 3}
