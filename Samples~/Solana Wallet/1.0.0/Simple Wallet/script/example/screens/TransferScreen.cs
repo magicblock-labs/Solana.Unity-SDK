@@ -1,6 +1,7 @@
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Solana.Unity.SDK.Example
@@ -135,6 +136,7 @@ namespace Solana.Unity.SDK.Example
                 Nft.Nft nft = (Nft.Nft)data;
                 nftTitle_txt.text = $"{nft.metaplexData.data.name}";
                 nftImage.texture = nft.metaplexData.nftImage.file;
+                nftImage.color = Color.white;
             }
             else
             {
