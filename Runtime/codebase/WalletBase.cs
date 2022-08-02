@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
+using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
@@ -35,6 +37,7 @@ namespace Solana.Unity.SDK
             get => StartConnection();
             private set => _activeRpcClient = value; }
         public Account Account { get;private set; }
+        public Mnemonic Mnemonic { get;protected set; }
         
         public virtual void Awake()
         {
@@ -49,7 +52,18 @@ namespace Solana.Unity.SDK
         public void Setup() { }
 
         /// <inheritdoc />
-        public abstract Account Login(string password = null);
+        public async Task<Account> Login(string password = null)
+        {
+            Account = await _Login(password);
+            return Account;
+        }
+
+        /// <summary>
+        /// Login to the wallet
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        protected abstract Task<Account> _Login(string password = null);
 
         /// <inheritdoc />
         public void Logout()
@@ -58,12 +72,25 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public abstract Account CreateAccount(Mnemonic mnemonic = null, string password = null);
+        public async Task<Account> CreateAccount(string mnemonic = null, string password = null)
+        {
+            Account = await _CreateAccount(mnemonic, password);
+            return Account;
+        }
+        
+        /// <summary>
+        /// Create a new account
+        /// </summary>
+        /// <param name="mnemonic"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        protected abstract Task<Account> _CreateAccount(string mnemonic = null, string password = null);
         
         /// <inheritdoc />
-        public ulong GetBalance(PublicKey publicKey)
+        public async Task<ulong> GetBalance(PublicKey publicKey)
         {
-            throw new System.NotImplementedException();
+            var balance= await ActiveRpcClient.GetTokenAccountBalanceAsync(publicKey);
+            return balance.Result.Value.AmountUlong;
         }
 
         /// <inheritdoc />
@@ -73,22 +100,33 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey, PublicKey tokenMint, PublicKey tokenProgramPublicKey)
+        public async Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey, PublicKey tokenMint, PublicKey tokenProgramPublicKey)
         {
-            throw new System.NotImplementedException();
+            RequestResult<ResponseValue<List<TokenAccount>>> result = 
+                await ActiveRpcClient.GetTokenAccountsByOwnerAsync(
+                    Account.PublicKey, 
+                    tokenMint, 
+                    tokenProgramPublicKey);
+            return result.Result?.Value?.ToArray();
+        }
+        
+        /// <inheritdoc />
+        public async Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey)
+        {
+            return await GetTokenAccounts(publicKey, null, TokenProgram.ProgramIdKey);
         }
 
         /// <inheritdoc />
-        public abstract Transaction SignTransaction(Transaction transaction);
+        public abstract Task<byte[]> SignTransaction(Transaction transaction);
 
         /// <summary>
         /// Sign and send a transaction
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        public Transaction SignAndSendTransaction(Transaction transaction)
+        public async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
         {
-            throw new System.NotImplementedException();
+            return await ActiveRpcClient.SendTransactionAsync(await SignTransaction(transaction));
         }
         
         /// <summary>

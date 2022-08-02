@@ -16,7 +16,7 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// login to the wallet
         /// </summary>
-        Account Login(string password=null);
+        Task<Account> Login(string password=null);
         
         
         /// <summary>
@@ -31,15 +31,15 @@ namespace Solana.Unity.SDK
         /// <param name="mnemonic">The mnemonic to use</param>
         /// <param name="password">The password used for encryption if the mnemonic need to be stored</param>
         /// <returns></returns>
-        Account CreateAccount(Mnemonic mnemonic=null, string password=null);
-        
-        
+        Task<Account> CreateAccount(string mnemonic=null, string password=null);
+
+
         /// <summary>
         /// Get the balance for a Token Account PublicKey
         /// </summary>
         /// <param name="publicKey"></param>
         /// <returns></returns>
-        ulong GetBalance(PublicKey publicKey);
+        Task<ulong> GetBalance(PublicKey publicKey);
         
         /// <summary>
         /// Transfer a certain amount of a given tokenMint to destination account 
@@ -60,10 +60,17 @@ namespace Solana.Unity.SDK
         Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey, PublicKey tokenMint, PublicKey tokenProgramPublicKey);
         
         /// <summary>
+        /// Returns tokens held by the given publicKey
+        /// </summary>
+        /// <param name="publicKey">PublicKey of the Account for which we want to return tokens</param>
+        /// <returns></returns>
+        Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey);
+
+        /// <summary>
         /// Sign a transaction
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        Transaction SignTransaction(Transaction transaction);
+        Task<byte[]> SignTransaction(Transaction transaction);
     }
 }
