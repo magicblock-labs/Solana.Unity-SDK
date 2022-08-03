@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using Solana.Unity.Wallet;
 
 namespace Solana.Unity.SDK.Example
 {
@@ -26,8 +27,6 @@ namespace Solana.Unity.SDK.Example
         private string _password;
         private string _mnemonics;
         private string _path;
-        private SimpleWallet _simpleWallet;
-        private Cypher _cypher;
         private string _pubKey;
         private string[] _paths;
         private string _loadedKey;
@@ -39,9 +38,6 @@ namespace Solana.Unity.SDK.Example
 
         private void Start()
         {
-            _cypher = new Cypher();
-            _simpleWallet = SimpleWallet.instance;
-            //_mnemonics = "gym basket dizzy chest pact rubber canvas staff around shadow brain purchase hello parent digital degree window version still rather measure brass lock arrest";
             _passwordText.text = "";
 
             SwitchButtons("Login");
@@ -66,7 +62,7 @@ namespace Solana.Unity.SDK.Example
             {
                 _createNewWalletBtn.onClick.AddListener(() =>
                 {
-                    SimpleWallet.instance.DeleteWalletAndClearKey();
+                    SimpleWallet.Instance.Logout();
                     manager.ShowScreen(this, "generate_screen");
                     SwitchPanels(0);
                 });
@@ -81,14 +77,16 @@ namespace Solana.Unity.SDK.Example
                 _messageTxt.gameObject.SetActive(false);
         }
 
-        private void LoginChecker()
+        private async void LoginChecker()
         {
-            if (_simpleWallet.LoginCheckMnemonicAndPassword(_passwordInputField.text))
+            string password = _passwordInputField.text;
+            Account account = await SimpleWallet.Instance.Login(password);
+            if (account != null)
             {
-                SimpleWallet.instance.GenerateWalletWithMenmonic(_simpleWallet.LoadPlayerPrefs(_simpleWallet.MnemonicsKey));
-                MainThreadDispatcher.Instance().Enqueue(() => { _simpleWallet.StartWebSocketConnection(); }); 
+                //SimpleWallet.instance.GenerateWalletWithMenmonic(_simpleWallet.LoadPlayerPrefs(_simpleWallet.MnemonicsKey));
+                //MainThreadDispatcher.Instance().Enqueue(() => { _simpleWallet.StartWebSocketConnection(); }); 
                 manager.ShowScreen(this, "wallet_screen");
-                this.gameObject.SetActive(false);
+                gameObject.SetActive(false);
             }
             else
             {

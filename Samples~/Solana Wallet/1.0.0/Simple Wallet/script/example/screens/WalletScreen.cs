@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Solana.Unity.SDK.Example
 {
@@ -59,7 +60,7 @@ namespace Solana.Unity.SDK.Example
 
             logout_btn.onClick.AddListener(() =>
             {
-                SimpleWallet.instance.DeleteWalletAndClearKey();
+                SimpleWallet.Instance.Logout();
                 manager.ShowScreen(this, "login_screen");
                 if(parentManager != null)
                     parentManager.ShowScreen(this, "[Connect_Wallet_Screen]");
@@ -67,13 +68,12 @@ namespace Solana.Unity.SDK.Example
 
             save_private_key_btn.onClick.AddListener(() => 
             {
-                //_txtLoader.SaveByteArray(_privateKeyFileTitle, Encoding.ASCII.GetBytes(SimpleWallet.instance.privateKey), false);
-                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.instance.privateKey, false);
+                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Account.PrivateKey, false);
             });
 
             save_mnemonics_btn.onClick.AddListener(() =>
             {
-                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.instance.LoadPlayerPrefs(SimpleWallet.instance.MnemonicsKey), false);
+                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.Instance.Mnemonic.ToString(), false);
             });
 
             _txtLoader.TxtSavedAction += SaveMnemonicsOnClick;
@@ -107,10 +107,10 @@ namespace Solana.Unity.SDK.Example
 
         private void SaveMnemonicsOnClick(string path, string mnemonics, string fileTitle)
         {
-            if (!this.gameObject.activeSelf) return;
+            if (!gameObject.activeSelf) return;
             if (fileTitle != _mnemonicsFileTitle) return;
 
-            if (SimpleWallet.instance.StorageMethodReference == StorageMethod.JSON)
+            if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.JSON)
             {
                 List<string> mnemonicsList = new List<string>();
 
@@ -132,7 +132,7 @@ namespace Solana.Unity.SDK.Example
                     DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
                 }
             }
-            else if (SimpleWallet.instance.StorageMethodReference == StorageMethod.SimpleTxt)
+            else if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.SimpleTxt)
             {
                 if(path != string.Empty)
                     File.WriteAllText(path, mnemonics);
@@ -151,16 +151,17 @@ namespace Solana.Unity.SDK.Example
 
         private async void UpdateWalletBalanceDisplay()
         {
-            if (SimpleWallet.instance.wallet is null) return;
+            if (SimpleWallet.Instance.Account is null) return;
 
-            double sol = await SimpleWallet.instance.GetSolAmmount(SimpleWallet.instance.wallet.GetAccount(0));
+            double sol = await SimpleWallet.Instance.GetBalance();
+            if (SimpleWallet.Instance.Account is null) return;
             MainThreadDispatcher.Instance().Enqueue(() => { lamports.text = $"{sol}"; });
         }
 
         private void DisconnectToWebSocket()
         {
             MainThreadDispatcher.Instance().Enqueue(() => { manager.ShowScreen(this, "login_screen"); });
-            MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.instance.DeleteWalletAndClearKey(); });
+            MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.Instance.Logout(); });
         }
 
         public override void ShowScreen(object data = null)
@@ -178,10 +179,10 @@ namespace Solana.Unity.SDK.Example
             gameObject.SetActive(false);
         }
 
-        public async void GetOwnedTokenAccounts()
+        private async Task GetOwnedTokenAccounts()
         {
             DisableTokenItems();
-            TokenAccount[] result = await SimpleWallet.instance.GetOwnedTokenAccounts(SimpleWallet.instance.wallet.GetAccount(0));
+            TokenAccount[] result = await SimpleWallet.Instance.GetTokenAccounts();
 
             if (result != null && result.Length > 0)
             {
@@ -190,14 +191,8 @@ namespace Solana.Unity.SDK.Example
                 {
                     if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
                     {
-                        Nft.Nft nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.instance.activeRpcClient, true);
-
-                        //Task<Solana.Unity.SDK.Nft.Nft> t = Task.Run<Solana.Unity.SDK.Nft.Nft>( async () => {
-                        //    return await Solana.Unity.SDK.Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.instance.activeRpcClient, false);
-                        //}, stopTask.Token);
-
-                        //Debug.Log("new");
-                        //Solana.Unity.SDK.Nft.Nft nft = t.Result;
+                        Nft.Nft nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.Instance.ActiveRpcClient, true);
+                        
                         if (itemIndex >= token_items.Count) return;
                         if (token_items[itemIndex] == null) return;
 

@@ -1,11 +1,10 @@
 ﻿using Newtonsoft.Json;
-using SFB;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using Solana.Unity.Wallet.Bip39;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,13 +29,13 @@ namespace Solana.Unity.SDK.Example
         void Start()
         {
             _txtLoader = GetComponent<TxtLoader>();
-            mnemonic_txt.text = WalletKeyPair.GenerateNewMnemonic();//"margin toast sheriff air tank liar tuna oyster cake tell trial more rebuild ostrich sick once palace uphold fall faculty clap slam job pitch";
+            mnemonic_txt.text = new Mnemonic(WordList.English, WordCount.Twelve).ToString();
 
             if(generate_btn != null)
             {
                 generate_btn.onClick.AddListener(() =>
                 {
-                    MainThreadDispatcher.Instance().Enqueue(() => { GenerateNewAccount(); });
+                    MainThreadDispatcher.Instance().Enqueue(GenerateNewAccount);
                 });
             }
 
@@ -70,10 +69,10 @@ namespace Solana.Unity.SDK.Example
         private void OnEnable()
         {
             need_password_txt.gameObject.SetActive(false);
-            mnemonic_txt.text = WalletKeyPair.GenerateNewMnemonic();
+            mnemonic_txt.text = new Mnemonic(WordList.English, WordCount.Twelve).ToString();
         }
 
-        public void GenerateNewAccount()
+        private async void GenerateNewAccount()
         {
             if (string.IsNullOrEmpty(password_input_field.text))
             {
@@ -81,12 +80,12 @@ namespace Solana.Unity.SDK.Example
                 need_password_txt.text = "Need Password!";
                 return;
             }
-
-            SimpleWallet.instance.SavePlayerPrefs(SimpleWallet.instance.PasswordKey, password_input_field.text);
+            
+            var password = password_input_field.text;
+            var mnemonic = mnemonic_txt.text.Trim();
             try
             {
-                SimpleWallet.instance.GenerateWalletWithMenmonic(mnemonic_txt.text);
-                string mnemonics = mnemonic_txt.text;
+                await SimpleWallet.Instance.CreateAccount(mnemonic, password);
                 manager.ShowScreen(this, "wallet_screen");
                 need_password_txt.gameObject.SetActive(false);
             }
@@ -115,7 +114,7 @@ namespace Solana.Unity.SDK.Example
             if (!this.gameObject.activeSelf) return;
             if (fileTitle != _mnemonicsFileTitle) return;
 
-            if (SimpleWallet.instance.StorageMethodReference == StorageMethod.JSON)
+            if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.JSON)
             {
                 List<string> mnemonicsList = new List<string>();
 
@@ -137,7 +136,7 @@ namespace Solana.Unity.SDK.Example
                     DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
                 }
             }
-            else if (SimpleWallet.instance.StorageMethodReference == StorageMethod.SimpleTxt)
+            else if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.SimpleTxt)
             {
                 if (path != string.Empty)
                     File.WriteAllText(path, mnemonics);

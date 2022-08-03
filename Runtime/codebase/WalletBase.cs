@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
-using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
@@ -29,7 +28,7 @@ namespace Solana.Unity.SDK
             { 1, Cluster.DevNet },
             { 2, Cluster.TestNet }
         };
-        [DrawIf("rpcCluster", RpcCluster.Custom)]  
+        [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
         public string customRpc;
         public bool autoConnectOnStartup;
         private IRpcClient _activeRpcClient;
@@ -69,6 +68,7 @@ namespace Solana.Unity.SDK
         public void Logout()
         {
             Account = null;
+            Mnemonic = null;
         }
 
         /// <inheritdoc />
@@ -87,33 +87,40 @@ namespace Solana.Unity.SDK
         protected abstract Task<Account> _CreateAccount(string mnemonic = null, string password = null);
         
         /// <inheritdoc />
-        public async Task<ulong> GetBalance(PublicKey publicKey)
+        public async Task<double> GetBalance(PublicKey publicKey)
         {
-            var balance= await ActiveRpcClient.GetTokenAccountBalanceAsync(publicKey);
-            return balance.Result.Value.AmountUlong;
+            var balance= await ActiveRpcClient.GetBalanceAsync(publicKey);
+            return (double)balance.Result.Value / 1000000000;
+        }
+        
+        /// <inheritdoc />
+        public async Task<double> GetBalance()
+        {
+            return await GetBalance(Account.PublicKey);
         }
 
         /// <inheritdoc />
-        public RequestResult<string> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount)
+        public async Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount)
         {
             throw new System.NotImplementedException();
         }
 
         /// <inheritdoc />
-        public async Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey, PublicKey tokenMint, PublicKey tokenProgramPublicKey)
+        public async Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey)
         {
-            RequestResult<ResponseValue<List<TokenAccount>>> result = 
-                await ActiveRpcClient.GetTokenAccountsByOwnerAsync(
+            var rpc = ActiveRpcClient;
+            var result = await 
+                rpc.GetTokenAccountsByOwnerAsync(
                     Account.PublicKey, 
-                    tokenMint, 
+                    null, 
                     tokenProgramPublicKey);
             return result.Result?.Value?.ToArray();
         }
         
         /// <inheritdoc />
-        public async Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey)
+        public async Task<TokenAccount[]> GetTokenAccounts()
         {
-            return await GetTokenAccounts(publicKey, null, TokenProgram.ProgramIdKey);
+            return await GetTokenAccounts(null, TokenProgram.ProgramIdKey);
         }
 
         /// <inheritdoc />
@@ -148,13 +155,13 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                if (ActiveRpcClient == null && rpcCluster != RpcCluster.Custom)
+                if (_activeRpcClient == null && rpcCluster != RpcCluster.Custom)
                 {
-                    ActiveRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)rpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)rpcCluster]);
                 }
-                if (ActiveRpcClient == null && rpcCluster == RpcCluster.Custom)
+                if (_activeRpcClient == null && rpcCluster == RpcCluster.Custom)
                 {
-                    ActiveRpcClient = ClientFactory.GetClient(customRpc);
+                    _activeRpcClient = ClientFactory.GetClient(customRpc);
                 }
 
                 return _activeRpcClient;

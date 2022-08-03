@@ -1,37 +1,35 @@
-using Solana.Unity.Wallet;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Example
 {
     public enum StorageMethod { JSON, SimpleTxt }
-    public class SimpleWallet : WalletBaseComponent
+    
+    [RequireComponent(typeof(MainThreadDispatcher))]
+    public class SimpleWallet : InGameWallet
     {
         public StorageMethod storageMethod;
+        private const string StorageMethodStateKey = "StorageMethodKey";
         
-        public static SimpleWallet instance;
-        public readonly string storageMethodStateKey = "StorageMethodKey";
+        public static SimpleWallet Instance;
 
         public override void Awake()
-        {           
-            base.Awake();
-            if (instance == null)
+        {
+            if (Instance == null)
             {
-                instance = this;
+                Instance = this;
             }
             else
             {
-                Destroy(this.gameObject);
+                Destroy(gameObject);
             }
         }
 
         private void Start()
         {
             ChangeState(storageMethod.ToString());
-            if (PlayerPrefs.HasKey(storageMethodStateKey))
+            if (PlayerPrefs.HasKey(StorageMethodStateKey))
             {
-                string storageMethodString = LoadPlayerPrefs(storageMethodStateKey);
+                string storageMethodString = LoadPlayerPrefs(StorageMethodStateKey);
 
                 if(storageMethodString != storageMethod.ToString())
                 {
@@ -50,7 +48,7 @@ namespace Solana.Unity.SDK.Example
 
         private void ChangeState(string state)
         {
-            SavePlayerPrefs(storageMethodStateKey, storageMethod.ToString());
+            SavePlayerPrefs(StorageMethodStateKey, storageMethod.ToString());
         }
 
         public StorageMethod StorageMethodReference
@@ -58,6 +56,22 @@ namespace Solana.Unity.SDK.Example
             get { return storageMethod; }
             set { storageMethod = value; ChangeState(storageMethod.ToString()); }
         }
+        
+        #region Data Functions
+
+        private static void SavePlayerPrefs(string key, string value)
+        {
+            PlayerPrefs.SetString(key, value);
+            #if UNITY_WEBGL
+            PlayerPrefs.Save();
+            #endif
+        }
+
+        private static string LoadPlayerPrefs(string key)
+        {
+            return PlayerPrefs.GetString(key);
+        }
+        #endregion
 
     }
 }

@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
-using Solana.Unity.Wallet.Bip39;
 
 namespace Solana.Unity.SDK
 {
@@ -35,11 +34,17 @@ namespace Solana.Unity.SDK
 
 
         /// <summary>
-        /// Get the balance for a Token Account PublicKey
+        /// Get the SOL balance for a Token Account PublicKey
         /// </summary>
         /// <param name="publicKey"></param>
         /// <returns></returns>
-        Task<ulong> GetBalance(PublicKey publicKey);
+        Task<double> GetBalance(PublicKey publicKey);
+        
+        /// <summary>
+        /// Get the SOL balance
+        /// </summary>
+        /// <returns></returns>
+        Task<double> GetBalance();
         
         /// <summary>
         /// Transfer a certain amount of a given tokenMint to destination account 
@@ -48,23 +53,21 @@ namespace Solana.Unity.SDK
         /// <param name="tokenMint"></param>
         /// <param name="amount"></param>
         /// <returns></returns>
-        RequestResult<string> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount);
+        Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount);
 
         /// <summary>
         /// Returns tokens held by the given publicKey
         /// </summary>
-        /// <param name="publicKey">PublicKey of the Account for which we want to return tokens</param>
         /// <param name="tokenMint"></param>
         /// <param name="tokenProgramPublicKey"></param>
         /// <returns></returns>
-        Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey, PublicKey tokenMint, PublicKey tokenProgramPublicKey);
+        Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey);
         
         /// <summary>
         /// Returns tokens held by the given publicKey
         /// </summary>
-        /// <param name="publicKey">PublicKey of the Account for which we want to return tokens</param>
         /// <returns></returns>
-        Task<TokenAccount[]> GetTokenAccounts(PublicKey publicKey);
+        Task<TokenAccount[]> GetTokenAccounts();
 
         /// <summary>
         /// Sign a transaction
