@@ -129,9 +129,11 @@ namespace Solana.Unity.SDK.Example
         //
         // WebGL
         //
+#if UNITY_WEBGL
         [DllImport("__Internal")]
         private static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
-
+#endif
+        
         // Called from browser
         public void OnFileUpload(string url)
         {
