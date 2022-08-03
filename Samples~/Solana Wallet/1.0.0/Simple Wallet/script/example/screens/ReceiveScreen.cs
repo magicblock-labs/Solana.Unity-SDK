@@ -1,7 +1,4 @@
-using Solana.Unity.SDK;
 using Solana.Unity.SDK.Example;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,7 +14,7 @@ public class ReceiveScreen : SimpleScreen
     private void Start()
     {
         airdrop_btn.onClick.AddListener(async () => {
-            await SimpleWallet.instance.RequestAirdrop(SimpleWallet.instance.wallet.GetAccount(0));
+            await SimpleWallet.Instance.RequestAirdrop();
         });
 
         close_btn?.onClick.AddListener(() =>
@@ -34,20 +31,17 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQR();
-        publicKey_txt.text = SimpleWallet.instance.wallet.GetAccount(0).PublicKey;
+        publicKey_txt.text = SimpleWallet.Instance.Account.PublicKey;
     }
 
     private void CheckAndToggleAirdrop()
     {
-        if (SimpleWallet.instance.clientSource != WalletBaseComponent.EClientUrlSource.EMainnet)
-            airdrop_btn.gameObject.SetActive(true);
-        else
-            airdrop_btn.gameObject.SetActive(false);
+        airdrop_btn.gameObject.SetActive(SimpleWallet.Instance.ActiveRpcClient.ToString().Contains("api.mainnet"));
     }
 
     private void GenerateQR()
     {
-        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.instance.wallet.GetAccount(0).PublicKey, 256, 256);
+        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.Instance.Account.PublicKey, 256, 256);
         qrCode_img.texture = tex;
     }
 

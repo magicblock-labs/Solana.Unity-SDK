@@ -1,5 +1,5 @@
 {
-    "name": "UnityWebSocket.Editor",
+    "name": "com.solana.unity_sdk.Editor",
     "references": [
         "UnityWebSocket.Runtime"
     ],

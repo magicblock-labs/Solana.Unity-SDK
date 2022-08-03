@@ -427,8 +427,8 @@ namespace Solana.Unity.SDK
                         associatedTokenAccount,
                         amount,
                         0,
-                        mint,
-                        ownerAccount)).// the ownerAccount was set as the mint authority
+                        ownerAccount,
+                        mint)).// the ownerAccount was set as the mint authority
                     Build(new List<Account> { ownerAccount });
             }
 

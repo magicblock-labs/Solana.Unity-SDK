@@ -1,5 +1,6 @@
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Wallet;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -50,7 +51,10 @@ namespace Solana.Unity.SDK.Example
 
         private async void TransferSol()
         {
-            RequestResult<string> result = await SimpleWallet.instance.TransferSol(toPublic_txt.text, ulong.Parse(ammount_txt.text));
+            RequestResult<string> result = await SimpleWallet.Instance.Transfer(
+                new PublicKey(toPublic_txt.text), 
+                null, 
+                ulong.Parse(ammount_txt.text));
             HandleResponse(result);
         }
 
@@ -90,27 +94,22 @@ namespace Solana.Unity.SDK.Example
 
         private async void TransferToken()
         {
-            RequestResult<string> result = await SimpleWallet.instance.TransferToken(
+            /*RequestResult<string> result = await SimpleWallet.instance.TransferToken(
                                 transferTokenAccount.PublicKey,
                                 toPublic_txt.text,
                                 SimpleWallet.instance.wallet.GetAccount(0),
                                 transferTokenAccount.Account.Data.Parsed.Info.Mint,
                                 ulong.Parse(ammount_txt.text));
 
-            HandleResponse(result);
+            HandleResponse(result);*/
         }
 
         private void HandleResponse(RequestResult<string> result)
         {
-            if (result.Result == null)
-            {
-                error_txt.text = result.Reason;
-            }
-            else
-                error_txt.text = "";
+            error_txt.text = result.Result == null ? result.Reason : "";
         }
 
-        public async override void ShowScreen(object data = null)
+        public override async void ShowScreen(object data = null)
         {
             base.ShowScreen();
 
@@ -126,7 +125,7 @@ namespace Solana.Unity.SDK.Example
             ownedAmmount_txt.gameObject.SetActive(false);
             if (data != null && data.GetType().Equals(typeof(TokenAccount)))
             {
-                this.transferTokenAccount = (TokenAccount)data;
+                transferTokenAccount = (TokenAccount)data;
                 ownedAmmount_txt.text = $"{transferTokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
             }
             else if (data != null && data.GetType().Equals(typeof(Nft.Nft)))
@@ -140,7 +139,7 @@ namespace Solana.Unity.SDK.Example
             }
             else
             {
-                ownedSolAmmount = await SimpleWallet.instance.GetSolAmmount(SimpleWallet.instance.wallet.GetAccount(0));
+                ownedSolAmmount = await SimpleWallet.Instance.GetBalance();
                 ownedAmmount_txt.text = $"{ownedSolAmmount}";
             }
         }
@@ -155,7 +154,7 @@ namespace Solana.Unity.SDK.Example
         public override void HideScreen()
         {
             base.HideScreen();
-            this.transferTokenAccount = null;
+            transferTokenAccount = null;
             gameObject.SetActive(false);
         }
     }

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Runtime.InteropServices;
+using Solana.Unity.Wallet;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -61,12 +62,13 @@ namespace Solana.Unity.SDK.Example
             load_mnemonics_btn.onClick.AddListener(LoadMnemonicsFromTxtClicked);
         }
 
-        public void GenerateNewAccount()
+        public async void GenerateNewAccount()
         {
-            SimpleWallet.instance.SavePlayerPrefs(SimpleWallet.instance.PasswordKey, password_input_field.text);
+            string password = password_input_field.text;
+            string mnemonic = mnemonic_txt.text;
 
-            Wallet.Wallet keypair = SimpleWallet.instance.GenerateWalletWithMenmonic(mnemonic_txt.text);
-            if (keypair != null)
+            Account account = await SimpleWallet.Instance.CreateAccount(mnemonic, password);
+            if (account != null)
             {
                 manager.ShowScreen(this, "wallet_screen");
             }
@@ -80,8 +82,6 @@ namespace Solana.Unity.SDK.Example
         {
             base.ShowScreen();
 
-            //mnemonic_txt.text = "margin toast sheriff air tank liar tuna oyster cake tell trial more rebuild ostrich sick once palace uphold fall faculty clap slam job pitch";
-            //mnemonic_txt.text = "gym basket dizzy chest pact rubber canvas staff around shadow brain purchase hello parent digital degree window version still rather measure brass lock arrest";
             error_txt.text = String.Empty;
             mnemonic_txt.text = String.Empty;
             password_input_field.text = String.Empty;
@@ -135,7 +135,7 @@ namespace Solana.Unity.SDK.Example
         {
             if (!string.IsNullOrEmpty(_loadedMnemonics))
             {
-                if (SimpleWallet.instance.storageMethod == StorageMethod.JSON)
+                if (SimpleWallet.Instance.storageMethod == StorageMethod.JSON)
                 {
                     try
                     {
@@ -153,7 +153,7 @@ namespace Solana.Unity.SDK.Example
                         }
                     }
                 }
-                else if (SimpleWallet.instance.storageMethod == StorageMethod.SimpleTxt)
+                else if (SimpleWallet.Instance.storageMethod == StorageMethod.SimpleTxt)
                 {
                     try
                     {
