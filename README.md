@@ -10,10 +10,9 @@ Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana
 
 Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made (e.g. full rpc coverage) and others we have in the roadmap, such as: Phantom integration, native SMS wallet, ...
 
-</p>
+## Documentation
 
-</div>
-
+[Solana.Unity SDK - Documentation](developers.garbles.fun)
 
 ## Features
 - Create/Backup wallet with mnemonic phrase
