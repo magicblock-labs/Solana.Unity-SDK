@@ -5,13 +5,13 @@ using Solana.Unity.SDK.Utility;
 
 namespace Solana.Unity.SDK.Nft
 {
-    [System.Serializable]
+    [Serializable]
     public class Attributes {
         public string trait_type;
         public string value;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class MetaplexJsonData {
         public string name;
         public string description;
@@ -22,7 +22,7 @@ namespace Solana.Unity.SDK.Nft
 
     }
 
-    [System.Serializable]
+    [Serializable]
     public class MetaplexData
     {
         public string name;
@@ -33,7 +33,7 @@ namespace Solana.Unity.SDK.Nft
         public MetaplexJsonData json;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class CreatorData
     {
         public string address;
@@ -41,14 +41,14 @@ namespace Solana.Unity.SDK.Nft
         public int share;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class File
     {
         public string uri;
         public string type;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class Properties
     {
         public File[] files;
@@ -56,7 +56,7 @@ namespace Solana.Unity.SDK.Nft
         public CreatorData[] creators;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class Metaplex : iNftStandard<Metaplex>
     {
         public string authority;

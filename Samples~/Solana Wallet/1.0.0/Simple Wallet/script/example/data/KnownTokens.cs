@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Solana.Unity.SDK.Example
 { 
-    [CreateAssetMenu(fileName = "Tokens", menuName = "AllArt/Example/KnownTokensData", order = 1)]
+    [CreateAssetMenu(fileName = "Tokens", menuName = "Solana/Example/KnownTokensData", order = 1)]
     public class KnownTokens : ScriptableObject
     {
         public KnownToken[] knownTokens;

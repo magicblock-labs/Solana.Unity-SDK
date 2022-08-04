@@ -37,9 +37,6 @@ namespace Solana.Unity.SDK.Example
             this.tokenAccount = tokenAccount;
             if (nftData != null)
             {
-                //UnityMainThreadDispatcher.Instance().Enqueue(() => { nft = nftData; });
-                //UnityMainThreadDispatcher.Instance().Enqueue(() => { ammount_txt.text = ""; });
-                //UnityMainThreadDispatcher.Instance().Enqueue(() => { pub_txt.text = nftData.metaplexData.data.name; });
                 nft = nftData;
                 ammount_txt.text = "";
                 pub_txt.text = nftData.metaplexData.data.name;
@@ -47,14 +44,10 @@ namespace Solana.Unity.SDK.Example
                 if (logo != null)
                 {
                     MainThreadDispatcher.Instance().Enqueue(() => { logo.texture = nftData.metaplexData.nftImage.file; });
-                    //logo.texture = nftData.metaplexData.nftImage.file;
                 }
             }
             else
             {
-                //UnityMainThreadDispatcher.Instance().Enqueue(() => { ammount_txt.text = tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount.ToString(); });
-                //UnityMainThreadDispatcher.Instance().Enqueue(() => { logo.gameObject.SetActive(false); });
-                //UnityMainThreadDispatcher.Instance().Enqueue(() => { pub_txt.text = tokenAccount.Account.Data.Parsed.Info.Mint; });
                 ammount_txt.text = tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount.ToString();
 
                 if (logo is null) return;

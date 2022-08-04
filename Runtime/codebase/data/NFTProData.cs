@@ -3,7 +3,7 @@ using Solana.Unity.SDK.Utility;
 
 namespace Solana.Unity.SDK.Nft
 {
-    [System.Serializable]
+    [Serializable]
     public class NFTProData
     {
         public string type;
