@@ -48,7 +48,7 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public void Setup() { }
+        public virtual void Setup() { }
 
         /// <inheritdoc />
         public async Task<Account> Login(string password = null)
@@ -131,7 +131,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        public async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
+        public virtual async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
         {
             return await ActiveRpcClient.SendTransactionAsync(await SignTransaction(transaction));
         }

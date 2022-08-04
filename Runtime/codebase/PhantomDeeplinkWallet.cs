@@ -1,31 +1,27 @@
 using System;
 using System.Collections.Specialized;
-using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Chaos.NaCl;
-using Solana.Unity.Rpc;
+using Merkator.BitCoin;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK;
 using UnityEngine;
 using UnityEngine.Networking;
 using X25519;
-using Merkator.BitCoin;
 using Org.BouncyCastle.Security;
-using Solana.Unity.KeyStore.Crypto;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Wallet;
 
 namespace Solana.Unity.DeeplinkWallet
 {
-    // TODO: Add a transaction counter to be able to keep track across multiple transactions
     // TODO: App signing transaction without sending.
     // TODO: Improve deeplink url parsing
-    public class PhantomDeeplinkWallet : WalletBaseInterface
+    public class PhantomDeeplinkWallet : WalletBase
     {
-        public event Action<string> OnDeepLinkTriggered;
-        public event Action<IDeeplinkWallet.DeeplinkWalletConnectSuccess> OnDeeplinkWalletConnectionSuccess;
+        public string PhantomApiVersion = "v1";
+        public string AppMetaDataUrl = "https://beavercrush.com";
+        public string DeeplinkUrlSceme = "SolPlay";
         public event Action<IDeeplinkWallet.DeeplinkWalletError> OnDeeplinkWalletError;
         public event Action<IDeeplinkWallet.DeeplinkWalletTransactionSuccessful> OnDeeplinkTransactionSuccessful;
 
@@ -35,19 +31,11 @@ namespace Solana.Unity.DeeplinkWallet
         private X25519KeyPair _localKeyPairForPhantomConnection;
         private string _base58PublicKey = "";
         private string _phantomEncryptionPubKey;
-        private string _phantomApiVersion = "v1";
-        private string _appMetaDataUrl = "https://beavercrush.com";
-        private string _deeplinkUrlSceme = "SolPlay";
-        private IRpcClient _rpcClient;
+        private TaskCompletionSource<Account> _loginTaskCompletionSource;
+        private TaskCompletionSource<RequestResult<string>> _signAndSendTaskCompletionSource;
 
-        public void Setup(string deeplinkUrlSceme, IRpcClient rpcClient, string appMetaDataUrl, string apiVersion = "v1")
+        public override void Setup()
         {
-            _phantomApiVersion = apiVersion;
-
-            _deeplinkUrlSceme = deeplinkUrlSceme;
-            _appMetaDataUrl = appMetaDataUrl;
-            _rpcClient = rpcClient;
-
             Application.deepLinkActivated += OnDeepLinkActivated;
             if (!String.IsNullOrEmpty(Application.absoluteURL))
             {
@@ -57,66 +45,51 @@ namespace Solana.Unity.DeeplinkWallet
             CreateEncryptionKeys();
         }
 
-        public void Setup()
-        {
-            throw new NotImplementedException();
-        }
-
-        private TaskCompletionSource<Account> _loginTaskCompletionSource;
-
-        public Task<Account> Login(string password = null)
+        protected override Task<Account> _Login(string password = null)
         {
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
-            string appMetaDataUrl = this._appMetaDataUrl;
-            string redirectUri = UnityWebRequest.EscapeURL($"{_deeplinkUrlSceme}://onPhantomConnected");
+            string appMetaDataUrl = AppMetaDataUrl;
+            string redirectUri = UnityWebRequest.EscapeURL($"{DeeplinkUrlSceme}://onPhantomConnected");
             string url =
-                $"https://phantom.app/ul/{_phantomApiVersion}/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}";
+                $"https://phantom.app/ul/{PhantomApiVersion}/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}";
 
             Application.OpenURL(url);
             return _loginTaskCompletionSource.Task;
         }
 
-        public bool TryGetWalletPublicKey(out string phantomPublicKey)
+        /// <summary>
+        /// Can't connect a new account in phantom wallet.
+        /// </summary>
+        protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
-            if (!string.IsNullOrEmpty(_phantomWalletPublicKey))
-            {
-                phantomPublicKey = _phantomWalletPublicKey;
-                return true;
-            }
-
-            phantomPublicKey = "";
-            return false;
+            throw new NotImplementedException();
         }
 
-        public bool TryGetSessionId(out string session)
+        /// <summary>
+        /// Will come soon
+        /// </summary>
+        public override Task<byte[]> SignTransaction(Transaction transaction)
         {
-            if (!string.IsNullOrEmpty(_sessionId))
-            {
-                session = _sessionId;
-                return true;
-            }
-
-            session = "";
-            return false;
+            throw new NotImplementedException();
         }
 
-        public string GetAppMetaDataUrl()
+        public override async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
         {
-            return _appMetaDataUrl;
-        }
-
-        public async void SignAndSendTransaction(Transaction transaction)
-        {
-            var blockHash = await _rpcClient.GetRecentBlockHashAsync();
-
+            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
+            _signAndSendTaskCompletionSource = new TaskCompletionSource<RequestResult<string>>();
+            
             if (blockHash.Result == null)
             {
+                var blockHashCouldNotBeCreatedError = "Block hash null. Connected to internet?";
                 OnDeeplinkWalletError?.Invoke(
-                    new IDeeplinkWallet.DeeplinkWalletError("0", "Block hash null. Connected to internet?"));
-                return;
+                    new IDeeplinkWallet.DeeplinkWalletError("0", blockHashCouldNotBeCreatedError));
+                RequestResult<string> result = new RequestResult<string>();
+                result.Reason = blockHashCouldNotBeCreatedError;
+                _signAndSendTaskCompletionSource.SetResult(result);
+                return _signAndSendTaskCompletionSource.Task.Result;
             }
 
-            string redirectUri = $"{_deeplinkUrlSceme}://transactionSuccessful";
+            string redirectUri = $"{DeeplinkUrlSceme}://transactionSuccessful";
 
             byte[] serializedTransaction = transaction.Serialize();
             string base58Transaction = Base58Encoding.Encode(serializedTransaction);
@@ -137,8 +110,28 @@ namespace Solana.Unity.DeeplinkWallet
                 $"https://phantom.app/ul/v1/signAndSendTransaction?dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}&nonce={Base58Encoding.Encode(randomNonce)}&payload={base58Payload}";
 
             Application.OpenURL(url);
+            
+            await _signAndSendTaskCompletionSource.Task;
+            return _signAndSendTaskCompletionSource.Task.Result;
         }
-        
+
+        public bool TryGetSessionId(out string session)
+        {
+            if (!string.IsNullOrEmpty(_sessionId))
+            {
+                session = _sessionId;
+                return true;
+            }
+
+            session = "";
+            return false;
+        }
+
+        public string GetAppMetaDataUrl()
+        {
+            return AppMetaDataUrl;
+        }
+
         private byte[] GenerateRandomBytes(int size)
         {
             byte[] buffer = new byte[size];
@@ -194,7 +187,7 @@ namespace Solana.Unity.DeeplinkWallet
                 _loginTaskCompletionSource.SetResult(null);
                 return;
             }
-
+            
             byte[] uncryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(Base58Encoding.Decode(data),
                 Base58Encoding.Decode(phantomNonce), Base58Encoding.Decode(_phantomEncryptionPubKey),
                 _localKeyPairForPhantomConnection.PrivateKey);
@@ -210,9 +203,6 @@ namespace Solana.Unity.DeeplinkWallet
                 _phantomWalletPublicKey = connectSuccess.public_key;
                 _sessionId = connectSuccess.session;
                 _loginTaskCompletionSource.SetResult(new Account(string.Empty, connectSuccess.public_key));
-                OnDeeplinkWalletConnectionSuccess?.Invoke(
-                    new IDeeplinkWallet.DeeplinkWalletConnectSuccess(connectSuccess.public_key,
-                        connectSuccess.session));
             }
             else
             {
@@ -289,46 +279,6 @@ namespace Solana.Unity.DeeplinkWallet
         public class PhantomWalletTransactionSuccessful
         {
             public string signature;
-        }
-
-        public void Logout()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Account> CreateAccount(string mnemonic = null, string password = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<double> GetBalance(PublicKey publicKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<double> GetBalance()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<TokenAccount[]> GetTokenAccounts()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<byte[]> SignTransaction(Transaction transaction)
-        {
-            throw new NotImplementedException();
         }
     }
 }
