@@ -9,27 +9,24 @@ namespace Solana.Unity.SDK.Example
 {
     public class TransferScreen : SimpleScreen
     {
-        public TextMeshProUGUI ownedAmmount_txt;
-        public TextMeshProUGUI nftTitle_txt;
-        public TextMeshProUGUI error_txt;
-        public TMP_InputField toPublic_txt;
-        public TMP_InputField ammount_txt;
-        public Button transfer_btn;
+        public TextMeshProUGUI ownedAmountTxt;
+        public TextMeshProUGUI nftTitleTxt;
+        public TextMeshProUGUI errorTxt;
+        public TMP_InputField toPublicTxt;
+        public TMP_InputField amountTxt;
+        public Button transferBtn;
         public RawImage nftImage;
+        public Button closeBtn;
 
-        public Button close_btn;
-
-        private TokenAccount transferTokenAccount;
-        private double ownedSolAmmount;
+        private TokenAccount _transferTokenAccount;
+        private Nft.Nft _nft;
+        private double _ownedSolAmount;
 
         private void Start()
         {
-            transfer_btn.onClick.AddListener(() =>
-            {
-                TryTransfer();
-            });
+            transferBtn.onClick.AddListener(TryTransfer);
 
-            close_btn.onClick.AddListener(() =>
+            closeBtn.onClick.AddListener(() =>
             {
                 manager.ShowScreen(this, "wallet_screen");
             });
@@ -37,7 +34,11 @@ namespace Solana.Unity.SDK.Example
 
         private void TryTransfer()
         {
-            if (transferTokenAccount == null)
+            if (_nft != null)
+            {
+                TransferNft();
+            }
+            else if (_transferTokenAccount == null)
             {
                 if (CheckInput())
                     TransferSol();
@@ -52,109 +53,121 @@ namespace Solana.Unity.SDK.Example
         private async void TransferSol()
         {
             RequestResult<string> result = await SimpleWallet.Instance.Transfer(
-                new PublicKey(toPublic_txt.text), 
-                null, 
-                ulong.Parse(ammount_txt.text));
+                new PublicKey(toPublicTxt.text),
+                ulong.Parse(amountTxt.text));
+            HandleResponse(result);
+        }
+
+        private async void TransferNft()
+        {
+            RequestResult<string> result = await SimpleWallet.Instance.Transfer(
+                new PublicKey(toPublicTxt.text),
+                new PublicKey(_nft.metaplexData.mint),
+                1);
             HandleResponse(result);
         }
 
         bool CheckInput()
         {
-            if (string.IsNullOrEmpty(ammount_txt.text))
+            if (string.IsNullOrEmpty(amountTxt.text))
             {
-                error_txt.text = "Please input transfer ammount";
+                errorTxt.text = "Please input transfer amount";
                 return false;
             }
 
-            if (string.IsNullOrEmpty(toPublic_txt.text))
+            if (string.IsNullOrEmpty(toPublicTxt.text))
             {
-                error_txt.text = "Please enter receiver public key";
+                errorTxt.text = "Please enter receiver public key";
                 return false;
             }
 
-            if (transferTokenAccount == null)
+            if (_transferTokenAccount == null)
             {
-                if (long.Parse(ammount_txt.text) > (long)(ownedSolAmmount * 1000000000))
+                if (long.Parse(amountTxt.text) > (long)(_ownedSolAmount * 1000000000))
                 {
-                    error_txt.text = "Not enough funds for transaction.";
+                    errorTxt.text = "Not enough funds for transaction.";
                     return false;
                 }
             }
             else
             {
-                if (long.Parse(ammount_txt.text) > long.Parse(ownedAmmount_txt.text))
+                if (long.Parse(amountTxt.text) > long.Parse(ownedAmountTxt.text))
                 {
-                    error_txt.text = "Not enough funds for transaction.";
+                    errorTxt.text = "Not enough funds for transaction.";
                     return false;
                 }
             }
-            error_txt.text = "";
+            errorTxt.text = "";
             return true;
         }
 
         private async void TransferToken()
         {
-            /*RequestResult<string> result = await SimpleWallet.instance.TransferToken(
-                                transferTokenAccount.PublicKey,
-                                toPublic_txt.text,
-                                SimpleWallet.instance.wallet.GetAccount(0),
-                                transferTokenAccount.Account.Data.Parsed.Info.Mint,
-                                ulong.Parse(ammount_txt.text));
-
-            HandleResponse(result);*/
+            RequestResult<string> result = await SimpleWallet.Instance.Transfer(
+                new PublicKey(toPublicTxt.text),
+                new PublicKey(_transferTokenAccount.Account.Data.Parsed.Info.Mint),
+                ulong.Parse(amountTxt.text));
+            HandleResponse(result);
         }
 
         private void HandleResponse(RequestResult<string> result)
         {
-            error_txt.text = result.Result == null ? result.Reason : "";
+            errorTxt.text = result.Result == null ? result.Reason : "";
+            if (result.Result != null)
+            {
+                manager.ShowScreen(this, "wallet_screen");
+            }
         }
 
         public override async void ShowScreen(object data = null)
         {
             base.ShowScreen();
 
-            ResetInputFileds();
-            await PopulateInfoFileds(data);
+            ResetInputFields();
+            await PopulateInfoFields(data);
             gameObject.SetActive(true);
         }
 
-        private async System.Threading.Tasks.Task PopulateInfoFileds(object data)
+        private async System.Threading.Tasks.Task PopulateInfoFields(object data)
         {
             nftImage.gameObject.SetActive(false);
-            nftTitle_txt.gameObject.SetActive(false);
-            ownedAmmount_txt.gameObject.SetActive(false);
-            if (data != null && data.GetType().Equals(typeof(TokenAccount)))
+            nftTitleTxt.gameObject.SetActive(false);
+            ownedAmountTxt.gameObject.SetActive(false);
+            if (data != null && data.GetType() == typeof(TokenAccount))
             {
-                transferTokenAccount = (TokenAccount)data;
-                ownedAmmount_txt.text = $"{transferTokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
+                _transferTokenAccount = (TokenAccount)data;
+                ownedAmountTxt.text = $"{_transferTokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
             }
-            else if (data != null && data.GetType().Equals(typeof(Nft.Nft)))
+            else if (data != null && data.GetType() == typeof(Nft.Nft))
             {
-                nftTitle_txt.gameObject.SetActive(true);
+                nftTitleTxt.gameObject.SetActive(true);
                 nftImage.gameObject.SetActive(true);
-                Nft.Nft nft = (Nft.Nft)data;
-                nftTitle_txt.text = $"{nft.metaplexData.data.name}";
-                nftImage.texture = nft.metaplexData.nftImage.file;
+                _nft = (Nft.Nft)data;
+                nftTitleTxt.text = $"{_nft.metaplexData.data.name}";
+                nftImage.texture = _nft.metaplexData.nftImage.file;
                 nftImage.color = Color.white;
+                amountTxt.text = "1";
+                amountTxt.interactable = false;
             }
             else
             {
-                ownedSolAmmount = await SimpleWallet.Instance.GetBalance();
-                ownedAmmount_txt.text = $"{ownedSolAmmount}";
+                _ownedSolAmount = await SimpleWallet.Instance.GetBalance();
+                ownedAmountTxt.text = $"{_ownedSolAmount}";
             }
         }
 
-        private void ResetInputFileds()
+        private void ResetInputFields()
         {
-            error_txt.text = "";
-            ammount_txt.text = "";
-            toPublic_txt.text = "";
+            errorTxt.text = "";
+            amountTxt.text = "";
+            toPublicTxt.text = "";
+            amountTxt.interactable = true;
         }
 
         public override void HideScreen()
         {
             base.HideScreen();
-            transferTokenAccount = null;
+            _transferTokenAccount = null;
             gameObject.SetActive(false);
         }
     }

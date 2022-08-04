@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
+using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
@@ -18,9 +19,10 @@ namespace Solana.Unity.SDK
         TestNet = 2,
         Custom
     }
-    
+
     public abstract class WalletBase : MonoBehaviour, WalletBaseInterface
     {
+        private const long SolLamports = 1000000000;
         public RpcCluster rpcCluster = RpcCluster.DevNet;
         private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
         {
@@ -90,7 +92,7 @@ namespace Solana.Unity.SDK
         public async Task<double> GetBalance(PublicKey publicKey)
         {
             var balance= await ActiveRpcClient.GetBalanceAsync(publicKey);
-            return (double)balance.Result.Value / 1000000000;
+            return (double)balance.Result.Value / SolLamports;
         }
         
         /// <inheritdoc />
@@ -102,7 +104,53 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public async Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount)
         {
-            throw new System.NotImplementedException();
+            var sta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
+                Account.PublicKey, 
+                tokenMint);
+            var ata = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
+            var tokenAccounts = await ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint, null);
+            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
+            var transaction = new Transaction
+            {
+                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                FeePayer = Account.PublicKey,
+                Instructions = new List<TransactionInstruction>()
+            };
+            if (tokenAccounts.Result == null || tokenAccounts.Result.Value.Count == 0)
+            {
+                transaction.Instructions.Add( 
+                    AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
+                    Account,
+                    destination,
+                    tokenMint));
+            }
+            transaction.Instructions.Add(
+                TokenProgram.Transfer(
+                sta,
+                ata,
+                amount,
+                Account
+            ));
+            return await SignAndSendTransaction(transaction);
+        }
+        
+        /// <inheritdoc />
+        public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount)
+        {
+            RequestResult<ResponseValue<BlockHash>> blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
+            var transaction = new Transaction
+            {
+                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                FeePayer = Account.PublicKey,
+                Instructions = new List<TransactionInstruction>
+                { 
+                    SystemProgram.Transfer(
+                        Account.PublicKey, 
+                        destination, 
+                        amount*SolLamports)
+                }
+            };
+            return await SignAndSendTransaction(transaction);
         }
 
         /// <inheritdoc />
@@ -112,7 +160,7 @@ namespace Solana.Unity.SDK
             var result = await 
                 rpc.GetTokenAccountsByOwnerAsync(
                     Account.PublicKey, 
-                    null, 
+                    tokenMint, 
                     tokenProgramPublicKey);
             return result.Result?.Value?.ToArray();
         }
@@ -120,20 +168,23 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public async Task<TokenAccount[]> GetTokenAccounts()
         {
-            return await GetTokenAccounts(null, TokenProgram.ProgramIdKey);
+            var rpc = ActiveRpcClient;
+            var result = await rpc.GetTokenAccountsByOwnerAsync(
+                Account.PublicKey, 
+                null, 
+                TokenProgram.ProgramIdKey);
+            return result.Result?.Value?.ToArray();
         }
 
         /// <inheritdoc />
-        public abstract Task<byte[]> SignTransaction(Transaction transaction);
+        public abstract Task<Transaction> SignTransaction(Transaction transaction);
 
-        /// <summary>
-        /// Sign and send a transaction
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
         {
-            return await ActiveRpcClient.SendTransactionAsync(await SignTransaction(transaction));
+            var signedTransaction = await SignTransaction(transaction);
+            return await ActiveRpcClient.SendTransactionAsync(
+                Convert.ToBase64String(signedTransaction.Serialize()));
         }
         
         /// <summary>
@@ -141,7 +192,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="amount">Amount of sol</param>
         /// <returns>Amount of sol</returns>
-        public async Task<string> RequestAirdrop(ulong amount = 1000000000)
+        public async Task<string> RequestAirdrop(ulong amount = SolLamports)
         {
             var result = await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount);
             return result.Result;

@@ -56,10 +56,10 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public override Task<byte[]> SignTransaction(Transaction transaction)
+        public override Task<Transaction> SignTransaction(Transaction transaction)
         {
             transaction.Sign(Account);
-            return Task.FromResult(transaction.Serialize());
+            return Task.FromResult(transaction);
         }
         
         private static string LoadPlayerPrefs(string key)

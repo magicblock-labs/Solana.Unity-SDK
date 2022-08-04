@@ -36,7 +36,7 @@ public class ReceiveScreen : SimpleScreen
 
     private void CheckAndToggleAirdrop()
     {
-        airdrop_btn.gameObject.SetActive(SimpleWallet.Instance.ActiveRpcClient.ToString().Contains("api.mainnet"));
+        airdrop_btn.gameObject.SetActive(!SimpleWallet.Instance.ActiveRpcClient.ToString().Contains("api.mainnet"));
     }
 
     private void GenerateQR()
