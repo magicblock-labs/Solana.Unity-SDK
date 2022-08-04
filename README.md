@@ -1,6 +1,6 @@
-<div style="text-align:center">
-
-<p>
+[![Licence](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/garbles-labs/Solana.Unity-SDK/blob/master/LICENSE)
+[![Issues](https://img.shields.io/github/issues/garbles-labs/Solana.Unity-SDK)](https://github.com/garbles-labs/Solana.Unity-SDK/issues)
+![Discord](https://img.shields.io/discord/943797222162726962)
 
 # Solana.Unity-SDK
 
@@ -355,3 +355,5 @@ Texture2D compressedTexture = Resize(texture, 75, 75);
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/bmresearch/Solnet/blob/master/LICENSE) file for details
+
+![Twitter Follow](https://img.shields.io/twitter/follow/garblesfun)
