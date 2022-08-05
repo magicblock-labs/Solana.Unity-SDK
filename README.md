@@ -1,6 +1,6 @@
 [![Licence](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/garbles-labs/Solana.Unity-SDK/blob/master/LICENSE)
 [![Issues](https://img.shields.io/github/issues/garbles-labs/Solana.Unity-SDK)](https://github.com/garbles-labs/Solana.Unity-SDK/issues)
-![Discord](https://img.shields.io/discord/943797222162726962)
+[![Discord](https://img.shields.io/discord/943797222162726962)](https://discord.gg/MBkdC3gxcv)
 
 # Solana.Unity-SDK
 
