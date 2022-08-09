@@ -21,6 +21,10 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - TokenWallet object to send and receive SPL tokens and JIT provisioning of Associated Token Accounts 
 - Basic UI examples 
 
+## Upcoming
+- Wallet support for SMS, Phantom and Web3auth support. 
+- Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
+
 ## Dependencies
 - Solana.Unity.Wallet
 - Solana.Unity.Rpc
@@ -34,10 +38,6 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 ## External packages
 - Native File Picker
 - Standalone File Browser
-
-## Upcoming
-- Wallet support for SMS, Phantom and Web3auth support. 
-- Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
 
 ## Installation
 
