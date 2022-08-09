@@ -3,12 +3,10 @@
 [![Discord](https://img.shields.io/discord/943797222162726962)](https://discord.gg/MBkdC3gxcv)
 
 # Solana.Unity-SDK
-
-The Solana.Unity-SDK is an essential bridge connecting game developers and the Solana blockchain. With Solana’s quick and low-cost transactions, games can start using blockchain technology like never before - in real-time. Thousands of developers will bring millions of players into the Solana ecosystem. This will, in turn, make the Solana projects benefit from an increased number of participants, and cross-protocol interoperability in games will take us beyond the current understanding of DeFi.  
   
-Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 and Unity compatible with full RPC API coverage.
+Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation in native .NET Standard 2.0 (Unity compatible) with full RPC API coverage.
 
-Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made (e.g. full rpc coverage) and others we have in the roadmap, such as: Phantom integration, native SMS wallet, ...
+Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of wallet integrations including SMS, Phantom and Web3auth support ...
 
 ## Documentation
 
