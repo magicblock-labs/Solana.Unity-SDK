@@ -13,16 +13,13 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 [Solana.Unity SDK - Documentation](developers.garbles.fun)
 
 ## Features
-- Create/Backup wallet with mnemonic phrase
-- Account handling
-- Transaction building
-- SOL balance 
-- SPL-token balances
-- SPL-token transfers
+- Full JSON RPC API coverage
+- Wallet and accounts: Set up of a non-custodial Solana wallet in Unity (sollet and solana-keygen compatible)
+- Transaction decoding from base64 and wire format and encoding back into wire format
+- Message decoding from base64 and wire format and encoding back into wire format
+- Instruction decompilation 
+- TokenWallet object to send and receive SPL tokens and JIT provisioning of Associated Token Accounts 
 - Basic UI examples 
-- WebSocket subscription
-- Save and load mnemonics from local txt file
-- Save private key in txt file
 
 ## Dependencies
 - Solana.Unity.Wallet
@@ -38,16 +35,9 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Native File Picker
 - Standalone File Browser
 
-## Roadmap
-- Multiple wallet accounts
-- Camera support with QR code scanning for token transfers
-- Improved UI for in-game easy integration
-- Metaplex NFT / NFT-PRO support with GameObjects 
-- Token swaps
-- NFT swaps
-- One-click in-game currency creator
-- Themed UI support
-- Metaplex auctions for in-game store items
+## Upcoming
+- Wallet support for SMS, Phantom and Web3auth support. 
+- Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
 
 ## Installation
 
