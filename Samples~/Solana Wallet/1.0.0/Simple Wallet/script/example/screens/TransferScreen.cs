@@ -1,3 +1,4 @@
+using System;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
@@ -21,6 +22,8 @@ namespace Solana.Unity.SDK.Example
         private TokenAccount _transferTokenAccount;
         private Nft.Nft _nft;
         private double _ownedSolAmount;
+        
+        private const long SolLamports = 1000000000;
 
         private void Start()
         {
@@ -54,7 +57,7 @@ namespace Solana.Unity.SDK.Example
         {
             RequestResult<string> result = await SimpleWallet.Instance.Transfer(
                 new PublicKey(toPublicTxt.text),
-                ulong.Parse(amountTxt.text));
+                Convert.ToUInt64(float.Parse(amountTxt.text)*SolLamports));
             HandleResponse(result);
         }
 
@@ -83,7 +86,7 @@ namespace Solana.Unity.SDK.Example
 
             if (_transferTokenAccount == null)
             {
-                if (long.Parse(amountTxt.text) > (long)(_ownedSolAmount * 1000000000))
+                if (float.Parse(amountTxt.text) > _ownedSolAmount)
                 {
                     errorTxt.text = "Not enough funds for transaction.";
                     return false;

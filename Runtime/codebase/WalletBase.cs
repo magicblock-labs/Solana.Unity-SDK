@@ -147,7 +147,7 @@ namespace Solana.Unity.SDK
                     SystemProgram.Transfer(
                         Account.PublicKey, 
                         destination, 
-                        amount*SolLamports)
+                        amount)
                 }
             };
             return await SignAndSendTransaction(transaction);

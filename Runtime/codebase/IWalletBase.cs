@@ -56,7 +56,7 @@ namespace Solana.Unity.SDK
         Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount);
         
         /// <summary>
-        /// Transfer a certain amount of SOL to a destination account
+        /// Transfer a certain amount of lamports to a destination account
         /// </summary>
         /// <param name="destination">Destination PublicKey</param>
         /// <param name="amount">SOL amount</param>
