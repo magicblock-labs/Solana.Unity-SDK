@@ -18,40 +18,50 @@ namespace Solana.Unity.SDK
         TestNet = 2,
         Custom
     }
-    
-    public abstract class WalletBase : MonoBehaviour, WalletBaseInterface
+
+    public abstract class WalletBase : MonoBehaviour, IWalletBase
     {
         public RpcCluster rpcCluster = RpcCluster.DevNet;
-        private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
+
+        private readonly Dictionary<int, Cluster> _rpcClusterMap = new()
         {
-            { 0, Cluster.MainNet },
-            { 1, Cluster.DevNet },
-            { 2, Cluster.TestNet }
+            {0, Cluster.MainNet},
+            {1, Cluster.DevNet},
+            {2, Cluster.TestNet}
         };
+
         [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
         public string customRpc;
+
         public bool autoConnectOnStartup;
         private IRpcClient _activeRpcClient;
-        public IRpcClient ActiveRpcClient {
+
+        public IRpcClient ActiveRpcClient
+        {
             get => StartConnection();
-            private set => _activeRpcClient = value; }
-        public Account Account { get;private set; }
-        public Mnemonic Mnemonic { get;protected set; }
-        
+            private set => _activeRpcClient = value;
+        }
+
+        public Account Account { get; private set; }
+        public Mnemonic Mnemonic { get; protected set; }
+
         public virtual void Awake()
         {
             if (autoConnectOnStartup)
             {
                 StartConnection();
             }
+
             Setup();
         }
 
         /// <inheritdoc />
-        public virtual void Setup() { }
+        public virtual void Setup()
+        {
+        }
 
         /// <inheritdoc />
-        public async Task<Account> Login(string password = null)
+        public async Task<Account> Login(string password = "")
         {
             Account = await _Login(password);
             return Account;
@@ -62,7 +72,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="password"></param>
         /// <returns></returns>
-        protected abstract Task<Account> _Login(string password = null);
+        protected abstract Task<Account> _Login(string password = "");
 
         /// <inheritdoc />
         public void Logout()
@@ -77,7 +87,7 @@ namespace Solana.Unity.SDK
             Account = await _CreateAccount(mnemonic, password);
             return Account;
         }
-        
+
         /// <summary>
         /// Create a new account
         /// </summary>
@@ -85,14 +95,19 @@ namespace Solana.Unity.SDK
         /// <param name="password"></param>
         /// <returns></returns>
         protected abstract Task<Account> _CreateAccount(string mnemonic = null, string password = null);
-        
+
         /// <inheritdoc />
         public async Task<double> GetBalance(PublicKey publicKey)
         {
-            var balance= await ActiveRpcClient.GetBalanceAsync(publicKey);
-            return (double)balance.Result.Value / 1000000000;
+            var balance = await ActiveRpcClient.GetBalanceAsync(publicKey);
+            if (balance.Result == null)
+            {
+                return 0;
+            }
+
+            return (double) balance.Result.Value / 1000000000;
         }
-        
+
         /// <inheritdoc />
         public async Task<double> GetBalance()
         {
@@ -109,14 +124,14 @@ namespace Solana.Unity.SDK
         public async Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey)
         {
             var rpc = ActiveRpcClient;
-            var result = await 
+            var result = await
                 rpc.GetTokenAccountsByOwnerAsync(
-                    Account.PublicKey, 
-                    null, 
+                    Account.PublicKey,
+                    null,
                     tokenProgramPublicKey);
             return result.Result?.Value?.ToArray();
         }
-        
+
         /// <inheritdoc />
         public async Task<TokenAccount[]> GetTokenAccounts()
         {
@@ -135,7 +150,7 @@ namespace Solana.Unity.SDK
         {
             return await ActiveRpcClient.SendTransactionAsync(await SignTransaction(transaction));
         }
-        
+
         /// <summary>
         /// Airdrop sol on wallet
         /// </summary>
@@ -146,7 +161,7 @@ namespace Solana.Unity.SDK
             var result = await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount);
             return result.Result;
         }
-        
+
         /// <summary>
         /// Start RPC connection and return new RPC Client 
         /// </summary>
@@ -157,8 +172,9 @@ namespace Solana.Unity.SDK
             {
                 if (_activeRpcClient == null && rpcCluster != RpcCluster.Custom)
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)rpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int) rpcCluster]);
                 }
+
                 if (_activeRpcClient == null && rpcCluster == RpcCluster.Custom)
                 {
                     _activeRpcClient = ClientFactory.GetClient(customRpc);

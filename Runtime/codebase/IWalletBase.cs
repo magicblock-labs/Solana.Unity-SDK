@@ -5,7 +5,7 @@ using Solana.Unity.Wallet;
 
 namespace Solana.Unity.SDK
 {
-    public interface WalletBaseInterface
+    public interface IWalletBase
     {
         /// <summary>
         /// Perform wallet setup and initialization, such as wallet state loading and RPC connection
