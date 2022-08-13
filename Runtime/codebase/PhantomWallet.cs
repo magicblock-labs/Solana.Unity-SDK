@@ -48,7 +48,7 @@ namespace Solana.Unity.SDK
 
         public override void Setup()
         {
-#if UNITY_IOS || UNITY_ANROID
+#if UNITY_IOS || UNITY_ANDROID
             Application.deepLinkActivated += OnDeepLinkActivated;
             if (!String.IsNullOrEmpty(Application.absoluteURL))
             {
@@ -66,7 +66,7 @@ namespace Solana.Unity.SDK
 #if UNITY_WEBGL
             ExternConnectPhantom();
 #endif
-#if UNITY_IOS || UNITY_ANROID
+#if UNITY_IOS || UNITY_ANDROID
             DeeplinkLogin();
 #endif
             return _loginTaskCompletionSource.Task;
@@ -102,7 +102,7 @@ namespace Solana.Unity.SDK
             ExternSignTransaction(encode);
 #endif
 
-#if UNITY_IOS || UNITY_ANROID
+#if UNITY_IOS || UNITY_ANDROID
             throw new NotImplementedException();
 #endif
 
@@ -118,7 +118,7 @@ namespace Solana.Unity.SDK
             ExternSignAndSendTransaction(encode);
 #endif
 
-#if UNITY_IOS || UNITY_ANROID
+#if UNITY_IOS || UNITY_ANDROID
             DeeplinkSignAndSendTransaction(transaction);
 #endif
 
@@ -140,7 +140,7 @@ namespace Solana.Unity.SDK
 
         public void OpenUrlInWalletBrowser(string url)
         {
-#if UNITY_IOS || UNITY_ANROID
+#if UNITY_IOS || UNITY_ANDROID
             string refUrl = UnityWebRequest.EscapeURL(GetAppMetaDataUrl());
             string escapedUrl = UnityWebRequest.EscapeURL(url);
             string inWalletUrl = $"https://phantom.app/ul/browse/{url}?ref=refUrl";
