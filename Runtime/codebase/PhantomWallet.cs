@@ -77,7 +77,7 @@ namespace Solana.Unity.SDK
             string appMetaDataUrl = AppMetaDataUrl;
             string redirectUri = UnityWebRequest.EscapeURL($"{DeeplinkUrlSceme}://onPhantomConnected");
             string url =
-                $"https://phantom.app/ul/{PhantomApiVersion}/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}&cluster={rpcCluster.ToString().ToLower()}";
+                $"https://phantom.app/ul/{PhantomApiVersion}/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}&cluster={GetClusterString()}";
             Application.OpenURL(url);
         }
 
@@ -182,7 +182,7 @@ namespace Solana.Unity.SDK
             string base58Payload = Base58Encoding.Encode(encryptedMessage);
 
             string url =
-                $"https://phantom.app/ul/v1/signAndSendTransaction?dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}&nonce={Base58Encoding.Encode(randomNonce)}&payload={base58Payload}&cluster={rpcCluster.ToString().ToLower()}";
+                $"https://phantom.app/ul/v1/signAndSendTransaction?dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}&nonce={Base58Encoding.Encode(randomNonce)}&payload={base58Payload}&cluster={GetClusterString()}";
 
             Debug.Log(url);
             Application.OpenURL(url);
@@ -315,6 +315,21 @@ namespace Solana.Unity.SDK
         {
             _localKeyPairForPhantomConnection = X25519KeyAgreement.GenerateKeyPair();
             _base58PublicKey = Base58Encoding.Encode(_localKeyPairForPhantomConnection.PublicKey);
+        }
+        
+        private string GetClusterString()
+        {
+            switch (rpcCluster)
+            {
+                case RpcCluster.MainNet:
+                    return "mainnet-beta";
+                case RpcCluster.DevNet:
+                    return "devnet";
+                case RpcCluster.TestNet:
+                    return "testnet";
+            }
+            
+            return "mainnet-beta";
         }
 
         [Serializable]
