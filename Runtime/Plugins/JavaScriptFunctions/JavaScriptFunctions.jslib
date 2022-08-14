@@ -5,7 +5,7 @@ mergeInto(LibraryManager.library, {
             try {
                 const resp = await window.phantom.solana.connect();
                 console.log(resp.publicKey.toString());
-                window.unityInstance.SendMessage('WalletHolderService', 'OnPhantomConnected', resp.publicKey.toString());
+                window.unityInstance.SendMessage('PhantomWallet', 'OnPhantomConnected', resp.publicKey.toString());
             } catch (err) {
                 window.alert(err.toString());
             }
@@ -24,7 +24,7 @@ mergeInto(LibraryManager.library, {
                   },
                });
                 console.log(signedTransaction);
-                window.unityInstance.SendMessage('WalletHolderService', 'OnTransactionSigned', signedTransaction.signature);
+                window.unityInstance.SendMessage('PhantomWallet', 'OnTransactionSigned', signedTransaction.signature);
             } catch (err) {
                 console.error(err.message);
             }
@@ -47,7 +47,7 @@ mergeInto(LibraryManager.library, {
 
                 console.log("Signed and send resulting in signature: " + signature);
 
-                window.unityInstance.SendMessage('WalletHolderService', 'OnTransactionSignedAndSent', signature);
+                window.unityInstance.SendMessage('PhantomWallet', 'OnTransactionSignedAndSent', signature);
             } catch (err) {
                 console.error(err.message);
             }

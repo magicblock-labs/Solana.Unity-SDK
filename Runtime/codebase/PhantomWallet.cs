@@ -57,6 +57,10 @@ namespace Solana.Unity.SDK
 
             CreatePhantomAppEncryptionKeys();
 #endif
+#if UNITY_WEBGL
+            // For the send message from java script to work the game object needs to have the correct name.
+            gameObject.name = "PhantomWallet";
+#endif
         }
 
         protected override Task<Account> _Login(string password = null)
