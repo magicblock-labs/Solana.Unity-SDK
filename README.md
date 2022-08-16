@@ -10,7 +10,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 ## Documentation
 
-[Solana.Unity SDK - Documentation](developers.garbles.fun)
+[Solana.Unity SDK - Documentation](http://developers.garbles.fun/)
 
 ## Features
 - Full JSON RPC API coverage
