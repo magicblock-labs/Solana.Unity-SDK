@@ -7,10 +7,11 @@ mergeInto(LibraryManager.library, {
                 console.log(resp.publicKey.toString());
                 window.unityInstance.SendMessage('PhantomWallet', 'OnPhantomConnected', resp.publicKey.toString());
             } catch (err) {
-                window.alert(err.toString());
+                window.alert('Phantom error: ' + err.toString());
+                console.error(err.message);
             }
         } else {
-            window.alert("Please install phantom browser extension.");
+            window.alert('Please install phantom browser extension.');
         }
     },
 
@@ -18,7 +19,7 @@ mergeInto(LibraryManager.library, {
         if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
             try {
                const signedTransaction = await window.phantom.solana.request({
-                  method: "signTransaction",
+                  method: 'signTransaction',
                   params: {
                      message: UTF8ToString(transaction),
                   },
@@ -26,33 +27,33 @@ mergeInto(LibraryManager.library, {
                 console.log(signedTransaction);
                 window.unityInstance.SendMessage('PhantomWallet', 'OnTransactionSigned', signedTransaction.signature);
             } catch (err) {
+                window.alert('Phantom error: ' + err.message);
                 console.error(err.message);
             }
         } else {
-            window.alert("Please install phantom browser extension.");
+            window.alert('Please install phantom browser extension.');
         }
     },
 
     ExternSignAndSendTransaction: async function (inputTransaction) {
         if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
             try {
-                console.log("Attempting to sign transaction: " + UTF8ToString(inputTransaction));
-            
                 const {signature} = await window.phantom.solana.request({
-                    method: "signAndSendTransaction",
+                    method: 'signAndSendTransaction',
                     params: {
                         message: UTF8ToString(inputTransaction),
                     },
                 });
 
-                console.log("Signed and send resulting in signature: " + signature);
+                console.log('Signed and send resulting in signature: ' + signature);
 
                 window.unityInstance.SendMessage('PhantomWallet', 'OnTransactionSignedAndSent', signature);
             } catch (err) {
+                window.alert('Phantom error: ' + err.message);
                 console.error(err.message);
             }
         } else {
-            window.alert("Please install phantom browser extension.");
+            window.alert('Please install phantom browser extension.');
         }
     },
 

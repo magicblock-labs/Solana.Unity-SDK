@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net.Http;
 using System.Text;
@@ -107,7 +108,7 @@ namespace Solana.Unity.SDK
 #endif
 
 #if UNITY_IOS || UNITY_ANDROID
-            throw new NotImplementedException();
+            DeeplinkSignTransaction(transaction);
 #endif
 
             return _signedTransactionTaskCompletionSource.Task;
@@ -166,6 +167,33 @@ namespace Solana.Unity.SDK
             return buffer;
         }
 
+        private void DeeplinkSignTransaction(Transaction transaction)
+        {
+            currentTransaction = transaction;
+            string redirectUri = $"{DeeplinkUrlSceme}://transactionSigned";
+
+            byte[] serializedTransaction = transaction.Serialize();
+            string base58Transaction = Base58Encoding.Encode(serializedTransaction);
+
+            PhantomTransactionPayload transactionPayload = new PhantomTransactionPayload(base58Transaction, _sessionId);
+            string transactionPayloadJson = JsonUtility.ToJson(transactionPayload);
+
+            byte[] bytesJson = Encoding.UTF8.GetBytes(transactionPayloadJson);
+
+            byte[] randomNonce = GenerateRandomBytes(24);
+
+            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(bytesJson, randomNonce,
+                Base58Encoding.Decode(_phantomEncryptionPubKey), _localKeyPairForPhantomConnection.PrivateKey);
+
+            string base58Payload = Base58Encoding.Encode(encryptedMessage);
+
+            string url =
+                $"https://phantom.app/ul/v1/signTransaction?dapp_encryption_public_key={_base58PublicKey}&redirect_link={redirectUri}&nonce={Base58Encoding.Encode(randomNonce)}&payload={base58Payload}&cluster={GetClusterString()}";
+
+            Debug.Log(url);
+            Application.OpenURL(url);
+        }
+
         private void DeeplinkSignAndSendTransaction(Transaction transaction)
         {
             string redirectUri = $"{DeeplinkUrlSceme}://transactionSuccessful";
@@ -200,6 +228,12 @@ namespace Solana.Unity.SDK
             if (url.Contains("transactionSuccessful"))
             {
                 ParseSuccessfulTransaction(url);
+                return;
+            }
+
+            if (url.Contains("transactionSigned"))
+            {
+                ParseSuccessfullySignedTransaction(url);
                 return;
             }
 
@@ -256,6 +290,34 @@ namespace Solana.Unity.SDK
             }
         }
 
+        private void ParseSuccessfullySignedTransaction(string url)
+        {
+            string phantomResponse = url.Split("?"[0])[1];
+
+            NameValueCollection result = HttpUtility.ParseQueryString(phantomResponse);
+            string nonce = result.Get("nonce");
+            string data = result.Get("data");
+            string errorMessage = result.Get("errorMessage");
+
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
+                return;
+            }
+
+            byte[] uncryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(Base58Encoding.Decode(data),
+                Base58Encoding.Decode(nonce), Base58Encoding.Decode(_phantomEncryptionPubKey),
+                _localKeyPairForPhantomConnection.PrivateKey);
+
+            string bytesToUtf8String = Encoding.UTF8.GetString(uncryptedMessage);
+            
+            PhantomWalletTransactionSignedSuccessfully success =
+                JsonUtility.FromJson<PhantomWalletTransactionSignedSuccessfully>(bytesToUtf8String);
+            
+            var base58TransBytes = Base58Encoding.Decode(success.transaction);
+            _signedTransactionTaskCompletionSource.SetResult(base58TransBytes);
+        }
+        
         private void ParseSuccessfulTransaction(string url)
         {
             string phantomResponse = url.Split("?"[0])[1];
@@ -367,6 +429,12 @@ namespace Solana.Unity.SDK
         public class PhantomWalletTransactionSuccessful
         {
             public string signature;
+        }
+        
+        [Serializable]
+        public class PhantomWalletTransactionSignedSuccessfully
+        {
+            public string transaction;
         }
     }
 }
