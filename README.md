@@ -1,8 +1,19 @@
-[![Licence](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/garbles-labs/Solana.Unity-SDK/blob/master/LICENSE)
-[![Issues](https://img.shields.io/github/issues/garbles-labs/Solana.Unity-SDK)](https://github.com/garbles-labs/Solana.Unity-SDK/issues)
-[![Discord](https://img.shields.io/discord/943797222162726962)](https://discord.gg/MBkdC3gxcv)
+<div align="center">
+  <img height="170x" src="https://i.imgur.com/UvulxS0.png" />
 
-# Solana.Unity-SDK
+  <h1>Solana.Unity SDK</h1>
+
+  <p>
+    <strong>Solana.Unity integration Framework</strong>
+  </p>
+
+  <p>
+    <a href="https://developers.garbles.fun"><img alt="Tutorials" src="https://img.shields.io/badge/docs-tutorials-blueviolet" /></a>
+    <a href="https://github.com/garbles-labs/Solana.Unity-SDK/issues"><img alt="Issues" src="https://img.shields.io/github/issues/garbles-labs/Solana.Unity-SDK?color=blueviolet" /></a>
+    <a href="https://discord.gg/PDeRXyVURd"><img alt="Discord Chat" src="https://img.shields.io/discord/943797222162726962?color=blueviolet" /></a>
+    <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/github/license/garbles-labs/Solana.Unity-SDK?color=blueviolet" /></a>
+  </p>
+</div>
   
 Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 (Unity compatible) with full RPC API coverage.
 
@@ -339,8 +350,16 @@ private static Texture2D Resize(Texture2D texture2D, int targetX, int targetY)
 ```C#
 Texture2D compressedTexture = Resize(texture, 75, 75);
 ```
-## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/bmresearch/Solnet/blob/master/LICENSE) file for details
+## Contribution
 
-![Twitter Follow](https://img.shields.io/twitter/follow/garblesfun)
+Thank you for your interest in contributing to Solana.Unity-SDK!
+Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) to learn how or reach out on Discord.
+
+### Thanks 💜
+
+<div align="center">
+  <a href="https://github.com/garbles-labs/Solana.Unity-SDK/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=garbles-labs/Solana.Unity-SDK" width="100%" />
+  </a>
+</div>
