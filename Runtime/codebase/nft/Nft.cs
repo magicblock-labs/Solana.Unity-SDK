@@ -85,10 +85,10 @@ namespace Solana.Unity.SDK.Nft
             var jsonData = await FileLoader.LoadFile<MetaplexJsonData>(met.data.url);
 
             var nftImage = new NftImage();
-            var texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
             if (jsonData != null)
             {
                 met.data.json = jsonData;
+                var texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
                 var compressedTexture = Resize(texture, 75, 75);
                 FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
                 if (compressedTexture)
