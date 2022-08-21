@@ -30,3 +30,9 @@ test-results/
 
 /BUILD/
 *.DS_store
+
+CODE_OF_CONDUCT.md.meta
+CONTRIBUTING.md.meta
+LICENSE.meta
+README.md.meta
+package.json.meta
