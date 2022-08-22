@@ -64,7 +64,7 @@ namespace Solana.Unity.SDK.Example
 
             logout_btn.onClick.AddListener(() =>
             {
-                SimpleWallet.Instance.Logout();
+                SimpleWallet.Instance.Wallet.Logout();
                 manager.ShowScreen(this, "login_screen");
                 if(parentManager != null)
                     parentManager.ShowScreen(this, "[Connect_Wallet_Screen]");
@@ -72,12 +72,12 @@ namespace Solana.Unity.SDK.Example
 
             save_private_key_btn.onClick.AddListener(() => 
             {
-                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Account.PrivateKey, false);
+                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Wallet.Account.PrivateKey, false);
             });
 
             save_mnemonics_btn.onClick.AddListener(() =>
             {
-                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.Instance.Mnemonic.ToString(), false);
+                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.Instance.Wallet.Mnemonic.ToString(), false);
             });
 
             _txtLoader.TxtSavedAction += SaveMnemonicsOnClick;
@@ -155,17 +155,17 @@ namespace Solana.Unity.SDK.Example
 
         private async void UpdateWalletBalanceDisplay()
         {
-            if (SimpleWallet.Instance.Account is null) return;
+            if (SimpleWallet.Instance.Wallet.Account is null) return;
 
-            double sol = await SimpleWallet.Instance.GetBalance();
-            if (SimpleWallet.Instance.Account is null) return;
+            double sol = await SimpleWallet.Instance.Wallet.GetBalance();
+            if (SimpleWallet.Instance.Wallet.Account is null) return;
             MainThreadDispatcher.Instance().Enqueue(() => { lamports.text = $"{sol}"; });
         }
 
         private void DisconnectToWebSocket()
         {
             MainThreadDispatcher.Instance().Enqueue(() => { manager.ShowScreen(this, "login_screen"); });
-            MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.Instance.Logout(); });
+            MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.Instance.Wallet.Logout(); });
         }
 
         public override void ShowScreen(object data = null)
@@ -185,14 +185,14 @@ namespace Solana.Unity.SDK.Example
         private async Task GetOwnedTokenAccounts()
         {
             DisableTokenItems();
-            var result = await SimpleWallet.Instance.GetTokenAccounts();
+            var result = await SimpleWallet.Instance.Wallet.GetTokenAccounts();
 
             if (result is {Length: > 0})
             {
                 foreach (var item in result)
                 {
                     if (!(float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)) continue;
-                    var nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.Instance.ActiveRpcClient);
+                    var nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.Instance.Wallet.ActiveRpcClient);
 
                     var tk = Instantiate(tokenItem, tokenContainer, true);
                     tk.transform.localScale = Vector3.one;

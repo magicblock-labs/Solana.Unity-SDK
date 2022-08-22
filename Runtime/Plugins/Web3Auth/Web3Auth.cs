@@ -234,7 +234,6 @@ public class Web3Auth: MonoBehaviour
             throw new UnKnownException(queryParameters["error"]);
 
         this.web3AuthResponse = JsonConvert.DeserializeObject<Web3AuthResponse>(Encoding.UTF8.GetString(Utils.DecodeBase64(hash)));
-        Solana.Unity.SDK.Web3AuthWallet.setPrivKeys(this.web3AuthResponse.privKey, this.web3AuthResponse.ed25519PrivKey);
         if (!string.IsNullOrEmpty(this.web3AuthResponse.error))
             throw new UnKnownException(web3AuthResponse.error);
 
