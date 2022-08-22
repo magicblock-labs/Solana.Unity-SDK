@@ -17,23 +17,17 @@ namespace Solana.Unity.SDK.Example
         public Button _createNewWalletBtn;
         public Button _loginToWalletBtn;
         public Button _loginBtn;
+        public Button _loginBtnGoogle;
+        public Button _loginBtnTwitter;
         public Button _tryAgainBtn;
         public Button _backBtn;
         public TextMeshProUGUI _messageTxt;
 
-        public List<GameObject> _panels = new List<GameObject>();
-        public SimpleScreenManager parentManager;
-
-        private string _password;
-        private string _mnemonics;
-        private string _path;
-        private string _pubKey;
-        private string[] _paths;
-        private string _loadedKey;
+        public List<GameObject> _panels = new();
 
         private void OnEnable()
         {
-            _passwordInputField.text = String.Empty;
+            _passwordInputField.text = string.Empty;
         }
 
         private void Start()
@@ -62,7 +56,7 @@ namespace Solana.Unity.SDK.Example
             {
                 _createNewWalletBtn.onClick.AddListener(() =>
                 {
-                    SimpleWallet.Instance.Logout();
+                    SimpleWallet.Instance.Wallet.Logout();
                     manager.ShowScreen(this, "generate_screen");
                     SwitchPanels(0);
                 });
@@ -71,6 +65,8 @@ namespace Solana.Unity.SDK.Example
             _passwordInputField.onSubmit.AddListener(delegate { LoginChecker(); });
 
             _loginBtn.onClick.AddListener(LoginChecker);
+            _loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
+            _loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             _tryAgainBtn.onClick.AddListener(() => { SwitchButtons("Login"); });  
 
             if(_messageTxt != null)
@@ -79,12 +75,22 @@ namespace Solana.Unity.SDK.Example
 
         private async void LoginChecker()
         {
-            string password = _passwordInputField.text;
-            Account account = await SimpleWallet.Instance.Login(password);
+            var password = _passwordInputField.text;
+            var account = await SimpleWallet.Instance.LoginInGameWallet(password);
+            CheckAccount(account);
+        }
+        
+        private async void LoginCheckerWeb3Auth(Provider provider)
+        {
+            var account = await SimpleWallet.Instance.LoginInWeb3Auth(provider);
+            CheckAccount(account);
+        }
+
+
+        private void CheckAccount(Account account)
+        {
             if (account != null)
             {
-                //SimpleWallet.instance.GenerateWalletWithMenmonic(_simpleWallet.LoadPlayerPrefs(_simpleWallet.MnemonicsKey));
-                //MainThreadDispatcher.Instance().Enqueue(() => { _simpleWallet.StartWebSocketConnection(); }); 
                 manager.ShowScreen(this, "wallet_screen");
                 gameObject.SetActive(false);
             }
@@ -141,7 +147,6 @@ namespace Solana.Unity.SDK.Example
         {
             var loader = new WWW(url);
             yield return loader;
-            _loadedKey = loader.text;
 
             //LoginWithPrivateKeyCallback();
         }

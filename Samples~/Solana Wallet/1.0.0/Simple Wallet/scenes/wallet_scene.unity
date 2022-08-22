@@ -235,6 +235,17 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &869552179 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6345655735037535353, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+  m_PrefabInstance: {fileID: 1849478902}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &946084034 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3221901485428508570, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
@@ -328,6 +339,17 @@ Transform:
 --- !u!114 &1184452919 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3221901485486836364, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+  m_PrefabInstance: {fileID: 1849478902}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1524734590 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4488629309861401148, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
   m_PrefabInstance: {fileID: 1849478902}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -646,6 +668,14 @@ PrefabInstance:
       propertyPath: m_FontData.m_FontStyle
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3221901486450247306, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: _loginBtnGoogle
+      value: 
+      objectReference: {fileID: 1524734590}
+    - target: {fileID: 3221901486450247306, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: _loginBtnTwitter
+      value: 
+      objectReference: {fileID: 869552179}
     - target: {fileID: 3221901486450247308, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1071,12 +1101,20 @@ PrefabInstance:
       value: https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/
       objectReference: {fileID: 0}
     - target: {fileID: 2887869531870850219, guid: 8eb765922c6c37d49b885282538d2b8e, type: 3}
+      propertyPath: rpcCluster
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2887869531870850219, guid: 8eb765922c6c37d49b885282538d2b8e, type: 3}
       propertyPath: clientSource
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2887869531870850219, guid: 8eb765922c6c37d49b885282538d2b8e, type: 3}
       propertyPath: webSocketService
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2887869531870850219, guid: 8eb765922c6c37d49b885282538d2b8e, type: 3}
+      propertyPath: Wallet.rpcCluster
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8eb765922c6c37d49b885282538d2b8e, type: 3}

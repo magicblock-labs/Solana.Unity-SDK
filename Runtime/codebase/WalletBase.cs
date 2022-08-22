@@ -8,7 +8,6 @@ using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
-using UnityEngine;
 
 namespace Solana.Unity.SDK
 {
@@ -17,31 +16,34 @@ namespace Solana.Unity.SDK
         MainNet = 0,
         DevNet = 1,
         TestNet = 2,
-        Custom
+        Custom = 3
     }
 
-    public abstract class WalletBase : MonoBehaviour, WalletBaseInterface
+    public abstract class WalletBase : IWalletBase
     {
         private const long SolLamports = 1000000000;
-        public RpcCluster rpcCluster = RpcCluster.DevNet;
+        private readonly RpcCluster _rpcCluster;
+
         private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
         {
             { 0, Cluster.MainNet },
             { 1, Cluster.DevNet },
             { 2, Cluster.TestNet }
         };
-        [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
-        public string customRpc;
-        public bool autoConnectOnStartup;
+
+        private readonly string _customRpc;
+
         private IRpcClient _activeRpcClient;
         public IRpcClient ActiveRpcClient {
             get => StartConnection();
             private set => _activeRpcClient = value; }
         public Account Account { get;private set; }
         public Mnemonic Mnemonic { get;protected set; }
-        
-        public virtual void Awake()
+
+        protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, bool autoConnectOnStartup = false)
         {
+            _rpcCluster = rpcCluster;
+            _customRpc = customRpc;
             if (autoConnectOnStartup)
             {
                 StartConnection();
@@ -206,13 +208,13 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                if (_activeRpcClient == null && rpcCluster != RpcCluster.Custom)
+                if (_activeRpcClient == null && _rpcCluster != RpcCluster.Custom)
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)rpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)_rpcCluster]);
                 }
-                if (_activeRpcClient == null && rpcCluster == RpcCluster.Custom)
+                if (_activeRpcClient == null && _rpcCluster == RpcCluster.Custom)
                 {
-                    _activeRpcClient = ClientFactory.GetClient(customRpc);
+                    _activeRpcClient = ClientFactory.GetClient(_customRpc);
                 }
 
                 return _activeRpcClient;

@@ -14,7 +14,7 @@ public class ReceiveScreen : SimpleScreen
     private void Start()
     {
         airdrop_btn.onClick.AddListener(async () => {
-            await SimpleWallet.Instance.RequestAirdrop();
+            await SimpleWallet.Instance.Wallet.RequestAirdrop();
         });
 
         close_btn?.onClick.AddListener(() =>
@@ -31,17 +31,17 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQR();
-        publicKey_txt.text = SimpleWallet.Instance.Account.PublicKey;
+        publicKey_txt.text = SimpleWallet.Instance.Wallet.Account.PublicKey;
     }
 
     private void CheckAndToggleAirdrop()
     {
-        airdrop_btn.gameObject.SetActive(!SimpleWallet.Instance.ActiveRpcClient.ToString().Contains("api.mainnet"));
+        airdrop_btn.gameObject.SetActive(!SimpleWallet.Instance.Wallet.ActiveRpcClient.ToString().Contains("api.mainnet"));
     }
 
     private void GenerateQR()
     {
-        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.Instance.Account.PublicKey, 256, 256);
+        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.Instance.Wallet.Account.PublicKey, 256, 256);
         qrCode_img.texture = tex;
     }
 

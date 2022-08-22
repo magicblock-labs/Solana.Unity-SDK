@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+using Solana.Unity.Wallet;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Example
@@ -5,14 +7,24 @@ namespace Solana.Unity.SDK.Example
     public enum StorageMethod { JSON, SimpleTxt }
     
     [RequireComponent(typeof(MainThreadDispatcher))]
-    public class SimpleWallet : InGameWallet
+    public class SimpleWallet : MonoBehaviour
     {
-        public StorageMethod storageMethod;
-        private const string StorageMethodStateKey = "StorageMethodKey";
+        public RpcCluster rpcCluster = RpcCluster.DevNet;
+        [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
+        public string customRpc;
+        public bool autoConnectOnStartup;
         
+        public StorageMethod storageMethod;
+        
+        public Web3AuthWalletOptions Web3AuthWalletOptions;
+        
+        private const string StorageMethodStateKey = "StorageMethodKey";
+
+        public WalletBase Wallet;
+
         public static SimpleWallet Instance;
 
-        public override void Awake()
+        public void Awake()
         {
             if (Instance == null)
             {
@@ -24,12 +36,36 @@ namespace Solana.Unity.SDK.Example
             }
         }
 
-        private void Start()
+        public async Task<Account> LoginInGameWallet(string password)
+        {
+            var inGameWallet = new InGameWallet(rpcCluster, customRpc, autoConnectOnStartup);
+            var acc = await inGameWallet.Login(password);
+            if (acc != null)
+                Wallet = inGameWallet;
+            return acc;
+        }
+        
+        public async Task<Account> CreateAccount(string mnemonic, string password)
+        {
+            Wallet = new InGameWallet(rpcCluster, customRpc, autoConnectOnStartup);
+            return await Wallet.CreateAccount( mnemonic, password);
+        }
+        
+        public async Task<Account> LoginInWeb3Auth(Provider provider)
+        {
+            var web3AuthWallet = new Web3AuthWallet(Web3AuthWalletOptions, rpcCluster, customRpc, autoConnectOnStartup);
+            var acc = await web3AuthWallet.LoginWithProvider(provider);
+            if (acc != null)
+                Wallet = web3AuthWallet;
+            return acc;
+        }
+
+        public void Start()
         {
             ChangeState(storageMethod.ToString());
             if (PlayerPrefs.HasKey(StorageMethodStateKey))
             {
-                string storageMethodString = LoadPlayerPrefs(StorageMethodStateKey);
+                var storageMethodString = LoadPlayerPrefs(StorageMethodStateKey);
 
                 if(storageMethodString != storageMethod.ToString())
                 {
@@ -72,6 +108,5 @@ namespace Solana.Unity.SDK.Example
             return PlayerPrefs.GetString(key);
         }
         #endregion
-
     }
 }
