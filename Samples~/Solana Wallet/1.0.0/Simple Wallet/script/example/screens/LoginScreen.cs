@@ -71,6 +71,14 @@ namespace Solana.Unity.SDK.Example
 
             if(_messageTxt != null)
                 _messageTxt.gameObject.SetActive(false);
+            
+            if (Application.platform != RuntimePlatform.Android && 
+                Application.platform != RuntimePlatform.IPhonePlayer
+                && Application.platform != RuntimePlatform.WindowsPlayer)
+            {
+                _loginBtnGoogle.gameObject.SetActive(false);
+                _loginBtnTwitter.gameObject.SetActive(false);
+            }
         }
 
         private async void LoginChecker()
