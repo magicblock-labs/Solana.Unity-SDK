@@ -74,7 +74,10 @@ namespace Solana.Unity.SDK.Example
             
             if (Application.platform != RuntimePlatform.Android && 
                 Application.platform != RuntimePlatform.IPhonePlayer
-                && Application.platform != RuntimePlatform.WindowsPlayer)
+                && Application.platform != RuntimePlatform.WindowsPlayer
+                && Application.platform != RuntimePlatform.LinuxEditor
+                && Application.platform != RuntimePlatform.WindowsEditor
+                && Application.platform != RuntimePlatform.OSXEditor)
             {
                 _loginBtnGoogle.gameObject.SetActive(false);
                 _loginBtnTwitter.gameObject.SetActive(false);
