@@ -52,11 +52,17 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 ## Installation
 
-1. Go to Window/Package Manager
-2. Click on the plus in the top left corner and select "Add package from git URL"
-3. Insert the repo git URL: https://github.com/garbles-labs/Solana.Unity-SDK.git and click "Add"
-4. Once the package is installed, in the Package Manager inspector you will have Samples. Click on Import
-5. You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.1/Simple Wallet/Solana Wallet/1.0.0/Simple Wallet/scenes/wallet_scene.unity`
+* Open [Unity Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) window.
+* Click the add **+** button in the status bar.
+* The options for adding packages appear.
+* Select Add package from git URL from the add menu. A text box and an Add button appear.
+* Enter the `https://github.com/garbles-labs/Solana.Unity-SDK.git` Git URL in the text box and click Add.
+* You may also install a specific package version by using the URL with the specified version.
+  * `https://github.com/garbles-labs/Solana.Unity-SDK.git#X.Y.X`
+  * Please note that the version `X.Y.Z` stated here is to be replaced with the version you would like to get.
+  * You can find all the available releases [here](https://github.com/garbles-labs/Solana.Unity-SDK.git/releases).
+  * The latest available release version is [![Last Release](https://img.shields.io/github/v/release/garbles-labs/Solana.Unity-SDK)](https://github.com/Sgarbles-labs/Solana.Unity-SDK/releases/latest)
+* You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.1/Simple Wallet/Solana Wallet/1.0.0/Simple Wallet/scenes/wallet_scene.unity`
 
 ## Step-by-step instructions
 1. If you have an older version of Unity that doesn't have imported Newtonsoft.Json just import it.
