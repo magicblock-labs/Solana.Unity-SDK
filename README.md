@@ -26,6 +26,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 ## Features
 - Full JSON RPC API coverage
 - Wallet and accounts: Set up of a non-custodial Solana wallet in Unity (sollet and solana-keygen compatible)
+- Web3auth support (non-custodial signup/login through social accounts)
 - Transaction decoding from base64 and wire format and encoding back into wire format
 - Message decoding from base64 and wire format and encoding back into wire format
 - Instruction decompilation 
@@ -33,7 +34,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Basic UI examples 
 
 ## Upcoming
-- Wallet support for SMS, Phantom and Web3auth support. 
+- Wallet support for SMS and Phantom 
 - Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
 
 ## Dependencies
