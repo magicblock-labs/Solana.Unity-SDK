@@ -67,12 +67,9 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 ## Step-by-step instructions
 1. If you have an older version of Unity that doesn't have imported Newtonsoft.Json just import it.
-2. After importing the wallet Unity will throw unity-plastic error. Just restart Unity.
-3. Create a new scene.
-4. Import WalletController prefab into your scene.
-5. Set Client Source (Mainnet/Testnet/Devnet/Custom uri) and Storage Method (Json/Simple txt) on SimpleWallet script in WalletController prefab.
-6. If you use custom URI be careful to use WS/WSS instead of HTTP/HTTPS because WebSocket does not work with HTTP / HTTPS.
-7. To save mnemonics in JSON format, select the JSON storage method, and if you want to save it as a regular string, select Simple Txt.
-8. If you want to use mnemonics saved in JSON format, you must deserialize it first. You have an example in ReGenerateAccountScreen.cs in the ResolveMnemonicsByType method.
-9. Create new Canvas
-10. Import WalletHolder prefab into the Canvas or if you want your design just import wallet prefab and customize the scene like we did with WalletHolder.
+2. Create a new scene.
+3. Import WalletController prefab into your scene.
+4. Set RPC Cluster (Mainnet/Testnet/Devnet/Custom uri) on SimpleWallet script in WalletController prefab.
+5. If you use custom URI be careful to use WS/WSS instead of HTTP/HTTPS because WebSocket does not work with HTTP / HTTPS.
+6. Create new Canvas
+7. Import WalletHolder prefab into the Canvas or if you want your design just import wallet prefab and customize the scene.
