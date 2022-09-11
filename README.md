@@ -58,6 +58,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 * The options for adding packages appear.
 * Select Add package from git URL from the add menu. A text box and an Add button appear.
 * Enter the `https://github.com/garbles-labs/Solana.Unity-SDK.git` Git URL in the text box and click Add.
+* Once the package is installed, in the Package Manager inspector you will have Samples. Click on Import
 * You may also install a specific package version by using the URL with the specified version.
   * `https://github.com/garbles-labs/Solana.Unity-SDK.git#X.Y.X`
   * Please note that the version `X.Y.Z` stated here is to be replaced with the version you would like to get.
