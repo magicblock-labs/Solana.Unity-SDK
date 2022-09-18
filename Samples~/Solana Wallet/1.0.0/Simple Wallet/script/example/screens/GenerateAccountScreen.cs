@@ -111,7 +111,7 @@ namespace Solana.Unity.SDK.Example
 
         private void SaveMnemonicsToTxtFile(string path, string mnemonics, string fileTitle)
         {
-            if (!this.gameObject.activeSelf) return;
+            if (!gameObject.activeSelf) return;
             if (fileTitle != _mnemonicsFileTitle) return;
 
             if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.JSON)

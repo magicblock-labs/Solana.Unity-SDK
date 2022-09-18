@@ -13,6 +13,12 @@ namespace Solana.Unity.SDK
     {
         private const string EncryptedKeystoreKey = "EncryptedKeystore";
 
+        public InGameWallet(RpcCluster rpcCluster = RpcCluster.DevNet, 
+            string customRpc = null, 
+            bool autoConnectOnStartup = false) : base(rpcCluster, customRpc, autoConnectOnStartup)
+        {
+        }
+
         /// <inheritdoc />
         protected override Task<Account> _Login(string password = "")
         {
@@ -23,7 +29,7 @@ namespace Solana.Unity.SDK
             {
                 decryptedKeystore = keystoreService.DecryptKeyStoreFromJson(password, encryptedKeystoreJson);
             }
-            catch (Exception e)
+            catch (DecryptionException)
             {
                 return Task.FromResult<Account>(null);
             }
@@ -55,10 +61,10 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public override Task<byte[]> SignTransaction(Transaction transaction)
+        public override Task<Transaction> SignTransaction(Transaction transaction)
         {
             transaction.Sign(Account);
-            return Task.FromResult(transaction.Serialize());
+            return Task.FromResult(transaction);
         }
 
         private static string LoadPlayerPrefs(string key)

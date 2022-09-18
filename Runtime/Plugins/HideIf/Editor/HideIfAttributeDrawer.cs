@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using HideIf_Utilities;
+
 
 public abstract class HidingAttributeDrawer : PropertyDrawer {
 
@@ -189,4 +191,5 @@ public class HideIfEnumValueAttributeDrawer : HidingAttributeDrawer {
         return equal != hideIfEnumValueAttribute.hideIfEqual;
     }
 }
+
 #endif

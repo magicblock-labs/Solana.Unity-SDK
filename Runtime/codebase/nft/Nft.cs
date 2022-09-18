@@ -14,7 +14,7 @@ using Solana.Unity.Wallet.Utilities;
 
 namespace Solana.Unity.SDK.Nft
 {
-    [System.Serializable]
+    [Serializable]
     public class NftImage : iNftFile<Texture2D>
     {
         public string name { get; set; }
@@ -32,7 +32,7 @@ namespace Solana.Unity.SDK.Nft
         //}
     }
 
-    [System.Serializable]
+    [Serializable]
     public class Nft
     {
         public Metaplex metaplexData;
@@ -46,14 +46,14 @@ namespace Solana.Unity.SDK.Nft
 
         public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection) {
             
-            AccountInfo data = await AccountUtility.GetAccountData(mint, connection);
+            var data = await GetAccountData(mint, connection);
 
             Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(data));
 
-            if (data != null && data.Data != null && data.Data.Count > 0)
+            var accountLayout = AccountLayout.DeserializeAccountLayout(data.Data[0]);
+            if (data is {Data: {Count: > 0}})
             {
-                AccountLayout accountlayout = AccountLayout.DeserializeAccountLayout(data.Data[0]);
-                Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountlayout));
+                Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountLayout));
             }
 
             return null;
@@ -68,47 +68,40 @@ namespace Solana.Unity.SDK.Nft
         /// <returns></returns>
         public static async Task<Nft> TryGetNftData(string mint, IRpcClient connection, bool tryUseLocalContent = true)
         {
-            PublicKey metaplexDataPubKey = FindProgramAddress(mint);
+            var metaplexDataPubKey = FindProgramAddress(mint);
 
-            if (metaplexDataPubKey != null)
-            {
-                AccountInfo data = await AccountUtility.GetAccountData(metaplexDataPubKey.Key, connection);
-
-                if (tryUseLocalContent)
-                { 
-                    Nft nft = TryLoadNftFromLocal(mint);
-                    if (nft != null)
-                    {
-                        return nft;
-                    }
-                }
-
-                if (data != null && data.Data != null && data.Data.Count > 0)
+            var data = await GetAccountData(metaplexDataPubKey.Key, connection);
+            if (tryUseLocalContent)
+            { 
+                var nft = TryLoadNftFromLocal(mint);
+                if (nft != null)
                 {
-                    Metaplex met = new Metaplex().ParseData(data.Data[0]);
-                    MetaplexJsonData jsonData = await Solana.Unity.SDK.Utility.FileLoader.LoadFile<MetaplexJsonData>(met.data.url);
-
-                    if (jsonData != null)
-                    {
-                        met.data.json = jsonData;
-                        Texture2D texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
-                        Texture2D compressedTexture = Resize(texture, 75, 75);
-                        FileLoader.SaveToPersistenDataPath<Texture2D>(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
-                        if (compressedTexture)
-                        {
-                            NftImage nftImage = new NftImage();
-                            nftImage.externalUrl = jsonData.image;
-                            //nftImage.file = Resize(texture, nftImage.heightAndWidth, nftImage.heightAndWidth);
-                            nftImage.file = compressedTexture;
-                            met.nftImage = nftImage;
-                        }
-                    }
-                    Nft newNft = new Nft(met);
-                    FileLoader.SaveToPersistenDataPath<Nft>(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft);
-                    return newNft;
+                    return nft;
                 }
             }
-            return null;
+
+            if (data?.Data == null || data.Data.Count <= 0) return null;
+            var met = new Metaplex().ParseData(data.Data[0]);
+            var jsonData = await FileLoader.LoadFile<MetaplexJsonData>(met.data.url);
+
+            var nftImage = new NftImage();
+            if (jsonData != null)
+            {
+                met.data.json = jsonData;
+                var texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
+                var compressedTexture = Resize(texture, 75, 75);
+                FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
+                if (compressedTexture)
+                {
+                    nftImage.externalUrl = jsonData.image;
+                    //nftImage.file = Resize(texture, nftImage.heightAndWidth, nftImage.heightAndWidth);
+                    nftImage.file = compressedTexture;
+                    met.nftImage = nftImage;
+                }
+            }
+            var newNft = new Nft(met);
+            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft);
+            return newNft;
         }
 
         /// <summary>
@@ -118,20 +111,18 @@ namespace Solana.Unity.SDK.Nft
         /// <returns></returns>
         public static Nft TryLoadNftFromLocal(string mint)
         {
-            Nft local = FileLoader.LoadFileFromLocalPath<Nft>($"{Path.Combine(Application.persistentDataPath, mint)}.json");
+            var local = FileLoader.LoadFileFromLocalPath<Nft>($"{Path.Combine(Application.persistentDataPath, mint)}.json");
 
-            if (local != null)
+            if (local == null) return null;
+            var tex = FileLoader.LoadFileFromLocalPath<Texture2D>($"{Path.Combine(Application.persistentDataPath, mint)}.png");
+            if (tex)
             {
-                Texture2D tex = FileLoader.LoadFileFromLocalPath<Texture2D>($"{Path.Combine(Application.persistentDataPath, mint)}.png");
-                if (tex)
-                {
-                    local.metaplexData.nftImage = new NftImage();
-                    local.metaplexData.nftImage.file = tex;
-                }
-                else
-                {
-                    return null;
-                }
+                local.metaplexData.nftImage = new NftImage();
+                local.metaplexData.nftImage.file = tex;
+            }
+            else
+            {
+                return null;
             }
 
             return local;
@@ -141,14 +132,13 @@ namespace Solana.Unity.SDK.Nft
         /// Returns public key of nft
         /// </summary>
         /// <param name="seed"></param>
-        /// <param name="programId"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static PublicKey CreateAddress(List<byte[]> seed, string programId)
+        public static PublicKey CreateAddress(List<byte[]> seed)
         {
-            List<byte> buffer = new List<byte>();
+            var buffer = new List<byte>();
 
-            foreach (byte[] item in seed)
+            foreach (var item in seed)
             {
                 if (item.Length > 32)
                 {
@@ -159,18 +149,18 @@ namespace Solana.Unity.SDK.Nft
             }
 
             buffer.AddRange(seed[1]);
-            byte[] derive = Encoding.UTF8.GetBytes("ProgramDerivedAddress");
+            var derive = Encoding.UTF8.GetBytes("ProgramDerivedAddress");
             buffer.AddRange(derive);
 
-            SHA256 sha256 = SHA256.Create();
-            byte[] hash1 = sha256.ComputeHash(buffer.ToArray());
+            var sha256 = SHA256.Create();
+            var hash1 = sha256.ComputeHash(buffer.ToArray());
 
             if (hash1.IsOnCurve())
             {
                 throw new Exception("Not on curve");
             }
 
-            PublicKey publicKey = new PublicKey(hash1);
+            var publicKey = new PublicKey(hash1);
             return publicKey;
         }
 
@@ -197,13 +187,12 @@ namespace Solana.Unity.SDK.Nft
                 try
                 {
                     seeds[3] = new[] { (byte)nonce };
-                    publicKey = CreateAddress(seeds, programId);
+                    publicKey = CreateAddress(seeds);
                     return publicKey;
                 }
                 catch
                 {
                     nonce--;
-                    continue;
                 }
             }
 
@@ -232,7 +221,6 @@ namespace Solana.Unity.SDK.Nft
             {
                 client.Dispose();
                 return default;
-                throw;
             }
         }
         /// <summary>
@@ -242,7 +230,7 @@ namespace Solana.Unity.SDK.Nft
         /// <param name="targetX"> Target width</param>
         /// <param name="targetY"> Target height</param>
         /// <returns></returns>
-        private static Texture2D Resize(Texture2D texture2D, int targetX, int targetY)
+        private static Texture2D Resize(Texture texture2D, int targetX, int targetY)
         {
             RenderTexture rt = new RenderTexture(targetX, targetY, 24);
             RenderTexture.active = rt;
@@ -251,6 +239,18 @@ namespace Solana.Unity.SDK.Nft
             result.ReadPixels(new Rect(0, 0, targetX, targetY), 0, 0);
             result.Apply();
             return result;
+        }
+        
+        /// <summary>
+        /// Get AccountData
+        /// </summary>
+        /// <param name="accountPublicKey"></param>
+        /// <param name="rpcClient"></param>
+        /// <returns></returns>
+        public static async Task<AccountInfo> GetAccountData(string accountPublicKey, IRpcClient rpcClient)
+        {
+            var result = await rpcClient.GetAccountInfoAsync(accountPublicKey);
+            return result.Result is {Value: { }} ? result.Result.Value : null;
         }
     }
 }

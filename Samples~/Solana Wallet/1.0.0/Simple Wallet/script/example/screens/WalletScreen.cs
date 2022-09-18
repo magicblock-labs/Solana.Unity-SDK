@@ -1,4 +1,5 @@
-﻿using Solana.Unity.Rpc.Models;
+﻿using System;
+using Solana.Unity.Rpc.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -22,8 +23,9 @@ namespace Solana.Unity.SDK.Example
         public Button logout_btn;
         public Button save_mnemonics_btn;
         public Button save_private_key_btn;
-
-        public List<TokenItem> token_items;
+        
+        public GameObject tokenItem;
+        public Transform tokenContainer;
 
         public KnownTokens knownTokens;
         public SimpleScreenManager parentManager;
@@ -31,12 +33,14 @@ namespace Solana.Unity.SDK.Example
         private TxtLoader _txtLoader;
         private CancellationTokenSource stopTask;
 
-        private string _mnemonicsFileTitle = "Mnemonics";
-        private string _privateKeyFileTitle = "PrivateKey";
+        private const string _mnemonicsFileTitle = "Mnemonics";
+        private const string _privateKeyFileTitle = "PrivateKey";
+        private List<GameObject> _instantiatedTokens;
 
         void Start()
         {
             _txtLoader = GetComponent<TxtLoader>();
+            _instantiatedTokens = new List<GameObject>();
             WebSocketActions.WebSocketAccountSubscriptionAction += (bool istrue) => 
             {
                 MainThreadDispatcher.Instance().Enqueue(() => { UpdateWalletBalanceDisplay(); });
@@ -60,7 +64,7 @@ namespace Solana.Unity.SDK.Example
 
             logout_btn.onClick.AddListener(() =>
             {
-                SimpleWallet.Instance.Logout();
+                SimpleWallet.Instance.Wallet.Logout();
                 manager.ShowScreen(this, "login_screen");
                 if(parentManager != null)
                     parentManager.ShowScreen(this, "[Connect_Wallet_Screen]");
@@ -68,12 +72,12 @@ namespace Solana.Unity.SDK.Example
 
             save_private_key_btn.onClick.AddListener(() => 
             {
-                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Account.PrivateKey, false);
+                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Wallet.Account.PrivateKey, false);
             });
 
             save_mnemonics_btn.onClick.AddListener(() =>
             {
-                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.Instance.Mnemonic.ToString(), false);
+                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.Instance.Wallet.Mnemonic.ToString(), false);
             });
 
             _txtLoader.TxtSavedAction += SaveMnemonicsOnClick;
@@ -151,26 +155,25 @@ namespace Solana.Unity.SDK.Example
 
         private async void UpdateWalletBalanceDisplay()
         {
-            if (SimpleWallet.Instance.Account is null) return;
+            if (SimpleWallet.Instance.Wallet.Account is null) return;
 
-            double sol = await SimpleWallet.Instance.GetBalance();
-            if (SimpleWallet.Instance.Account is null) return;
+            double sol = await SimpleWallet.Instance.Wallet.GetBalance();
+            if (SimpleWallet.Instance.Wallet.Account is null) return;
             MainThreadDispatcher.Instance().Enqueue(() => { lamports.text = $"{sol}"; });
         }
 
         private void DisconnectToWebSocket()
         {
             MainThreadDispatcher.Instance().Enqueue(() => { manager.ShowScreen(this, "login_screen"); });
-            MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.Instance.Logout(); });
+            MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.Instance.Wallet.Logout(); });
         }
 
         public override void ShowScreen(object data = null)
         {
             base.ShowScreen();
             gameObject.SetActive(true);
-
-            GetOwnedTokenAccounts();
             UpdateWalletBalanceDisplay();
+            GetOwnedTokenAccounts();
         }
 
         public override void HideScreen()
@@ -182,24 +185,20 @@ namespace Solana.Unity.SDK.Example
         private async Task GetOwnedTokenAccounts()
         {
             DisableTokenItems();
-            TokenAccount[] result = await SimpleWallet.Instance.GetTokenAccounts();
+            var result = await SimpleWallet.Instance.Wallet.GetTokenAccounts();
 
-            if (result != null && result.Length > 0)
+            if (result is {Length: > 0})
             {
-                int itemIndex = 0;
-                foreach (TokenAccount item in result)
+                foreach (var item in result)
                 {
-                    if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
-                    {
-                        Nft.Nft nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.Instance.ActiveRpcClient, true);
-                        
-                        if (itemIndex >= token_items.Count) return;
-                        if (token_items[itemIndex] == null) return;
+                    if (!(float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)) continue;
+                    var nft = await Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SimpleWallet.Instance.Wallet.ActiveRpcClient);
 
-                        token_items[itemIndex].gameObject.SetActive(true);
-                        token_items[itemIndex].InitializeData(item, this, nft);
-                        itemIndex++;
-                    }
+                    var tk = Instantiate(tokenItem, tokenContainer, true);
+                    tk.transform.localScale = Vector3.one;
+                    _instantiatedTokens.Add(tk);
+                    tk.SetActive(true);
+                    tk.GetComponent<TokenItem>().InitializeData(item, this, nft);
                 }
             }
         }
@@ -213,10 +212,12 @@ namespace Solana.Unity.SDK.Example
 
         void DisableTokenItems()
         {
-            foreach (TokenItem token in token_items)
+            if(_instantiatedTokens == null) return;
+            foreach (GameObject token in _instantiatedTokens)
             {
-                token.gameObject.SetActive(false);
+                Destroy(token);
             }
+            _instantiatedTokens.Clear();
         }
 
         //

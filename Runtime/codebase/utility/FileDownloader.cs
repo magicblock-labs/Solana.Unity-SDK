@@ -29,74 +29,65 @@ namespace Solana.Unity.SDK.Utility
 
         private static async Task<T> LoadTexture<T>(string filePath, CancellationToken token = default)
         {
-            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
+            using var uwr = UnityWebRequestTexture.GetTexture(filePath);
+            uwr.SendWebRequest();
+
+            while (!uwr.isDone && !token.IsCancellationRequested)
             {
-                uwr.SendWebRequest();
-
-                while (!uwr.isDone && !token.IsCancellationRequested)
-                {
-                    await Task.Yield();
-                }
-
-                if (uwr.isNetworkError || uwr.isHttpError)
-                {
-                    Debug.Log(uwr.error);
-                    return default;
-                }
-                else
-                {
-                    var texture = DownloadHandlerTexture.GetContent(uwr);
-                    return (T)Convert.ChangeType(texture, typeof(T));
-                }
+                await Task.Yield();
             }
+
+            if (uwr.isNetworkError || uwr.isHttpError)
+            {
+                Debug.Log(uwr.error);
+                return default;
+            }
+
+            var texture = DownloadHandlerTexture.GetContent(uwr);
+            return (T)Convert.ChangeType(texture, typeof(T));
         }
 
         private static async Task<T> LoadJsonWebRequest<T>(string path)
         {
-            using (UnityWebRequest uwr = UnityWebRequest.Get(path))
+            using var uwr = UnityWebRequest.Get(path);
+            uwr.downloadHandler = new DownloadHandlerBuffer();
+            uwr.SendWebRequest();
+
+            while (!uwr.isDone)
             {
-                uwr.downloadHandler = new DownloadHandlerBuffer();
-                uwr.SendWebRequest();
+                await Task.Yield();
+            }
 
-                while (!uwr.isDone)
-                {
-                    await Task.Yield();
-                }
+            var json = uwr.downloadHandler.text;
+            if (uwr.isNetworkError || uwr.isHttpError)
+            {
+                Debug.Log(uwr.error);
+                return default;
+            }
 
-                if (uwr.isNetworkError || uwr.isHttpError)
-                {
-                    Debug.Log(uwr.error);
-                    return default(T);
-                }
-                else
-                {
-                    string json = uwr.downloadHandler.text;
-                    Debug.Log(json);
-                    try
-                    {
-                        T data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
-                        return data;
-                    }
-                    catch
-                    {
-                        return default;
-                    }
-
-                }
+            Debug.Log(json);
+            try
+            {
+                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+                return data;
+            }
+            catch
+            {
+                return default;
             }
         }
 
         private static async Task<T> LoadJson<T>(string path)
         {            
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
 
-            HttpResponseMessage response = await client.GetAsync(path);
+            var response = await client.GetAsync(path);
             response.EnsureSuccessStatusCode();
 
             try
             {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                T data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
                 client.Dispose();
                 return data;
             }
@@ -104,50 +95,45 @@ namespace Solana.Unity.SDK.Utility
             {
                 client.Dispose();
                 return default;
-                throw;
             }
         }
 
         public static T LoadFileFromLocalPath<T>(string path)
         {
-            T data;
-
             if (!File.Exists(path))
                 return default;
 
-            byte[] bytes = System.IO.File.ReadAllBytes(path);
+            var bytes = File.ReadAllBytes(path);
 
+            var texture = new Texture2D(1, 1);
             if (typeof(T) == typeof(Texture2D))
             {
-                Texture2D texture = new Texture2D(1, 1);
                 texture.LoadImage(bytes);
                 return (T)Convert.ChangeType(texture, typeof(T));
             }
-            else
+
+            var contents = File.ReadAllText(path);
+            try
             {
-                string contents = File.ReadAllText(path);
-                try
-                {
-                    data = JsonUtility.FromJson<T>(contents);
-                    return data;
-                }
-                catch
-                {
-                    return default;
-                }
+                var data = JsonUtility.FromJson<T>(contents);
+                return data;
+            }
+            catch
+            {
+                return default;
             }
         }
 
-        public static void SaveToPersistenDataPath<T>(string path, T data)
+        public static void SaveToPersistentDataPath<T>(string path, T data)
         {
             if (typeof(T) == typeof(Texture2D))
             {
-                byte[] dataToByte = ((Texture2D)Convert.ChangeType(data, typeof(Texture2D))).EncodeToPNG();
+                var dataToByte = ((Texture2D)Convert.ChangeType(data, typeof(Texture2D))).EncodeToPNG();
                 File.WriteAllBytes(path, dataToByte);
             }
             else
             {
-                string dataString = JsonUtility.ToJson(data);
+                var dataString = JsonUtility.ToJson(data);
                 File.WriteAllText(path, dataString);
             }
         }

@@ -54,6 +54,14 @@ namespace Solana.Unity.SDK
         /// <param name="amount"></param>
         /// <returns></returns>
         Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount);
+        
+        /// <summary>
+        /// Transfer a certain amount of lamports to a destination account
+        /// </summary>
+        /// <param name="destination">Destination PublicKey</param>
+        /// <param name="amount">SOL amount</param>
+        /// <returns></returns>
+        Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount);
 
         /// <summary>
         /// Returns tokens held by the given publicKey
@@ -74,6 +82,14 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        Task<byte[]> SignTransaction(Transaction transaction);
+
+        Task<Transaction> SignTransaction(Transaction transaction);
+        
+        /// <summary>
+        /// Sign and send a transaction
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction);
     }
 }
