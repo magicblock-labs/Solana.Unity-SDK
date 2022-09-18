@@ -135,9 +135,11 @@ namespace Solana.Unity.SDK.Example
         //
         // WebGL
         //
+#if UNITY_WEBGL
         [DllImport("__Internal")]
         private static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
-
+#endif
+        
         // Called from browser
         public void OnFileUpload(string url)
         {
@@ -153,9 +155,11 @@ namespace Solana.Unity.SDK.Example
             MainThreadDispatcher.Instance().Enqueue(() => { TxtLoadedAction?.Invoke(loadedTxt); });           
         }
 
+#if UNITY_WEBGL
+
         [DllImport("__Internal")]
         public static extern void DownloadFile(string gameObjectName, string methodName, string filename, byte[] byteArray, int byteArraySize);
-
+#endif
         // Called from browser
         public void OnFileDownload()
         {

@@ -150,9 +150,10 @@ namespace Solana.Unity.SDK.Example
         //
         // WebGL
         //
+#if UNITY_WEBGL
         [DllImport("__Internal")]
         private static extern void DownloadFile(string gameObjectName, string methodName, string filename, byte[] byteArray, int byteArraySize);
-
+#endif
         // Called from browser
         private void OnFileDownload()
         {
