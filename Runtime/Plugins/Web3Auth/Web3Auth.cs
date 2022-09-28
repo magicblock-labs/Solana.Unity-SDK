@@ -41,14 +41,13 @@ public class Web3Auth: MonoBehaviour
 
     public void Awake()
     {
-        this.initParams = new Dictionary<string, object>();
+        initParams = new Dictionary<string, object>();
 
-        //this.initParams["clientId"] = clientId;
-        this.initParams["clientId"] = "BAwFgL-r7wzQKmtcdiz2uHJKNZdK7gzEf2q-m55xfzSZOw8jLOyIi4AVvvzaEQO5nv2dFLEmf9LBkF8kaq3aErg";
-        this.initParams["network"] = network.ToString().ToLower();
+        initParams["clientId"] = clientId;
+        initParams["network"] = network.ToString().ToLower();
 
         if (!string.IsNullOrEmpty(redirectUri))
-            this.initParams["redirectUrl"] = redirectUri;
+            initParams["redirectUrl"] = redirectUri;
 
         Application.deepLinkActivated += onDeepLinkActivated;
         if (!string.IsNullOrEmpty(Application.absoluteURL))
@@ -173,7 +172,7 @@ public class Web3Auth: MonoBehaviour
             Debug.Log("if (httpRequest.Url.LocalPath == / auth / )");
             var responseString = @"ok";
 
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+            byte[] buffer = Encoding.UTF8.GetBytes(responseString);
 
             httpResponse.ContentLength64 = buffer.Length;
             System.IO.Stream output = httpResponse.OutputStream;
@@ -194,11 +193,11 @@ public class Web3Auth: MonoBehaviour
     private void request(string  path, LoginParams loginParams = null, Dictionary<string, object> extraParams = null)
     {
 #if UNITY_STANDALONE || UNITY_EDITOR
-        this.initParams["redirectUrl"] = StartLocalWebserver();
+        initParams["redirectUrl"] = StartLocalWebserver();
 
 #endif
         Dictionary<string, object> paramMap = new Dictionary<string, object>();
-        paramMap["init"] = this.initParams;
+        paramMap["init"] = initParams;
         paramMap["params"] = loginParams == null ? (object)new Dictionary<string, object>() : (object)loginParams;
 
         if (extraParams != null && extraParams.Count > 0)

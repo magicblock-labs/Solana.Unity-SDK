@@ -1,11 +1,13 @@
-using System;
 using System.Text;
 using System.Threading.Tasks;
+using Solana.Unity.KeyStore.Exceptions;
 using Solana.Unity.KeyStore.Services;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
 using UnityEngine;
+
+// ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK
 {
