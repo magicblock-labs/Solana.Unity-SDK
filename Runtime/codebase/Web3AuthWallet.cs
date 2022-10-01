@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Merkator.Tools;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
@@ -73,7 +74,8 @@ namespace Solana.Unity.SDK
             _web3Auth.onLogin += OnLogin;
         }
 
-        private void OnLogin(Web3AuthResponse response) {
+        private void OnLogin(Web3AuthResponse response)
+        {
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
             _loginTaskCompletionSource.SetResult(wallet.Account);

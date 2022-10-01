@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using AOT;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
@@ -15,9 +16,10 @@ namespace Solana.Unity.SDK
         
         private readonly PhantomWalletOptions _phantomWalletOptions;
         
-        private TaskCompletionSource<Account> _loginTaskCompletionSource;
-        private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
-        private Transaction _currentTransaction;
+        private static TaskCompletionSource<Account> _loginTaskCompletionSource;
+        private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private static Transaction _currentTransaction;
+        private static Account _account;
 
         public PhantomWebGL(
             PhantomWalletOptions phantomWalletOptions, 
@@ -30,7 +32,7 @@ namespace Solana.Unity.SDK
         protected override Task<Account> _Login(string password = null)
         {
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
-            ExternConnectPhantom();
+            ExternConnectPhantom(OnPhantomConnected);
             return _loginTaskCompletionSource.Task;
         }
 
@@ -39,7 +41,7 @@ namespace Solana.Unity.SDK
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             var encode = Encoders.Base58.EncodeData(transaction.CompileMessage());
             _currentTransaction = transaction;
-            ExternSignTransaction(encode);
+            ExternSignTransaction(encode, OnTransactionSigned);
             return _signedTransactionTaskCompletionSource.Task;
         }
         
@@ -53,21 +55,24 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// Called from java script when the phantom wallet approves the connection
         /// </summary>
-        public void OnPhantomConnected(string walletPubKey)
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        private static void OnPhantomConnected(string walletPubKey)
         {
             Debug.Log($"Wallet {walletPubKey} connected!");
-            _loginTaskCompletionSource.SetResult(new Account("", walletPubKey));
+            _account = new Account("", walletPubKey);
+            _loginTaskCompletionSource.SetResult(_account);
         }
 
         /// <summary>
         /// Called from java script when the phantom wallet signed the transaction and return the signature
         /// that we then need to put into the transaction before we send it out.
         /// </summary>
-        public void OnTransactionSigned(string signature)
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        public static void OnTransactionSigned(string signature)
         {
             _currentTransaction.Signatures.Add(new SignaturePubKeyPair()
             {
-                PublicKey = Account.PublicKey,
+                PublicKey = _account.PublicKey,
                 Signature = Encoders.Base58.DecodeData(signature)
             });
             _signedTransactionTaskCompletionSource.SetResult(_currentTransaction);
@@ -78,13 +83,13 @@ namespace Solana.Unity.SDK
         #if UNITY_WEBGL
         
         [DllImport("__Internal")]
-        private static extern void ExternConnectPhantom();
+        private static extern void ExternConnectPhantom(Action<string> callback);
 
         [DllImport("__Internal")]
-        private static extern void ExternSignTransaction(string transaction);
+        private static extern void ExternSignTransaction(string transaction, Action<string> callback);
         
         #else
-        private static extern void ExternConnectPhantom();
+        private static extern void ExternConnectPhantom(Action<string, string> cb);
         private static extern void ExternSignTransaction(string transaction);
         #endif
     }
