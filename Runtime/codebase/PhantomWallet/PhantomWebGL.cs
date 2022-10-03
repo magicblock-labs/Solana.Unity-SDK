@@ -89,8 +89,8 @@ namespace Solana.Unity.SDK
         private static extern void ExternSignTransaction(string transaction, Action<string> callback);
         
         #else
-        private static extern void ExternConnectPhantom(Action<string, string> cb);
-        private static extern void ExternSignTransaction(string transaction);
+        private static void ExternConnectPhantom(Action<string> callback){}
+        private static void ExternSignTransaction(string transaction, Action<string> callback){}
         #endif
     }
 }

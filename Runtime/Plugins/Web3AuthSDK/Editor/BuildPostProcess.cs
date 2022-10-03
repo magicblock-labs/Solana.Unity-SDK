@@ -1,10 +1,7 @@
-#if UNITY_IOS
+#if UNITY_EDITOR && UNITY_IOS
 
-using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
-using System.IO;
-using System.Collections;
 using System;
 
 public class BuildPostProcess
