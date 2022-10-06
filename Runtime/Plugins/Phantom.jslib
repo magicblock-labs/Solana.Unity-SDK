@@ -43,26 +43,4 @@ mergeInto(LibraryManager.library, {
         }
     },
 
-    ExternSignAndSendTransaction: async function (inputTransaction) {
-        if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
-            try {
-                const {signature} = await window.phantom.solana.request({
-                    method: 'signAndSendTransaction',
-                    params: {
-                        message: UTF8ToString(inputTransaction),
-                    },
-                });
-
-                console.log('Signed and send resulting in signature: ' + signature);
-
-                window.unityInstance.SendMessage('PhantomWallet', 'OnTransactionSignedAndSent', signature);
-            } catch (err) {
-                window.alert('Phantom error: ' + err.message);
-                console.error(err.message);
-            }
-        } else {
-            window.alert('Please install phantom browser extension.');
-        }
-    },
-
 });

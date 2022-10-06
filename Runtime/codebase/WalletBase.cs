@@ -24,7 +24,7 @@ namespace Solana.Unity.SDK
     public abstract class WalletBase : IWalletBase
     {
         private const long SolLamports = 1000000000;
-        protected RpcCluster RpcCluster  { get; }
+        public RpcCluster RpcCluster  { get; }
 
         private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
         {

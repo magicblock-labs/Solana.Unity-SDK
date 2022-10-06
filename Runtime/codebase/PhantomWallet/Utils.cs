@@ -16,9 +16,7 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// Create random byte of the specified size
         /// </summary>
-        /// <param name="size"></param>
-        /// <returns></returns>
-        public static byte[] GenerateRandomBytes(int size)
+        private static byte[] GenerateRandomBytes(int size)
         {
             var buffer = new byte[size];
             new SecureRandom().NextBytes(buffer);
@@ -28,12 +26,6 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// Create DeepLink URL for logging in to Phantom and redirect to the game
         /// </summary>
-        /// <param name="redirectScheme">The schema registered in Unity for DeepLink</param>
-        /// <param name="metadataUrl">MetadataUrl, will be used by phantom to render game information</param>
-        /// <param name="apiVersion">Phantom API version</param>
-        /// <param name="connectionPublicKey">PublicKey used for establish connection with Phantom</param>
-        /// <param name="cluster">The solana cluster</param>
-        /// <returns></returns>
         public static string CreateLoginDeepLink(
             string redirectScheme, string metadataUrl, string apiVersion,
             string connectionPublicKey, RpcCluster cluster)
@@ -49,15 +41,6 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// Create DeepLink URL for signing a transaction with Phantom and redirect to the game
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="phantomEncryptionPubKey"></param>
-        /// <param name="phantomConnectionAccountPrivateKey"></param>
-        /// <param name="sessionId"></param>
-        /// <param name="redirectScheme"></param>
-        /// <param name="apiVersion"></param>
-        /// <param name="connectionPublicKey"></param>
-        /// <param name="cluster"></param>
-        /// <returns></returns>
         public static string CreateSignTransactionDeepLink(
             Transaction transaction, 
             byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey, 
@@ -70,7 +53,7 @@ namespace Solana.Unity.SDK
             var transactionPayload = new PhantomTransactionPayload(base58Transaction, sessionId);
             var transactionPayloadJson = JsonUtility.ToJson(transactionPayload);
             var bytesJson = Encoding.UTF8.GetBytes(transactionPayloadJson);
-            var randomNonce = Utils.GenerateRandomBytes(24);
+            var randomNonce = GenerateRandomBytes(24);
             var k = MontgomeryCurve25519.KeyExchange(phantomEncryptionPubKey, phantomConnectionAccountPrivateKey);
             var encryptedMessage = XSalsa20Poly1305.Encrypt(bytesJson, k, randomNonce);
             var base58Payload = Encoders.Base58.EncodeData(encryptedMessage);
@@ -81,8 +64,8 @@ namespace Solana.Unity.SDK
                    $"&payload={base58Payload}" +
                    $"&cluster={GetClusterString(cluster)}";
         }
-        
-        public static string GetClusterString(RpcCluster rpcCluster)
+
+        private static string GetClusterString(RpcCluster rpcCluster)
         {
             return rpcCluster switch
             {
