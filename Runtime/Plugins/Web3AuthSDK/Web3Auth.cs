@@ -48,13 +48,6 @@ public class Web3Auth: MonoBehaviour
         Application.deepLinkActivated += onDeepLinkActivated;
         if (!string.IsNullOrEmpty(Application.absoluteURL))
             onDeepLinkActivated(Application.absoluteURL);
-
-#if UNITY_EDITOR
-        Web3AuthSDK.Editor.Web3AuthDebug.onURLRecieved += (Uri url) =>
-        {
-            this.setResultUrl(url);
-        };
-#endif
     }
 
     public void setOptions(Web3AuthOptions web3AuthOptions)
@@ -217,7 +210,6 @@ public class Web3Auth: MonoBehaviour
         uriBuilder.Fragment = hash;
 
         Utils.LaunchUrl(uriBuilder.ToString());
-        Debug.Log(uriBuilder.ToString());
     }
 
     public void setResultUrl(Uri uri)
