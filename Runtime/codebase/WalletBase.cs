@@ -72,7 +72,7 @@ namespace Solana.Unity.SDK
         protected abstract Task<Account> _Login(string password = null);
 
         /// <inheritdoc />
-        public void Logout()
+        public virtual void Logout()
         {
             Account = null;
             Mnemonic = null;

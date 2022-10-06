@@ -91,6 +91,12 @@ namespace Solana.Unity.SDK
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             return _loginTaskCompletionSource.Task;
         }
+        
+        public override void Logout()
+        {
+            base.Logout();
+            _web3Auth.onLogin -= OnLogin;
+        }
 
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {

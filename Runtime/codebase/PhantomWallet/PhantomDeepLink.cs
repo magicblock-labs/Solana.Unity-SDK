@@ -17,17 +17,17 @@ namespace Solana.Unity.SDK
     {
         private readonly PhantomWalletOptions _phantomWalletOptions;
         
-        private readonly Account _tmpPhantomConnectionAccount;
-        private byte[] PhantomConnectionAccountPrivateKey 
-            => ArrayHelpers.SubArray(_tmpPhantomConnectionAccount.PrivateKey.KeyBytes, 0, 32);
-        private byte[] PhantomConnectionAccountPublicKey =>
+        private static readonly Account TmpPhantomConnectionAccount = new();
+        private static byte[] PhantomConnectionAccountPrivateKey 
+            => ArrayHelpers.SubArray(TmpPhantomConnectionAccount.PrivateKey.KeyBytes, 0, 32);
+        private static byte[] PhantomConnectionAccountPublicKey =>
             MontgomeryCurve25519.GetPublicKey(PhantomConnectionAccountPrivateKey);
         
         private string _sessionId;
         private byte[] _phantomEncryptionPubKey;
         
-        private TaskCompletionSource<Account> _loginTaskCompletionSource;
-        private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private TaskCompletionSource<Account> _loginTaskCompletionSource = new();
+        private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource = new();
 
         public PhantomDeepLink(
             PhantomWalletOptions phantomWalletOptions,
@@ -38,19 +38,22 @@ namespace Solana.Unity.SDK
             Application.deepLinkActivated += OnDeepLinkActivated;
             if (!string.IsNullOrEmpty(Application.absoluteURL))
                 OnDeepLinkActivated(Application.absoluteURL);
-            _tmpPhantomConnectionAccount = new Account();
         }
 
         protected override Task<Account> _Login(string password = null)
         {
-            _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             StartLogin();
             return _loginTaskCompletionSource.Task;
         }
         
+        public override void Logout()
+        {
+            base.Logout();
+            Application.deepLinkActivated -= OnDeepLinkActivated;
+        }
+        
         public override Task<Transaction> SignTransaction(Transaction transaction)
         {
-            _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             StartSignTransaction(transaction);
             return _signedTransactionTaskCompletionSource.Task;
         }
@@ -103,10 +106,6 @@ namespace Solana.Unity.SDK
             else if(url.Contains("onPhantomConnected"))
             {
                 ParseConnectionSuccessful(url);
-            }
-            else
-            {
-                throw new NotImplementedException($"Callback not implemented for: {url}");
             }
         }
 
