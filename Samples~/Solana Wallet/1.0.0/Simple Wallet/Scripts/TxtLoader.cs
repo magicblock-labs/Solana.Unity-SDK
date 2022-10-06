@@ -132,6 +132,7 @@ namespace Solana.Unity.SDK.Example
                 ByteArraySavedAction?.Invoke(_path, array, fileTitle);
         }
 
+#if UNITY_WEBGL
         //
         // WebGL
         //
@@ -161,5 +162,6 @@ namespace Solana.Unity.SDK.Example
         {
 
         }
+#endif
     }
 }
