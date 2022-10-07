@@ -7,9 +7,11 @@ using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
 using UnityEngine;
 
+// ReSharper disable once CheckNamespace
+
 namespace Solana.Unity.SDK
 {
-    public class InGameWallet: WalletBase
+    public class InGameWallet : WalletBase
     {
         private const string EncryptedKeystoreKey = "EncryptedKeystore";
 
@@ -20,7 +22,7 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        protected override Task<Account> _Login(string password = null)
+        protected override Task<Account> _Login(string password = "")
         {
             var keystoreService = new KeyStorePbkdf2Service();
             var encryptedKeystoreJson = LoadPlayerPrefs(EncryptedKeystoreKey);
@@ -33,7 +35,7 @@ namespace Solana.Unity.SDK
             {
                 return Task.FromResult<Account>(null);
             }
-           
+
             var mnemonicString = Encoding.UTF8.GetString(decryptedKeystore);
             var restoredMnemonic = new Mnemonic(mnemonicString);
             var wallet = new Wallet.Wallet(restoredMnemonic);
@@ -44,8 +46,7 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
-            var mnem = mnemonic != null ? new Mnemonic(mnemonic): 
-                new Mnemonic(WordList.English, WordCount.Twelve);
+            var mnem = mnemonic != null ? new Mnemonic(mnemonic) : new Mnemonic(WordList.English, WordCount.Twelve);
             var wallet = new Wallet.Wallet(mnem);
             password ??= "";
 
@@ -67,18 +68,18 @@ namespace Solana.Unity.SDK
             transaction.Sign(Account);
             return Task.FromResult(transaction);
         }
-        
+
         private static string LoadPlayerPrefs(string key)
         {
             return PlayerPrefs.GetString(key);
         }
-        
+
         private static void SavePlayerPrefs(string key, string value)
         {
             PlayerPrefs.SetString(key, value);
-            #if UNITY_WEBGL
+#if UNITY_WEBGL
             PlayerPrefs.Save();
-            #endif
+#endif
         }
     }
 }

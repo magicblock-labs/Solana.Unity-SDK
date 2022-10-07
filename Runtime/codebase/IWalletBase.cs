@@ -3,6 +3,8 @@ using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 
+// ReSharper disable once CheckNamespace
+
 namespace Solana.Unity.SDK
 {
     public interface IWalletBase
@@ -82,6 +84,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
+
         Task<Transaction> SignTransaction(Transaction transaction);
         
         /// <summary>

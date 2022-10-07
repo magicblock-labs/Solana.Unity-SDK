@@ -9,6 +9,8 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
 
+// ReSharper disable once CheckNamespace
+
 namespace Solana.Unity.SDK
 {
     public enum RpcCluster
@@ -22,7 +24,7 @@ namespace Solana.Unity.SDK
     public abstract class WalletBase : IWalletBase
     {
         private const long SolLamports = 1000000000;
-        private readonly RpcCluster _rpcCluster;
+        public RpcCluster RpcCluster  { get; }
 
         private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
         {
@@ -42,12 +44,13 @@ namespace Solana.Unity.SDK
 
         protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, bool autoConnectOnStartup = false)
         {
-            _rpcCluster = rpcCluster;
+            RpcCluster = rpcCluster;
             _customRpc = customRpc;
             if (autoConnectOnStartup)
             {
                 StartConnection();
             }
+            
             Setup();
         }
 
@@ -69,7 +72,7 @@ namespace Solana.Unity.SDK
         protected abstract Task<Account> _Login(string password = null);
 
         /// <inheritdoc />
-        public void Logout()
+        public virtual void Logout()
         {
             Account = null;
             Mnemonic = null;
@@ -116,7 +119,8 @@ namespace Solana.Unity.SDK
             {
                 RecentBlockHash = blockHash.Result.Value.Blockhash,
                 FeePayer = Account.PublicKey,
-                Instructions = new List<TransactionInstruction>()
+                Instructions = new List<TransactionInstruction>(),
+                Signatures = new List<SignaturePubKeyPair>()
             };
             if (tokenAccounts.Result == null || tokenAccounts.Result.Value.Count == 0)
             {
@@ -150,7 +154,8 @@ namespace Solana.Unity.SDK
                         Account.PublicKey, 
                         destination, 
                         amount)
-                }
+                },
+                Signatures = new List<SignaturePubKeyPair>()
             };
             return await SignAndSendTransaction(transaction);
         }
@@ -182,7 +187,7 @@ namespace Solana.Unity.SDK
         public abstract Task<Transaction> SignTransaction(Transaction transaction);
 
         /// <inheritdoc />
-        public async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
+        public virtual async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
         {
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
@@ -208,11 +213,11 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                if (_activeRpcClient == null && _rpcCluster != RpcCluster.Custom)
+                if (_activeRpcClient == null && RpcCluster != RpcCluster.Custom)
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)_rpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster]);
                 }
-                if (_activeRpcClient == null && _rpcCluster == RpcCluster.Custom)
+                if (_activeRpcClient == null && RpcCluster == RpcCluster.Custom)
                 {
                     _activeRpcClient = ClientFactory.GetClient(_customRpc);
                 }

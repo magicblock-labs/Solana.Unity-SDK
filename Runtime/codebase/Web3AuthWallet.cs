@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using Merkator.Tools;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
 
+// ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK
 {
@@ -72,7 +74,8 @@ namespace Solana.Unity.SDK
             _web3Auth.onLogin += OnLogin;
         }
 
-        private void OnLogin(Web3AuthResponse response) {
+        private void OnLogin(Web3AuthResponse response)
+        {
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
             _loginTaskCompletionSource.SetResult(wallet.Account);
@@ -87,6 +90,12 @@ namespace Solana.Unity.SDK
             _web3Auth.login(options);
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             return _loginTaskCompletionSource.Task;
+        }
+        
+        public override void Logout()
+        {
+            base.Logout();
+            _web3Auth.onLogin -= OnLogin;
         }
 
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
