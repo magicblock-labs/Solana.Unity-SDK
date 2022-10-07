@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using TMPro;
@@ -8,6 +9,7 @@ using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
@@ -64,12 +66,17 @@ namespace Solana.Unity.SDK.Example
 
             logout_btn.onClick.AddListener(() =>
             {
-                SimpleWallet.Instance.Wallet.Logout();
+                SimpleWallet.Instance.Logout();
                 manager.ShowScreen(this, "login_screen");
                 if(parentManager != null)
                     parentManager.ShowScreen(this, "[Connect_Wallet_Screen]");
             });
 
+            if (string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Account.PrivateKey))
+            {
+                save_private_key_btn.gameObject.SetActive(false);
+                save_mnemonics_btn.gameObject.SetActive(false);
+            }
             save_private_key_btn.onClick.AddListener(() => 
             {
                 _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Wallet.Account.PrivateKey, false);
