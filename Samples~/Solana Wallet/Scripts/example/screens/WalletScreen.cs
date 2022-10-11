@@ -3,6 +3,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using codebase.utility;
 using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
@@ -86,7 +87,7 @@ namespace Solana.Unity.SDK.Example
         {
             if (!gameObject.activeSelf) return;
             if (string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Account.PrivateKey?.ToString())) return;
-            GUIUtility.systemCopyBuffer = SimpleWallet.Instance.Wallet.Account.PrivateKey.ToString();
+            Clipboard.Copy(SimpleWallet.Instance.Wallet.Account.PrivateKey.ToString());
             gameObject.GetComponent<Toast>()?.ShowToast("Private Key copied to clipboard", 3);
         }
         
@@ -94,7 +95,7 @@ namespace Solana.Unity.SDK.Example
         {
             if (!gameObject.activeSelf) return;
             if (string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Mnemonic?.ToString())) return;
-            GUIUtility.systemCopyBuffer = SimpleWallet.Instance.Wallet.Mnemonic.ToString();
+            Clipboard.Copy(SimpleWallet.Instance.Wallet.Mnemonic.ToString());
             gameObject.GetComponent<Toast>()?.ShowToast("Mnemonics copied to clipboard", 3);
         }
 

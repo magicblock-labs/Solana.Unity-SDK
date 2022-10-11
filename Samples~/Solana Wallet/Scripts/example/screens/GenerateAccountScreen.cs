@@ -3,6 +3,7 @@ using Solana.Unity.Wallet.Bip39;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using codebase.utility;
 
 // ReSharper disable once CheckNamespace
 
@@ -92,7 +93,7 @@ namespace Solana.Unity.SDK.Example
         
         public void CopyMnemonicsToClipboard()
         {
-            GUIUtility.systemCopyBuffer = mnemonicTxt.text.Trim();
+            Clipboard.Copy(mnemonicTxt.text.Trim());
             gameObject.GetComponent<Toast>()?.ShowToast("Mnemonics copied to clipboard", 3);
         }
 

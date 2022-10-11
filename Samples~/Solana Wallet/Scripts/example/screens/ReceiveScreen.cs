@@ -3,6 +3,7 @@ using Solana.Unity.SDK.Example;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using codebase.utility;
 
 // ReSharper disable once CheckNamespace
 
@@ -57,7 +58,7 @@ public class ReceiveScreen : SimpleScreen
 
     public void CopyPublicKeyToClipboard()
     {
-        GUIUtility.systemCopyBuffer = SimpleWallet.Instance.Wallet.Account.PublicKey.ToString();
+        Clipboard.Copy(SimpleWallet.Instance.Wallet.Account.PublicKey.ToString());
         gameObject.GetComponent<Toast>()?.ShowToast("Public Key copied to clipboard", 3);
     }
 
