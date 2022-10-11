@@ -37,7 +37,7 @@ namespace Solana.Unity.SDK.Utility
                 await Task.Yield();
             }
 
-            if (uwr.isNetworkError || uwr.isHttpError)
+            if (uwr.result is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError)
             {
                 Debug.Log(uwr.error);
                 return default;
@@ -59,7 +59,7 @@ namespace Solana.Unity.SDK.Utility
             }
 
             var json = uwr.downloadHandler.text;
-            if (uwr.isNetworkError || uwr.isHttpError)
+            if (uwr.result is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError)
             {
                 Debug.Log(uwr.error);
                 return default;
