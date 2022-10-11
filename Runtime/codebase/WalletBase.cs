@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
-using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
 
@@ -95,20 +95,24 @@ namespace Solana.Unity.SDK
         protected abstract Task<Account> _CreateAccount(string mnemonic = null, string password = null);
         
         /// <inheritdoc />
-        public async Task<double> GetBalance(PublicKey publicKey)
+        public async Task<double> GetBalance(PublicKey publicKey, Commitment commitment = Commitment.Finalized)
         {
-            var balance= await ActiveRpcClient.GetBalanceAsync(publicKey);
+            var balance= await ActiveRpcClient.GetBalanceAsync(publicKey, commitment);
             return (double)balance.Result.Value / SolLamports;
         }
         
         /// <inheritdoc />
-        public async Task<double> GetBalance()
+        public async Task<double> GetBalance(Commitment commitment = Commitment.Finalized)
         {
-            return await GetBalance(Account.PublicKey);
+            return await GetBalance(Account.PublicKey, commitment);
         }
 
         /// <inheritdoc />
-        public async Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount)
+        public async Task<RequestResult<string>> Transfer(
+            PublicKey destination, 
+            PublicKey tokenMint, 
+            ulong amount, 
+            Commitment commitment = Commitment.Finalized)
         {
             var sta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
                 Account.PublicKey, 
@@ -138,13 +142,14 @@ namespace Solana.Unity.SDK
                 amount,
                 Account
             ));
-            return await SignAndSendTransaction(transaction);
+            return await SignAndSendTransaction(transaction, commitment);
         }
         
         /// <inheritdoc />
-        public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount)
+        public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, 
+            Commitment commitment = Commitment.Finalized)
         {
-            RequestResult<ResponseValue<BlockHash>> blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
+            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
             var transaction = new Transaction
             {
                 RecentBlockHash = blockHash.Result.Value.Blockhash,
@@ -158,7 +163,7 @@ namespace Solana.Unity.SDK
                 },
                 Signatures = new List<SignaturePubKeyPair>()
             };
-            return await SignAndSendTransaction(transaction);
+            return await SignAndSendTransaction(transaction, commitment);
         }
 
         /// <inheritdoc />
@@ -188,21 +193,25 @@ namespace Solana.Unity.SDK
         public abstract Task<Transaction> SignTransaction(Transaction transaction);
 
         /// <inheritdoc />
-        public virtual async Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction)
+        public virtual async Task<RequestResult<string>> SignAndSendTransaction
+        (
+            Transaction transaction, 
+            Commitment commitment = Commitment.Finalized)
         {
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
-                Convert.ToBase64String(signedTransaction.Serialize()));
+                Convert.ToBase64String(signedTransaction.Serialize()), preFlightCommitment: commitment);
         }
-        
+
         /// <summary>
         /// Airdrop sol on wallet
         /// </summary>
         /// <param name="amount">Amount of sol</param>
+        /// <param name="commitment"></param>
         /// <returns>Amount of sol</returns>
-        public async Task<string> RequestAirdrop(ulong amount = SolLamports)
+        public async Task<string> RequestAirdrop(ulong amount = SolLamports, Commitment commitment = Commitment.Finalized)
         {
-            var result = await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount);
+            var result = await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount, commitment);
             return result.Result;
         }
         

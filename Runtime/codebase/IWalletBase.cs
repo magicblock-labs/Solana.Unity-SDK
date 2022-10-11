@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 
 // ReSharper disable once CheckNamespace
@@ -39,31 +40,34 @@ namespace Solana.Unity.SDK
         /// Get the SOL balance for a Token Account PublicKey
         /// </summary>
         /// <param name="publicKey"></param>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<double> GetBalance(PublicKey publicKey);
+        Task<double> GetBalance(PublicKey publicKey, Commitment commitment);
         
         /// <summary>
         /// Get the SOL balance
         /// </summary>
         /// <returns></returns>
-        Task<double> GetBalance();
-        
+        Task<double> GetBalance(Commitment commitment);
+
         /// <summary>
         /// Transfer a certain amount of a given tokenMint to destination account 
         /// </summary>
         /// <param name="destination"></param>
         /// <param name="tokenMint"></param>
         /// <param name="amount"></param>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount);
-        
+        Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount, Commitment commitment);
+
         /// <summary>
         /// Transfer a certain amount of lamports to a destination account
         /// </summary>
         /// <param name="destination">Destination PublicKey</param>
         /// <param name="amount">SOL amount</param>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount);
+        Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, Commitment commitment);
 
         /// <summary>
         /// Returns tokens held by the given publicKey
@@ -86,12 +90,13 @@ namespace Solana.Unity.SDK
         /// <returns></returns>
 
         Task<Transaction> SignTransaction(Transaction transaction);
-        
+
         /// <summary>
         /// Sign and send a transaction
         /// </summary>
         /// <param name="transaction"></param>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction);
+        Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction, Commitment commitment);
     }
 }
