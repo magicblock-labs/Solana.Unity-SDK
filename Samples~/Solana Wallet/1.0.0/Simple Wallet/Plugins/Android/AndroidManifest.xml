@@ -10,13 +10,13 @@
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="unitydl" />
+        <data android:scheme="unitydl" android:host="onPhantomConnected" />
       </intent-filter>
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="torusapp" />
+        <data android:scheme="unitydl" android:host="transactionSigned" />
       </intent-filter>
     </activity>
   </application>

@@ -1,3 +1,4 @@
+using Solana.Unity.SDK;
 using Solana.Unity.SDK.Example;
 using TMPro;
 using UnityEngine;
@@ -19,10 +20,17 @@ public class ReceiveScreen : SimpleScreen
             await SimpleWallet.Instance.Wallet.RequestAirdrop();
         });
 
-        close_btn?.onClick.AddListener(() =>
+        close_btn.onClick.AddListener(() =>
         {
             manager.ShowScreen(this, "wallet_screen");
         });
+    }
+    
+    private void OnEnable()
+    {
+        var isDevnet = SimpleWallet.Instance.Wallet?.RpcCluster == RpcCluster.DevNet;
+        airdrop_btn.enabled = isDevnet;
+        airdrop_btn.interactable = isDevnet;
     }
 
     public override void ShowScreen(object data = null)
@@ -45,6 +53,12 @@ public class ReceiveScreen : SimpleScreen
     {
         Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.Instance.Wallet.Account.PublicKey, 256, 256);
         qrCode_img.texture = tex;
+    }
+
+    public void CopyPublicKeyToClipboard()
+    {
+        GUIUtility.systemCopyBuffer = SimpleWallet.Instance.Wallet.Account.PublicKey.ToString();
+        gameObject.GetComponent<Toast>()?.ShowToast("Public Key copied to clipboard", 3);
     }
 
     public override void HideScreen()

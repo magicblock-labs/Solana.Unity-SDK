@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Solana.Unity.Wallet;
 using UnityEngine;
+using UnityEngine.UI;
 
 // ReSharper disable once CheckNamespace
 
@@ -11,7 +13,8 @@ namespace Solana.Unity.SDK.Example
     [RequireComponent(typeof(MainThreadDispatcher))]
     public class SimpleWallet : MonoBehaviour
     {
-        public RpcCluster rpcCluster = RpcCluster.DevNet;
+        [SerializeField]
+        private RpcCluster rpcCluster = RpcCluster.DevNet;
         [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
         public string customRpc;
         public bool autoConnectOnStartup;
@@ -38,6 +41,28 @@ namespace Solana.Unity.SDK.Example
             {
                 Destroy(gameObject);
             }
+        }
+        
+        public void Start()
+        {
+            ChangeState(storageMethod.ToString());
+            if (PlayerPrefs.HasKey(StorageMethodStateKey))
+            {
+                var storageMethodString = LoadPlayerPrefs(StorageMethodStateKey);
+
+                if(storageMethodString != storageMethod.ToString())
+                {
+                    storageMethodString = storageMethod.ToString();
+                    ChangeState(storageMethodString);
+                }
+
+                if (storageMethodString == StorageMethod.JSON.ToString())
+                    StorageMethodReference = StorageMethod.JSON;
+                else if (storageMethodString == StorageMethod.SimpleTxt.ToString())
+                    StorageMethodReference = StorageMethod.SimpleTxt;
+            }
+            else
+                StorageMethodReference = StorageMethod.SimpleTxt;          
         }
 
         public async Task<Account> LoginInGameWallet(string password)
@@ -73,26 +98,19 @@ namespace Solana.Unity.SDK.Example
             return acc;
         }
 
-        public void Start()
+        public void RpcNodeDropdownSelected(int value)
         {
-            ChangeState(storageMethod.ToString());
-            if (PlayerPrefs.HasKey(StorageMethodStateKey))
+            rpcCluster = value switch
             {
-                var storageMethodString = LoadPlayerPrefs(StorageMethodStateKey);
-
-                if(storageMethodString != storageMethod.ToString())
-                {
-                    storageMethodString = storageMethod.ToString();
-                    ChangeState(storageMethodString);
-                }
-
-                if (storageMethodString == StorageMethod.JSON.ToString())
-                    StorageMethodReference = StorageMethod.JSON;
-                else if (storageMethodString == StorageMethod.SimpleTxt.ToString())
-                    StorageMethodReference = StorageMethod.SimpleTxt;
-            }
-            else
-                StorageMethodReference = StorageMethod.SimpleTxt;          
+                (int) RpcCluster.MainNet => RpcCluster.MainNet,
+                _ => RpcCluster.DevNet
+            };
+        }
+        
+        public void Logout()
+        {
+            Wallet.Logout();
+            Wallet = null;
         }
 
         private void ChangeState(string state)

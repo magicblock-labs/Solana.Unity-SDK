@@ -1,15 +1,12 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Runtime.InteropServices;
-using System.Collections;
 using Solana.Unity.Wallet;
 
 // ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK.Example
 {
-    [RequireComponent(typeof(TxtLoader))]
     public class LoginScreen : SimpleScreen
     {
         [SerializeField]
@@ -28,9 +25,12 @@ namespace Solana.Unity.SDK.Example
         private Button backBtn;
         [SerializeField]
         private TextMeshProUGUI messageTxt;
+        [SerializeField]
+        private TMP_Dropdown dropdownRpcCluster;
 
         private void OnEnable()
         {
+            dropdownRpcCluster.interactable = true;
             passwordInputField.text = string.Empty;
         }
 
@@ -84,6 +84,7 @@ namespace Solana.Unity.SDK.Example
         {
             if (account != null)
             {
+                dropdownRpcCluster.interactable = false;
                 manager.ShowScreen(this, "wallet_screen");
                 messageTxt.gameObject.SetActive(false);
                 gameObject.SetActive(false);
@@ -100,27 +101,6 @@ namespace Solana.Unity.SDK.Example
             var wallet = GameObject.Find("wallet");
             wallet.SetActive(false);
         }
-
-        #if UNITY_WEBGL
-
-        //
-        // WebGL
-        //
-        [DllImport("__Internal")]
-        private static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
-
-        // Called from browser
-        public void OnFileUpload(string url)
-        {
-            StartCoroutine(OutputRoutine(url));
-        }
-        private IEnumerator OutputRoutine(string url)
-        {
-            var loader = new WWW(url);
-            yield return loader;
-        }
-        
-        #endif
     }
 }
 

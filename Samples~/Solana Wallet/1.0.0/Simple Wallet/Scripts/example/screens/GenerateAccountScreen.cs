@@ -1,9 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System;
 using Solana.Unity.Wallet.Bip39;
 using TMPro;
 using UnityEngine;
@@ -13,88 +8,92 @@ using UnityEngine.UI;
 
 namespace Solana.Unity.SDK.Example
 {
-    [RequireComponent(typeof(TxtLoader))]
     public class GenerateAccountScreen : SimpleScreen
     {
-        public TextMeshProUGUI mnemonic_txt;
-        public Button generate_btn;
-        public Button restore_btn;
-        public Button save_mnemonics_btn;
-        public Button back_btn;
-        public TMP_InputField password_input_field;
-        public TextMeshProUGUI need_password_txt;
+        [SerializeField]
+        public TextMeshProUGUI mnemonicTxt;
+        [SerializeField]
+        public Button generateBtn;
+        [SerializeField]
+        public Button restoreBtn;
+        [SerializeField]
+        public Button saveMnemonicsBtn;
+        [SerializeField]
+        public Button backBtn;
+        [SerializeField]
+        public TMP_InputField passwordInputField;
+        [SerializeField]
+        public TextMeshProUGUI needPasswordTxt;
 
-        private TxtLoader _txtLoader;
-        private readonly string _mnemonicsFileTitle = "Mnemonics";
 
-        void Start()
+        private void Start()
         {
-            _txtLoader = GetComponent<TxtLoader>();
-            mnemonic_txt.text = new Mnemonic(WordList.English, WordCount.TwentyFour).ToString();
+            mnemonicTxt.text = new Mnemonic(WordList.English, WordCount.TwentyFour).ToString();
 
-            if(generate_btn != null)
+            if(generateBtn != null)
             {
-                generate_btn.onClick.AddListener(() =>
+                generateBtn.onClick.AddListener(() =>
                 {
                     MainThreadDispatcher.Instance().Enqueue(GenerateNewAccount);
                 });
             }
 
-            if(restore_btn != null)
+            if(restoreBtn != null)
             {
-                restore_btn.onClick.AddListener(() =>
+                restoreBtn.onClick.AddListener(() =>
                 {
                     manager.ShowScreen(this, "re-generate_screen");
                 });
             }
 
-            if(save_mnemonics_btn != null)
+            if(saveMnemonicsBtn != null)
             {
-                save_mnemonics_btn.onClick.AddListener(() =>
-                {
-                    _txtLoader.SaveTxt(_mnemonicsFileTitle, mnemonic_txt.text, false);
-                });
+                saveMnemonicsBtn.onClick.AddListener(CopyMnemonicsToClipboard);
             }
 
-            if(back_btn != null)
+            if(backBtn != null)
             {
-                back_btn.onClick.AddListener(() =>
+                backBtn.onClick.AddListener(() =>
                 {
                     manager.ShowScreen(this, "login_screen");
                 });
             }
-
-            _txtLoader.TxtSavedAction += SaveMnemonicsToTxtFile;
         }
 
         private void OnEnable()
         {
-            need_password_txt.gameObject.SetActive(false);
-            mnemonic_txt.text = new Mnemonic(WordList.English, WordCount.TwentyFour).ToString();
+            needPasswordTxt.gameObject.SetActive(false);
+            mnemonicTxt.text = new Mnemonic(WordList.English, WordCount.TwentyFour).ToString();
         }
 
         private async void GenerateNewAccount()
         {
-            if (string.IsNullOrEmpty(password_input_field.text))
+            if (string.IsNullOrEmpty(passwordInputField.text))
             {
-                need_password_txt.gameObject.SetActive(true);
-                need_password_txt.text = "Need Password!";
+                needPasswordTxt.gameObject.SetActive(true);
+                needPasswordTxt.text = "Need Password!";
                 return;
             }
             
-            var password = password_input_field.text;
-            var mnemonic = mnemonic_txt.text.Trim();
+            var password = passwordInputField.text;
+            var mnemonic = mnemonicTxt.text.Trim();
             try
             {
                 await SimpleWallet.Instance.CreateAccount(mnemonic, password);
                 manager.ShowScreen(this, "wallet_screen");
-                need_password_txt.gameObject.SetActive(false);
+                needPasswordTxt.gameObject.SetActive(false);
             }
             catch (Exception ex)
             {
-                password_input_field.gameObject.SetActive(true);
-                password_input_field.text = ex.ToString();
+                passwordInputField.gameObject.SetActive(true);
+                passwordInputField.text = ex.ToString();
             }
+        }
+        
+        public void CopyMnemonicsToClipboard()
+        {
+            GUIUtility.systemCopyBuffer = mnemonicTxt.text.Trim();
+            gameObject.GetComponent<Toast>()?.ShowToast("Mnemonics copied to clipboard", 3);
         }
 
         public override void ShowScreen(object data = null)
@@ -110,68 +109,11 @@ namespace Solana.Unity.SDK.Example
             gameObject.SetActive(false);
         }
 
-        private void SaveMnemonicsToTxtFile(string path, string mnemonics, string fileTitle)
-        {
-            if (!gameObject.activeSelf) return;
-            if (fileTitle != _mnemonicsFileTitle) return;
-
-            if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.JSON)
-            {
-                List<string> mnemonicsList = new List<string>();
-
-                string[] splittedStringArray = mnemonics.Split(' ');
-                foreach (string stringInArray in splittedStringArray)
-                {
-                    mnemonicsList.Add(stringInArray);
-                }
-                MnemonicsModel mnemonicsModel = new MnemonicsModel
-                {
-                    Mnemonics = mnemonicsList
-                };
-
-                if (path != string.Empty)
-                    File.WriteAllText(path, JsonConvert.SerializeObject(mnemonicsModel));
-                else
-                {
-                    var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mnemonicsModel));
-                    DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
-                }
-            }
-            else if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.SimpleTxt)
-            {
-                if (path != string.Empty)
-                    File.WriteAllText(path, mnemonics);
-                else
-                {
-                    var bytes = Encoding.UTF8.GetBytes(mnemonics);
-                    DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
-                }
-            }
-        }
-        
         public void OnClose()
         {
             var wallet = GameObject.Find("wallet");
             wallet.SetActive(false);
         }
 
-        #if UNITY_WEBGL
-
-        //
-        // WebGL
-        //
-        [DllImport("__Internal")]
-        private static extern void DownloadFile(string gameObjectName, string methodName, string filename, byte[] byteArray, int byteArraySize);
-
-        // Called from browser
-        private void OnFileDownload()
-        {
-
-        }
-        #else
-        
-        private static void DownloadFile(string gameObjectName, string methodName, string filename, byte[] byteArray, int byteArraySize){}
-
-        #endif
     } 
 }

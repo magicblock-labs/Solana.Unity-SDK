@@ -1,158 +1,101 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Newtonsoft.Json;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
-using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK.Example
 {
-    [RequireComponent(typeof(TxtLoader))]
     public class WalletScreen : SimpleScreen
     {
-        public TextMeshProUGUI lamports;
-        public Button refresh_btn;
-        public Button send_btn;
-        public Button receive_btn;
-        public Button logout_btn;
-        public Button save_mnemonics_btn;
-        public Button save_private_key_btn;
+        [SerializeField]
+        private TextMeshProUGUI lamports;
+        [SerializeField]
+        private Button refreshBtn;
+        [SerializeField]
+        private Button sendBtn;
+        [SerializeField]
+        private Button receiveBtn;
+        [SerializeField]
+        private Button logoutBtn;
+        [SerializeField]
+        private Button saveMnemonicsBtn;
+        [SerializeField]
+        private Button savePrivateKeyBtn;
         
-        public GameObject tokenItem;
-        public Transform tokenContainer;
+        [SerializeField]
+        private GameObject tokenItem;
+        [SerializeField]
+        private Transform tokenContainer;
 
-        public KnownTokens knownTokens;
         public SimpleScreenManager parentManager;
 
-        private TxtLoader _txtLoader;
-        private CancellationTokenSource stopTask;
-
-        private const string _mnemonicsFileTitle = "Mnemonics";
-        private const string _privateKeyFileTitle = "PrivateKey";
+        private CancellationTokenSource _stopTask;
         private List<GameObject> _instantiatedTokens;
 
-        void Start()
+        public void Start()
         {
-            _txtLoader = GetComponent<TxtLoader>();
             _instantiatedTokens = new List<GameObject>();
             WebSocketActions.WebSocketAccountSubscriptionAction += (bool istrue) => 
             {
-                MainThreadDispatcher.Instance().Enqueue(() => { UpdateWalletBalanceDisplay(); });
+                MainThreadDispatcher.Instance().Enqueue(UpdateWalletBalanceDisplay);
             };
             WebSocketActions.CloseWebSocketConnectionAction += DisconnectToWebSocket;
-            refresh_btn?.onClick.AddListener(() =>
+            refreshBtn.onClick.AddListener(async () =>
             {
                 UpdateWalletBalanceDisplay();
-                GetOwnedTokenAccounts();
+                await GetOwnedTokenAccounts();
             });
 
-            send_btn?.onClick.AddListener(() =>
+            sendBtn.onClick.AddListener(() =>
             {
                 TransitionToTransfer();
             });
 
-            receive_btn?.onClick.AddListener(() =>
+            receiveBtn.onClick.AddListener(() =>
             {
                 manager.ShowScreen(this, "receive_screen");
             });
 
-            logout_btn.onClick.AddListener(() =>
+            logoutBtn.onClick.AddListener(() =>
             {
                 SimpleWallet.Instance.Logout();
                 manager.ShowScreen(this, "login_screen");
                 if(parentManager != null)
                     parentManager.ShowScreen(this, "[Connect_Wallet_Screen]");
             });
+            
+            savePrivateKeyBtn.onClick.AddListener(SavePrivateKeyOnClick);
+            saveMnemonicsBtn.onClick.AddListener(SaveMnemonicsOnClick);
 
-            if (string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Account.PrivateKey))
-            {
-                save_private_key_btn.gameObject.SetActive(false);
-                save_mnemonics_btn.gameObject.SetActive(false);
-            }
-            save_private_key_btn.onClick.AddListener(() => 
-            {
-                _txtLoader.SaveTxt(_privateKeyFileTitle, SimpleWallet.Instance.Wallet.Account.PrivateKey, false);
-            });
-
-            save_mnemonics_btn.onClick.AddListener(() =>
-            {
-                _txtLoader.SaveTxt(_mnemonicsFileTitle, SimpleWallet.Instance.Wallet.Mnemonic.ToString(), false);
-            });
-
-            _txtLoader.TxtSavedAction += SaveMnemonicsOnClick;
-            _txtLoader.TxtSavedAction += SavePrivateKeyOnClick;
-
-            stopTask = new CancellationTokenSource();
+            _stopTask = new CancellationTokenSource();
         }
 
-        private void SavePrivateKeyOnClick(string path, string key, string fileTitle)
+        private void OnEnable()
         {
-            if (!this.gameObject.activeSelf) return;
-            if (fileTitle != _privateKeyFileTitle) return;
-
-            //List<string> list = new List<string>();
-            //foreach (byte item in key)
-            //{
-            //    list.Add(item.ToString());
-            //}
-
-            if (path != string.Empty)
-            {
-                File.WriteAllText(path, key);
-            }
-            else
-            {
-                //string result = string.Join(Environment.NewLine, list);
-                var bytes = Encoding.UTF8.GetBytes(key);
-                DownloadFile(gameObject.name, "OnFileDownload", _privateKeyFileTitle + ".txt", bytes, bytes.Length);
-            }
+            var hasPrivateKey = !string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Account.PrivateKey);
+            savePrivateKeyBtn.gameObject.SetActive(hasPrivateKey);
+            var hasMnemonics = !string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Mnemonic?.ToString());
+            saveMnemonicsBtn.gameObject.SetActive(hasMnemonics);
         }
 
-        private void SaveMnemonicsOnClick(string path, string mnemonics, string fileTitle)
+        private void SavePrivateKeyOnClick()
         {
             if (!gameObject.activeSelf) return;
-            if (fileTitle != _mnemonicsFileTitle) return;
-
-            if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.JSON)
-            {
-                List<string> mnemonicsList = new List<string>();
-
-                string[] splittedStringArray = mnemonics.Split(' ');
-                foreach (string stringInArray in splittedStringArray)
-                {
-                    mnemonicsList.Add(stringInArray);
-                }
-                MnemonicsModel mnemonicsModel = new MnemonicsModel
-                {
-                    Mnemonics = mnemonicsList
-                };
-
-                if(path != string.Empty)
-                    File.WriteAllText(path, JsonConvert.SerializeObject(mnemonicsModel));
-                else
-                {
-                    var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mnemonicsModel));
-                    DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
-                }
-            }
-            else if (SimpleWallet.Instance.StorageMethodReference == StorageMethod.SimpleTxt)
-            {
-                if(path != string.Empty)
-                    File.WriteAllText(path, mnemonics);
-                else
-                {
-                    var bytes = Encoding.UTF8.GetBytes(mnemonics);
-                    DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
-                }
-            }
+            if (string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Account.PrivateKey?.ToString())) return;
+            GUIUtility.systemCopyBuffer = SimpleWallet.Instance.Wallet.Account.PrivateKey.ToString();
+            gameObject.GetComponent<Toast>()?.ShowToast("Private Key copied to clipboard", 3);
+        }
+        
+        private void SaveMnemonicsOnClick()
+        {
+            if (!gameObject.activeSelf) return;
+            if (string.IsNullOrEmpty(SimpleWallet.Instance.Wallet.Mnemonic?.ToString())) return;
+            GUIUtility.systemCopyBuffer = SimpleWallet.Instance.Wallet.Mnemonic.ToString();
+            gameObject.GetComponent<Toast>()?.ShowToast("Mnemonics copied to clipboard", 3);
         }
 
         private void TransitionToTransfer(object data = null)
@@ -163,9 +106,7 @@ namespace Solana.Unity.SDK.Example
         private async void UpdateWalletBalanceDisplay()
         {
             if (SimpleWallet.Instance.Wallet.Account is null) return;
-
             double sol = await SimpleWallet.Instance.Wallet.GetBalance();
-            if (SimpleWallet.Instance.Wallet.Account is null) return;
             MainThreadDispatcher.Instance().Enqueue(() => { lamports.text = $"{sol}"; });
         }
 
@@ -173,20 +114,6 @@ namespace Solana.Unity.SDK.Example
         {
             MainThreadDispatcher.Instance().Enqueue(() => { manager.ShowScreen(this, "login_screen"); });
             MainThreadDispatcher.Instance().Enqueue(() => { SimpleWallet.Instance.Wallet.Logout(); });
-        }
-
-        public override void ShowScreen(object data = null)
-        {
-            base.ShowScreen();
-            gameObject.SetActive(true);
-            UpdateWalletBalanceDisplay();
-            GetOwnedTokenAccounts();
-        }
-
-        public override void HideScreen()
-        {
-            base.HideScreen();
-            gameObject.SetActive(false);
         }
 
         private async Task GetOwnedTokenAccounts()
@@ -210,20 +137,7 @@ namespace Solana.Unity.SDK.Example
             }
         }
         
-        public void OnClose()
-        {
-            var wallet = GameObject.Find("wallet");
-            wallet.SetActive(false);
-        }
-
-
-        private void OnDestroy()
-        {
-            if (stopTask is null) return;
-            stopTask.Cancel();
-        }
-
-        void DisableTokenItems()
+        private void DisableTokenItems()
         {
             if(_instantiatedTokens == null) return;
             foreach (GameObject token in _instantiatedTokens)
@@ -233,25 +147,34 @@ namespace Solana.Unity.SDK.Example
             _instantiatedTokens.Clear();
         }
         
-#if UNITY_WEBGL
-
-        //
-        // WebGL
-        //
-        [DllImport("__Internal")]
-        private static extern void DownloadFile(string gameObjectName, string methodName, string filename, byte[] byteArray, int byteArraySize);
-
-        // Called from browser
-        public void OnFileDownload()
+        public override void ShowScreen(object data = null)
         {
-            
+            base.ShowScreen();
+            gameObject.SetActive(true);
+            UpdateWalletBalanceDisplay();
+            #pragma warning disable CS4014
+            GetOwnedTokenAccounts();
+            #pragma warning restore CS4014
         }
-#else
-        private static void DownloadFile(string gameObjectName, string methodName, string filename,
-            byte[] byteArray, int byteArraySize)
+
+        public override void HideScreen()
         {
+            base.HideScreen();
+            gameObject.SetActive(false);
         }
-#endif
         
+        public void OnClose()
+        {
+            var wallet = GameObject.Find("wallet");
+            wallet.SetActive(false);
+        }
+
+
+        private void OnDestroy()
+        {
+            if (_stopTask is null) return;
+            _stopTask.Cancel();
+        }
+
     }
 }

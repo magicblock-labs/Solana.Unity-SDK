@@ -1,11 +1,4 @@
-﻿using Newtonsoft.Json;
-using SFB;
-using System;
-using System.Collections;
-using System.IO;
-using System.Runtime.InteropServices;
-using Solana.Unity.Wallet;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,80 +6,84 @@ using UnityEngine.UI;
 
 namespace Solana.Unity.SDK.Example
 {
-    [RequireComponent(typeof(TxtLoader))]
     public class ReGenerateAccountScreen : SimpleScreen
     {
-        public TMP_InputField mnemonic_txt;
-        public Button generate_btn;
-        public Button create_btn;
-        public Button back_btn;
-        public Button load_mnemonics_btn;
-        public TMP_InputField password_input_field;
-        public TextMeshProUGUI wrong_password_txt;
-
-        public TextMeshProUGUI error_txt;
-
-        private string[] _paths;
-        private string _path;
-        private string _loadedMnemonics;
+        [SerializeField]
+        private TMP_InputField mnemonicTxt;
+        [SerializeField]
+        private Button generateBtn;
+        [SerializeField]
+        private Button createBtn;
+        [SerializeField]
+        private Button backBtn;
+        [SerializeField]
+        private Button loadMnemonicsBtn;
+        [SerializeField]
+        private TMP_InputField passwordInputField;
+        [SerializeField]
+        private TextMeshProUGUI wrongPasswordTxt;
+        [SerializeField]
+        private TextMeshProUGUI errorTxt;
 
         private void OnEnable()
         {
-            wrong_password_txt.gameObject.SetActive(false);
+            wrongPasswordTxt.gameObject.SetActive(false);
         }
 
-        void Start()
+        private void Start()
         {
-            if(generate_btn != null)
+            if(generateBtn != null)
             {
-                generate_btn.onClick.AddListener(() =>
-                {
-                    GenerateNewAccount();
-                });
+                generateBtn.onClick.AddListener(GenerateNewAccount);
             }
 
-            if(create_btn != null)
+            if(createBtn != null)
             {
-                create_btn.onClick.AddListener(() =>
+                createBtn.onClick.AddListener(() =>
                 {
                     manager.ShowScreen(this, "generate_screen");
                 });
             }
 
-            if(back_btn != null)
+            if(backBtn != null)
             {
-                back_btn.onClick.AddListener(() =>
+                backBtn.onClick.AddListener(() =>
                 {
                     manager.ShowScreen(this, "generate_screen");
                 });
             }
 
-            load_mnemonics_btn.onClick.AddListener(LoadMnemonicsFromTxtClicked);
+            loadMnemonicsBtn.onClick.AddListener(PasteMnemonicsClicked);
         }
 
-        public async void GenerateNewAccount()
+        private async void GenerateNewAccount()
         {
-            string password = password_input_field.text;
-            string mnemonic = mnemonic_txt.text;
+            var password = passwordInputField.text;
+            var mnemonic = mnemonicTxt.text;
 
-            Account account = await SimpleWallet.Instance.CreateAccount(mnemonic, password);
+            var account = await SimpleWallet.Instance.CreateAccount(mnemonic, password);
             if (account != null)
             {
                 manager.ShowScreen(this, "wallet_screen");
             }
             else
             {
-                error_txt.text = "Keywords are not in a valid format.";
+                errorTxt.text = "Keywords are not in a valid format.";
             }
+        }
+        
+        private void PasteMnemonicsClicked()
+        {
+            mnemonicTxt.text = GUIUtility.systemCopyBuffer;
         }
 
         public override void ShowScreen(object data = null)
         {
             base.ShowScreen();
 
-            error_txt.text = String.Empty;
-            mnemonic_txt.text = String.Empty;
-            password_input_field.text = String.Empty;
+            errorTxt.text = string.Empty;
+            mnemonicTxt.text = string.Empty;
+            passwordInputField.text = string.Empty;
 
             gameObject.SetActive(true);
         }
@@ -102,121 +99,6 @@ namespace Solana.Unity.SDK.Example
             var wallet = GameObject.Find("wallet");
             wallet.SetActive(false);
         }
-
-        private void LoadMnemonicsFromTxtClicked()
-        {
-            try
-            {
-#if UNITY_WEBGL && !UNITY_EDITOR
-                 UploadFile(gameObject.name, "OnFileUpload", ".txt", false);
-#elif UNITY_EDITOR || UNITY_EDITOR_WIN || UNITY_STANDALONE
-                _paths = StandaloneFileBrowser.OpenFilePanel("Title", "", "txt", false);
-                _path = _paths[0];
-                _loadedMnemonics = File.ReadAllText(_path);
-#elif UNITY_ANDROID || UNITY_IPHONE
-                string txt;
-                txt = NativeFilePicker.ConvertExtensionToFileType("txt");
-                NativeFilePicker.Permission permission = NativeFilePicker.PickFile((path) =>
-		            {
-			            if (path == null)
-				            Debug.Log("Operation cancelled");
-			            else
-			            {
-                            _loadedMnemonics = File.ReadAllText(path);
-                        }
-		            }, new string[] { txt });
-		        Debug.Log("Permission result: " + permission);
-#endif
-
-#if UNITY_EDITOR || UNITY_EDITOR_WIN || UNITY_STANDALONE || UNITY_ANDROID || UNITY_IPHONE
-                ResolveMnemonicsByType();
-#endif
-            }
-
-            catch (Exception ex)
-            {
-                Debug.Log(ex);
-            }
-        }
-
-        private void ResolveMnemonicsByType()
-        {
-            if (!string.IsNullOrEmpty(_loadedMnemonics))
-            {
-                if (SimpleWallet.Instance.storageMethod == StorageMethod.JSON)
-                {
-                    try
-                    {
-                        JSONDeserialization();
-                    }
-                    catch
-                    {
-                        try
-                        {
-                            SimpleTxtDeserialization();
-                        }
-                        catch
-                        {
-                            return;
-                        }
-                    }
-                }
-                else if (SimpleWallet.Instance.storageMethod == StorageMethod.SimpleTxt)
-                {
-                    try
-                    {
-                        SimpleTxtDeserialization();
-                    }
-                    catch
-                    {
-                        try
-                        {
-                            JSONDeserialization();
-                        }
-                        catch
-                        {
-       
-                            return;
-                        }
-                    }
-                }
-            }
-
-            void JSONDeserialization()
-            {
-                MnemonicsModel mnemonicsModel = JsonConvert.DeserializeObject<MnemonicsModel>(_loadedMnemonics);
-                string deserializedMnemonics = string.Join(" ", mnemonicsModel.Mnemonics);
-                mnemonic_txt.text = deserializedMnemonics;
-            }
-
-            void SimpleTxtDeserialization()
-            {
-                mnemonic_txt.text = _loadedMnemonics;
-            }
-        }
         
-        #if UNITY_WEBGL
-
-        //
-        // WebGL
-        //
-        [DllImport("__Internal")]
-        private static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
-
-        // Called from browser
-        public void OnFileUpload(string url)
-        {
-            StartCoroutine(OutputRoutine(url));
-        }
-        private IEnumerator OutputRoutine(string url)
-        {
-            var loader = new WWW(url);
-            yield return loader;
-
-            MainThreadDispatcher.Instance().Enqueue(() => { _loadedMnemonics = loader.text; });
-            MainThreadDispatcher.Instance().Enqueue(() => { ResolveMnemonicsByType(); });           
-        }
-
-        #endif
     }
 }
