@@ -16,7 +16,7 @@
 </div>
   
 Solana.Unity-SDK is the interface to access [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core), Solnet implementation in .NET Standard 2.0 (Unity compatible).
-The SDK support an In-game wallet with Web3auth authentication, phantom and SMS (upcoming). A set of convenience methods allow developers to access all the methodds implemented in Core, inluding MPL, native dex transations and more...
+The SDK support an In-game wallet with Web3auth authentication, phantom and SMS (upcoming). A set of convenience methods allows Unity developers to access all the methods implemented in Solana.Unity-Core, inluding MPL, native dex transations and more...
 
 Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of integrations. 
 
