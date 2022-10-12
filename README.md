@@ -17,7 +17,7 @@
   
 Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 (Unity compatible) with full RPC API coverage.
 
-Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of wallet integrations including SMS, Phantom and Web3auth support ...
+Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of integrations. 
 
 ## Documentation
 
@@ -30,7 +30,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 ## Features
 - Full JSON RPC API coverage
 - Wallet and accounts: Set up of a non-custodial Solana wallet in Unity (sollet and solana-keygen compatible)
-- Web3auth support (non-custodial signup/login through social accounts)
+- Phantom and Web3auth support (non-custodial signup/login through social accounts)
 - Transaction decoding from base64 and wire format and encoding back into wire format
 - Message decoding from base64 and wire format and encoding back into wire format
 - Instruction decompilation 
@@ -38,8 +38,10 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Basic UI examples 
 
 ## Upcoming
-- Wallet support for SMS and Phantom 
+- Wallet support for SMS
 - Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
+- MPL
+- Native DEX integration
 
 ## Dependencies
 - Solana.Unity.Wallet
