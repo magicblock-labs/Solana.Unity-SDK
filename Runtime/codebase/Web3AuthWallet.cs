@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
-using Merkator.Tools;
-using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
-using Solana.Unity.Wallet.Utilities;
-using UnityEngine;
+using Solana.Unity.Wallet;
 
 // ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK
 {
+    
     [Serializable]
     public class Web3AuthWalletOptions
     {
@@ -25,93 +22,57 @@ namespace Solana.Unity.SDK
         public string clientId = "BAwFgL-r7wzQKmtcdiz2uHJKNZdK7gzEf2q-m55xfzSZOw8jLOyIi4AVvvzaEQO5nv2dFLEmf9LBkF8kaq3aErg";
     }
     
+    
     public class Web3AuthWallet : WalletBase
     {
         private readonly Web3Auth _web3Auth;
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
-        private readonly Web3AuthWalletOptions _web3AuthWalletOptions;
-        private Provider _loginProvider = Provider.GOOGLE;
-        
-        private readonly Dictionary<int, Web3Auth.Network> _rpcClusterMap = new()
-        {
-            { 0, Web3Auth.Network.MAINNET },
-            { 1, Web3Auth.Network.TESTNET},
-            { 2, Web3Auth.Network.TESTNET},
-            { 3, Web3Auth.Network.TESTNET}
-        };
-        
-        public Web3AuthWallet(Web3AuthWalletOptions web3AuthWalletOptions,
+        private readonly WalletBase _internalWallet;
+
+        public Web3AuthWallet(
+            Web3AuthWalletOptions web3AuthWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet,
             string customRpc = null,
             bool autoConnectOnStartup = false
-            ) : base(rpcCluster, customRpc, autoConnectOnStartup)
+        ) : base(rpcCluster, customRpc, autoConnectOnStartup)
         {
-            _web3AuthWalletOptions = web3AuthWalletOptions;
-            var gameObject = new GameObject("Web3Auth");
-            _web3Auth = gameObject.AddComponent<Web3Auth>();
-            var web3AuthOptions = new Web3AuthOptions
-            {
-                redirectUrl = new Uri(_web3AuthWalletOptions.redirectUrl),
-                clientId = _web3AuthWalletOptions.clientId,
-                network = _rpcClusterMap[(int)rpcCluster],
-                whiteLabel = new WhiteLabelData()
-                {
-                    name = _web3AuthWalletOptions.appName,
-                    logoLight = _web3AuthWalletOptions.logoLight,
-                    logoDark = _web3AuthWalletOptions.logoDark,
-                    defaultLanguage = _web3AuthWalletOptions.defaultLanguage,
-                    dark = _web3AuthWalletOptions.dark,
-                    theme = new Dictionary<string, string>
-                    {
-                        {
-                            _web3AuthWalletOptions.themeName,
-                            _web3AuthWalletOptions.themeColor
-                        }
-                    }
-                }
-            };
-            _web3Auth.setOptions(web3AuthOptions);
-            _web3Auth.onLogin += OnLogin;
-        }
-
-        private void OnLogin(Web3AuthResponse response)
-        {
-            var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
-            var wallet = new Wallet.Wallet(keyBytes);
-            _loginTaskCompletionSource.SetResult(wallet.Account);
+            #if UNITY_WEBGL && ! UNITY_EDITOR
+            _internalWallet = new Web3AuthWalletWebGL(web3AuthWalletOptions, rpcCluster, customRpc, autoConnectOnStartup);
+            #else
+            _internalWallet = new Web3AuthWalletBase(web3AuthWalletOptions, rpcCluster, customRpc, autoConnectOnStartup);
+            #endif
         }
 
         protected override Task<Account> _Login(string password = null)
         {
-            var options = new LoginParams
-            {
-                loginProvider = _loginProvider
-            };
-            _web3Auth.login(options);
-            _loginTaskCompletionSource = new TaskCompletionSource<Account>();
-            return _loginTaskCompletionSource.Task;
+            if (_internalWallet != null)
+                return _internalWallet.Login(password);
+            throw new NotImplementedException();
         }
         
-        public override void Logout()
+        public override Task<Transaction> SignTransaction(Transaction transaction)
         {
-            base.Logout();
-            _web3Auth.onLogin -= OnLogin;
+            if (_internalWallet != null)
+                return _internalWallet.SignTransaction(transaction);
+            throw new NotImplementedException();
         }
 
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
-            return _Login(password);
-        }
-        public override Task<Transaction> SignTransaction(Transaction transaction)
-        {
-            transaction.Sign(Account);
-            return Task.FromResult(transaction);
+            if (_internalWallet != null)
+                return _internalWallet.CreateAccount(mnemonic, password);
+            throw new NotImplementedException();
         }
         
         public Task<Account> LoginWithProvider(Provider provider)
         {
-            _loginProvider = provider;
-            return Login();
+            if (_internalWallet != null)
+                #if UNITY_WEBGL && ! UNITY_EDITOR
+                return ((Web3AuthWalletWebGL)_internalWallet).LoginWithProvider(provider);
+                #else
+                return ((Web3AuthWalletBase)_internalWallet).LoginWithProvider(provider);
+                #endif
+            throw new NotImplementedException();
         }
     }
 }
