@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
 using Solana.Unity.Programs.Abstract;
@@ -724,7 +725,7 @@ namespace CandyMachineV2
         }
     }
     
-    public class CandyMachineUtils{
+    public static class CandyMachineUtils{
         public static readonly PublicKey TokenMetadataProgramId = new("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
         public static readonly PublicKey CandyMachineProgramId = new("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
         public static readonly PublicKey instructionSysVarAccount = new("Sysvar1nstructions1111111111111111111111111");
@@ -735,10 +736,10 @@ namespace CandyMachineV2
         /// <param name="account">The target account used for minting the token</param>
         /// <param name="candyMachineKey">The CandyMachine public key</param>
         /// <param name="rpc">The RPC instance</param>
-        public static async Task<RequestResult<string>> MintOneToken(Account account, PublicKey candyMachineKey, IRpcClient rpc)
+        public static async Task<Transaction> MintOneToken(Account account, PublicKey candyMachineKey, IRpcClient rpc)
         {
-            Account mint = new Account();
-            PublicKey associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(account, mint.PublicKey);
+            var mint = new Account();
+            var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(account, mint.PublicKey);
             
             var candyMachineClient = new CandyMachineClient(rpc, null);
             var candyMachineWrap  = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
@@ -747,7 +748,7 @@ namespace CandyMachineV2
             var (candyMachineCreator, creatorBump) = getCandyMachineCreator(candyMachineKey);
             
 
-            MintNftAccounts mintNftAccounts = new MintNftAccounts
+            var mintNftAccounts = new MintNftAccounts
             {
                 CandyMachine = candyMachineKey,
                 CandyMachineCreator = candyMachineCreator,
@@ -799,13 +800,11 @@ namespace CandyMachineV2
                         associatedTokenAccount,
                         1,
                         account))
-                .AddInstruction(candyMachineInstruction)
-                .Build(new List<Account>()
-                {
-                    account,
-                    mint
-                });
-            return await rpc.SendTransactionAsync(transaction);
+                .AddInstruction(candyMachineInstruction);
+            
+            var tx = Transaction.Deserialize(transaction.Serialize());
+            tx.PartialSign(mint);
+            return tx;
         }
 
         public static PublicKey getMasterEdition(PublicKey mint)
