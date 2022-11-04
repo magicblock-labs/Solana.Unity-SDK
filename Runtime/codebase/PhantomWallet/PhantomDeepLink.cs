@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -28,6 +29,7 @@ namespace Solana.Unity.SDK
         
         private TaskCompletionSource<Account> _loginTaskCompletionSource = new();
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource = new();
+        private List<SignaturePubKeyPair> _signatures;
 
         public PhantomDeepLink(
             PhantomWalletOptions phantomWalletOptions,
@@ -54,6 +56,8 @@ namespace Solana.Unity.SDK
         
         public override Task<Transaction> SignTransaction(Transaction transaction)
         {
+            _signatures = transaction.Signatures;
+            transaction.Signatures = new List<SignaturePubKeyPair>();
             StartSignTransaction(transaction);
             return _signedTransactionTaskCompletionSource.Task;
         }
@@ -165,7 +169,13 @@ namespace Solana.Unity.SDK
             var bytesToUtf8String = Encoding.UTF8.GetString(unencryptedMessage);
             var success = JsonUtility.FromJson<PhantomWalletTransactionSignedSuccessfully>(bytesToUtf8String);
             var base58TransBytes = Encoders.Base58.DecodeData(success.transaction);
-            _signedTransactionTaskCompletionSource.SetResult(Transaction.Deserialize(base58TransBytes));
+            var transaction = Transaction.Deserialize(base58TransBytes);
+            foreach (var sng in _signatures)
+            {
+                transaction.Signatures.RemoveAll(s => s.PublicKey == sng.PublicKey);
+                transaction.Signatures.Add(sng);
+            }
+            _signedTransactionTaskCompletionSource.SetResult(transaction);
         }
 
         #endregion
