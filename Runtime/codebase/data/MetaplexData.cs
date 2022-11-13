@@ -16,6 +16,7 @@ namespace Solana.Unity.SDK.Nft
         public string name;
         public string description;
         public string previewUrl;
+        public string animation_url;
         public string image;
         public Attributes[] attributes;
         public Properties properties;
