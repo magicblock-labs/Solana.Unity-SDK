@@ -9,6 +9,11 @@
       "displayName": "Simple Wallet",
       "description": "Contains simple implementation of Unity Solana Wallet",
       "path": "Samples~"
+    },
+    {
+      "displayName": "WebGLTemplates",
+      "description": "Contains WebGL template for XNFT Solana Wallet, move this folder to your project's Assets folder",
+      "path": "WebGLTemplates~"
     }
   ],
   "dependencies": {
