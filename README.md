@@ -37,12 +37,14 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Instruction decompilation 
 - TokenWallet object to send and receive SPL tokens and JIT provisioning of Associated Token Accounts 
 - Basic UI examples 
+- NFTs
 
 ## Upcoming
-- Wallet support for SMS
+- Native DEX operations (Orca coming soon...)
+- Raindrops integration, see the [DAO proposal]() 
+- Backpack
+- Wallet adapter and support for SMS (Solana Mobile Stack)
 - Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
-- MPL
-- Native DEX operations
 
 ## Dependencies
 - Solana.Unity.Wallet
