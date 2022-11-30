@@ -21,9 +21,8 @@ namespace Solana.Unity.SDK.Example
         private Button loginBtnTwitter;
         [SerializeField]
         private Button loginBtnPhantom;
-        // Should add a new button for XNFT login
-        // [SerializeField]
-        // private Button loginBtnXNFT;
+        [SerializeField]
+        private Button loginBtnXNFT;
         [SerializeField]
         private Button backBtn;
         [SerializeField]
@@ -47,8 +46,7 @@ namespace Solana.Unity.SDK.Example
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
-            // Register the XNFT login function to the button click event
-            // loginBtnXNFT.onClick.AddListener(LoginCheckerXNFT);
+            loginBtnXNFT.onClick.AddListener(LoginCheckerXNFT);
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
