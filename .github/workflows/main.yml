@@ -32,19 +32,7 @@ jobs:
           template: repository
           base: ""
           committer_branch: gh-pages
-          filename: metrics.repository.svg
-          token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
-          user: garbles-labs
-          repo: Solana.Unity-SDK
-          plugin_people: yes
-          plugin_people_types: stargazers, watchers
-      - name: Stargazers, Watchers
-        uses: lowlighter/metrics@latest
-        with:
-          template: repository
-          base: ""
-          committer_branch: gh-pages
-          filename: people.repository.svg
+          filename: people.repository.png
           token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
           user: garbles-labs
           repo: Solana.Unity-SDK
