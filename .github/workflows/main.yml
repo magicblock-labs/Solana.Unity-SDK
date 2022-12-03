@@ -16,11 +16,11 @@ jobs:
         uses: lowlighter/metrics@latest
         with:
           template: repository
+          base: ""
+          committer_branch: gh-pages
           filename: metrics.repository.svg
           token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
           user: garbles-labs
           repo: Solana.Unity-SDK
-          plugin_lines: yes
-          plugin_followup: yes
-          plugin_projects: yes
-          plugin_projects_repositories: lowlighter/metrics/projects/1
+          plugin_contributors: yes
+          plugin_contributors_contributions: yes
