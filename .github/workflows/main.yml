@@ -14,7 +14,19 @@ jobs:
     steps:
       - name: Get the sources
         uses: actions/checkout@v2
-      - name: Metrics
+      - name: Metrics contributors
+        uses: lowlighter/metrics@latest
+        with:
+          template: repository
+          base: ""
+          committer_branch: gh-pages
+          filename: metrics.repository.svg
+          token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
+          user: garbles-labs
+          repo: Solana.Unity-SDK
+          plugin_contributors: yes
+          plugin_contributors_contributions: yes
+      - name: Stargazers, Watchers
         uses: lowlighter/metrics@latest
         with:
           template: repository
@@ -25,4 +37,17 @@ jobs:
           user: garbles-labs
           repo: Solana.Unity-SDK
           plugin_people: yes
-          plugin_people_types: contributors, stargazers, watchers
+          plugin_people_types: stargazers, watchers
+      - name: Stargazers, Watchers
+        uses: lowlighter/metrics@latest
+        with:
+          template: repository
+          base: ""
+          committer_branch: gh-pages
+          filename: people.repository.svg
+          token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
+          user: garbles-labs
+          repo: Solana.Unity-SDK
+          plugin_people: yes
+          plugin_people_types: stargazers, watchers
+          config_output: png
