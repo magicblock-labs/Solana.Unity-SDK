@@ -20,13 +20,9 @@ The SDK support an In-game wallet with Web3auth authentication, phantom and SMS 
 
 Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of integrations. 
 
-## 📝 Documentation
+## 📝 [Documentation](http://developers.garbles.fun/)
 
-[Solana.Unity SDK - Documentation](http://developers.garbles.fun/)
-
-## 🚀 Live demo
-
-[Solana.Unity SDK - Demo](https://solana-unity-sdk.garbles.fun/)
+## 🚀 [Live Demo](https://garbles-labs.github.io/Solana.Unity-SDK/)
 
 ## ✨ Features
 - Full JSON RPC API coverage
