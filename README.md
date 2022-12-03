@@ -20,15 +20,15 @@ The SDK support an In-game wallet with Web3auth authentication, phantom and SMS 
 
 Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of integrations. 
 
-## Documentation
+## 📝 Documentation
 
 [Solana.Unity SDK - Documentation](http://developers.garbles.fun/)
 
-## Live demo
+## 🚀 Live demo
 
 [Solana.Unity SDK - Demo](https://solana-unity-sdk.garbles.fun/)
 
-## Features
+## ✨ Features
 - Full JSON RPC API coverage
 - Wallet and accounts: Set up of a non-custodial Solana wallet in Unity (sollet and solana-keygen compatible)
 - Phantom and Web3auth support (non-custodial signup/login through social accounts)
@@ -39,14 +39,14 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Basic UI examples 
 - NFTs
 
-## Upcoming
+## 🚩 Upcoming
 - Native DEX operations (Orca coming soon...)
 - Raindrops integration, see the [DAO proposal]() 
 - Backpack
 - Wallet adapter and support for SMS (Solana Mobile Stack)
 - Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
 
-## Dependencies
+## 📌 Dependencies
 - Solana.Unity.Wallet
 - Solana.Unity.Rpc
 - Soalana.Unity.KeyStore
@@ -56,11 +56,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Portable.BouncyCastle
 - Zxing
 
-## External packages
-- Native File Picker
-- Standalone File Browser
-
-## Installation
+## ➕ Installation
 
 * Open [Unity Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) window.
 * Click the add **+** button in the status bar.
@@ -75,7 +71,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
   * The latest available release version is [![Last Release](https://img.shields.io/github/v/release/garbles-labs/Solana.Unity-SDK)](https://github.com/Sgarbles-labs/Solana.Unity-SDK/releases/latest)
 * You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.1/Simple Wallet/Solana Wallet/1.0.0/Simple Wallet/scenes/wallet_scene.unity`
 
-## Step-by-step instructions
+## 👷 Step-by-step instructions
 1. If you have an older version of Unity that doesn't have imported Newtonsoft.Json just import it.
 2. Create a new scene.
 3. Import WalletController prefab into your scene.
@@ -83,3 +79,13 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 5. If you use custom URI be careful to use WS/WSS instead of HTTP/HTTPS because WebSocket does not work with HTTP / HTTPS.
 6. Create new Canvas
 7. Import WalletHolder prefab into the Canvas or if you want your design just import wallet prefab and customize the scene.
+
+
+## 💚 Open Source
+Open Source is at the heart of what we do at Garbles Labs. We believe building software in the open, with thriving communities, helps leave the world a little better than we found it.
+
+## ✨ Contributors & Community
+
+Thanks go to these wonderful people:
+
+![Contributors](https://garbles-labs.github.io/Solana.Unity-SDK/metrics.repository.svg)
