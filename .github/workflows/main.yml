@@ -17,6 +17,7 @@ jobs:
         with:
           template: repository
           filename: metrics.repository.svg
+          token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
           user: garbles-labs
           repo: Solana.Unity-SDK
           plugin_lines: yes
