@@ -84,4 +84,4 @@ Open Source is at the heart of what we do at Garbles Labs. We believe building s
 
 Thanks go to these wonderful people:
 
-![Contributors](https://garbles-labs.github.io/Solana.Unity-SDK/metrics.repository.svg)
+<a href="https://github.com/garbles-labs/Solana.Unity-SDK/graphs/contributors"><img width="100%" src="https://garbles-labs.github.io/Solana.Unity-SDK/metrics.repository.svg"></a>
