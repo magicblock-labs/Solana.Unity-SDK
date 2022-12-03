@@ -22,5 +22,5 @@ jobs:
           token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
           user: garbles-labs
           repo: Solana.Unity-SDK
-          plugin_contributors: yes
-          plugin_contributors_contributions: yes
+          plugin_people: yes
+          plugin_people_types: contributors, stargazers, watchers
