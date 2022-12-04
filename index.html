@@ -3,10 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Solana.Unity SDK</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>Unity WebGL Player | Solana.Unity-SDK</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
   </head>
-  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
+  <body>
     <script>
     "use strict";
     // base-x encoding / decoding
@@ -167,7 +168,6 @@
     var bs58 = base(ALPHABET);
     </script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <script src="Build/Solana.Unity-SDK.loader.js"></script>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600></canvas>
       <div id="unity-loading-bar">
@@ -175,6 +175,12 @@
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">Solana.Unity-SDK</div>
       </div>
     </div>
     <script>
@@ -184,7 +190,7 @@
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
       var warningBanner = document.querySelector("#unity-warning");
-      
+
       // Shows a temporary message banner/ribbon for a few seconds, or
       // a permanent error message on top of the canvas if type=='error'.
       // If type=='warning', a yellow highlight color is used.
@@ -208,32 +214,34 @@
         }
         updateBannerVisibility();
       }
-      
+
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/Solana.Unity-SDK.loader.js";
       var config = {
-        dataUrl: "Build/Solana.Unity-SDK.data",
-        frameworkUrl: "Build/Solana.Unity-SDK.framework.js",
-        codeUrl: "Build/Solana.Unity-SDK.wasm",
+        dataUrl: buildUrl + "/Solana.Unity-SDK.data",
+        frameworkUrl: buildUrl + "/Solana.Unity-SDK.framework.js",
+        codeUrl: buildUrl + "/Solana.Unity-SDK.wasm",
         streamingAssetsUrl: "StreamingAssets",
-        companyName: "Garbles",
-        productName: "Solana.Unity SDK",
+        companyName: "Garbles Labs",
+        productName: "Solana.Unity-SDK",
         productVersion: "0.0.3",
         showBanner: unityShowBanner,
       };
-      
-      // Mobile device style: fill the whole browser client area with the game canvas:
+
+      // By default Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
+
       var meta = document.createElement('meta');
       meta.name = 'viewport';
       meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
       document.getElementsByTagName('head')[0].appendChild(meta);
+      container.className = "unity-mobile";
+      canvas.className = "unity-mobile";
 
-      var canvas = document.querySelector("#unity-canvas");
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      canvas.style.position = "fixed";
-
-      document.body.style.textAlign = "left";
 
       loadingBar.style.display = "block";
 
