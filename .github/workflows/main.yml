@@ -32,10 +32,9 @@ jobs:
           template: repository
           base: ""
           committer_branch: gh-pages
-          filename: people.repository.png
+          filename: people.repository.svg
           token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
           user: garbles-labs
           repo: Solana.Unity-SDK
           plugin_people: yes
           plugin_people_types: stargazers, watchers
-          config_output: png
