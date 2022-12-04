@@ -1,0 +1,8 @@
+@import 'tailwindcss/base';
+@import './fonts.css';
+@import './docsearch.css';
+@import './prism.css';
+@import './block.css';
+@import './cube.css';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
