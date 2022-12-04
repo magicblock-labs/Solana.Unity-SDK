@@ -2,7 +2,8 @@
     "name": "com.solana.unity_sdk",
     "rootNamespace": "",
     "references": [
-        "GUID:11b8985f735c7ea47bf017c34f3fcc41"
+        "GUID:11b8985f735c7ea47bf017c34f3fcc41",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
