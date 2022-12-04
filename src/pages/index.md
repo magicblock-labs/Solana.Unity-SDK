@@ -1,7 +1,7 @@
 ---
 title: Introduction
 pageTitle: Solana.Unity-SDK - Introduction
-description: Add a bit of magic to each block.
+description: Open-Source Unity-Solana SDK with NFT support & Full RPC coverage.
 ---
 
 Open-Source Unity-Solana SDK with NFT support & Full RPC coverage. {% .lead %}
