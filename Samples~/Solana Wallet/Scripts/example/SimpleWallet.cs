@@ -98,6 +98,15 @@ namespace Solana.Unity.SDK.Example
             return acc;
         }
 
+        public async Task<Account> LoginXNFT()
+        {
+            var XNFTWallet = new XNFTWallet(rpcCluster, customRpc, autoConnectOnStartup);
+            var acc = await XNFTWallet.Login();
+            if (acc != null)
+                Wallet = XNFTWallet;
+            return acc;
+        }
+
         public void RpcNodeDropdownSelected(int value)
         {
             rpcCluster = value switch

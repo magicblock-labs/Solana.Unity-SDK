@@ -22,6 +22,8 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private Button loginBtnPhantom;
         [SerializeField]
+        private Button loginBtnXNFT;
+        [SerializeField]
         private Button backBtn;
         [SerializeField]
         private TextMeshProUGUI messageTxt;
@@ -44,6 +46,7 @@ namespace Solana.Unity.SDK.Example
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
+            loginBtnXNFT.onClick.AddListener(LoginCheckerXNFT);
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
@@ -76,6 +79,12 @@ namespace Solana.Unity.SDK.Example
         private async void LoginCheckerWeb3Auth(Provider provider)
         {
             var account = await SimpleWallet.Instance.LoginInWeb3Auth(provider);
+            CheckAccount(account);
+        }
+
+        private async void LoginCheckerXNFT()
+        {
+            var account = await SimpleWallet.Instance.LoginXNFT();
             CheckAccount(account);
         }
 
