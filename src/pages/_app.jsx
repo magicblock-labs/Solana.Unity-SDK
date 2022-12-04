@@ -111,7 +111,7 @@ export default function App({ Component, pageProps }) {
           <meta property="og:description" content={description} />
           <meta
             property="og:image"
-            content="https://www.magicblocks.gg/logo.png"
+            content="https://solana.unity-sdk.gg/logo.png"
           />
           <meta property="og:image:width" content="250" />
           <meta property="og:image:height" content="214" />
@@ -122,7 +122,7 @@ export default function App({ Component, pageProps }) {
           <meta name="twitter:description" content={description} />
           <meta
             name="twitter:image"
-            content="https://www.magicblocks.gg/logo.png"
+            content="https://solana.unity-sdk.gg/logo.png"
           />
         </Head>
         <Layout
