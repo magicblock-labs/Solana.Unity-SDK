@@ -24,8 +24,6 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private Button loginBtnXNFT;
         [SerializeField]
-        private Button backBtn;
-        [SerializeField]
         private TextMeshProUGUI messageTxt;
         [SerializeField]
         private TMP_Dropdown dropdownRpcCluster;
@@ -48,9 +46,6 @@ namespace Solana.Unity.SDK.Example
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
             loginBtnXNFT.onClick.AddListener(LoginCheckerXNFT);
 
-            if(messageTxt != null)
-                messageTxt.gameObject.SetActive(false);
-            
             if (Application.platform != RuntimePlatform.Android && 
                 Application.platform != RuntimePlatform.IPhonePlayer
                 && Application.platform != RuntimePlatform.WindowsPlayer
@@ -61,6 +56,10 @@ namespace Solana.Unity.SDK.Example
                 loginBtnGoogle.gameObject.SetActive(false);
                 loginBtnTwitter.gameObject.SetActive(false);
             }
+            loginBtnXNFT.gameObject.SetActive(false);
+            //loginBtnXNFT.gameObject.SetActive(Application.platform == RuntimePlatform.WebGLPlayer);
+            if(messageTxt != null)
+                messageTxt.gameObject.SetActive(false);
         }
 
         private async void LoginChecker()
@@ -82,9 +81,15 @@ namespace Solana.Unity.SDK.Example
             CheckAccount(account);
         }
 
+        public void TryLoginBackPack()
+        {
+            LoginCheckerXNFT();
+        }
+
         private async void LoginCheckerXNFT()
         {
             var account = await SimpleWallet.Instance.LoginXNFT();
+            messageTxt.text = "";
             CheckAccount(account);
         }
 

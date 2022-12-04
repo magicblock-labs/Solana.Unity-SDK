@@ -28,7 +28,15 @@ namespace Solana.Unity.SDK
         protected override Task<Account> _Login(string password = null)
         {
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
-            ExternConnectXNFT(OnXNFTConnected);
+            try
+            {
+                ExternConnectXNFT(OnXNFTConnected);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                _loginTaskCompletionSource.SetResult(null);
+                return _loginTaskCompletionSource.Task;
+            }
             return _loginTaskCompletionSource.Task;
         }
 

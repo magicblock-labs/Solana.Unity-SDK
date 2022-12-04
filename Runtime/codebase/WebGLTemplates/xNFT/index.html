@@ -165,9 +165,9 @@
       const ALPHABET =
         "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
       var bs58 = base(ALPHABET);
-    </script>
-    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+      </script>
+      <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+      <script src="Build/{{{ LOADER_FILENAME }}}"></script>
     <script>
       
         // Mobile device style: fill the whole browser client area with the game canvas:
@@ -201,7 +201,7 @@
         productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
         productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
         // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
+        devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
       });
     </script>
   </body>

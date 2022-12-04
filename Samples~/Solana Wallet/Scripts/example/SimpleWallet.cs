@@ -18,7 +18,7 @@ namespace Solana.Unity.SDK.Example
         [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
         public string customRpc;
         public bool autoConnectOnStartup;
-        
+
         public StorageMethod storageMethod;
         
         public Web3AuthWalletOptions web3AuthWalletOptions;
@@ -109,10 +109,11 @@ namespace Solana.Unity.SDK.Example
 
         public void RpcNodeDropdownSelected(int value)
         {
-            rpcCluster = value switch
+            rpcCluster = RpcCluster.Custom;
+            customRpc = value switch
             {
-                (int) RpcCluster.MainNet => RpcCluster.MainNet,
-                _ => RpcCluster.DevNet
+                (int) RpcCluster.MainNet => "https://rpc.ankr.com/solana",
+                _ => "https://rpc.ankr.com/solana_devnet"
             };
         }
         
