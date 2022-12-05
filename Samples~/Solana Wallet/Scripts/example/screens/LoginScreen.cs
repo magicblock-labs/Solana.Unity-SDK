@@ -22,7 +22,7 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private Button loginBtnPhantom;
         [SerializeField]
-        private Button backBtn;
+        private Button loginBtnXNFT;
         [SerializeField]
         private TextMeshProUGUI messageTxt;
         [SerializeField]
@@ -44,10 +44,8 @@ namespace Solana.Unity.SDK.Example
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
+            loginBtnXNFT.onClick.AddListener(LoginCheckerXNFT);
 
-            if(messageTxt != null)
-                messageTxt.gameObject.SetActive(false);
-            
             if (Application.platform != RuntimePlatform.Android && 
                 Application.platform != RuntimePlatform.IPhonePlayer
                 && Application.platform != RuntimePlatform.WindowsPlayer
@@ -58,6 +56,10 @@ namespace Solana.Unity.SDK.Example
                 loginBtnGoogle.gameObject.SetActive(false);
                 loginBtnTwitter.gameObject.SetActive(false);
             }
+            loginBtnXNFT.gameObject.SetActive(false);
+            //loginBtnXNFT.gameObject.SetActive(Application.platform == RuntimePlatform.WebGLPlayer);
+            if(messageTxt != null)
+                messageTxt.gameObject.SetActive(false);
         }
 
         private async void LoginChecker()
@@ -76,6 +78,18 @@ namespace Solana.Unity.SDK.Example
         private async void LoginCheckerWeb3Auth(Provider provider)
         {
             var account = await SimpleWallet.Instance.LoginInWeb3Auth(provider);
+            CheckAccount(account);
+        }
+
+        public void TryLoginBackPack()
+        {
+            LoginCheckerXNFT();
+        }
+
+        private async void LoginCheckerXNFT()
+        {
+            var account = await SimpleWallet.Instance.LoginXNFT();
+            messageTxt.text = "";
             CheckAccount(account);
         }
 
