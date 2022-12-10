@@ -27,8 +27,8 @@ namespace Solana.Unity.SDK
         private string _sessionId;
         private byte[] _phantomEncryptionPubKey;
         
-        private TaskCompletionSource<Account> _loginTaskCompletionSource = new();
-        private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource = new();
+        private TaskCompletionSource<Account> _loginTaskCompletionSource;
+        private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private List<SignaturePubKeyPair> _signatures;
 
         public PhantomDeepLink(
@@ -44,6 +44,7 @@ namespace Solana.Unity.SDK
 
         protected override Task<Account> _Login(string password = null)
         {
+            _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             StartLogin();
             return _loginTaskCompletionSource.Task;
         }
@@ -56,6 +57,7 @@ namespace Solana.Unity.SDK
         
         public override Task<Transaction> SignTransaction(Transaction transaction)
         {
+            _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             _signatures = transaction.Signatures;
             transaction.Signatures = new List<SignaturePubKeyPair>();
             StartSignTransaction(transaction);
