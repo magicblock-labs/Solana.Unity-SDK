@@ -17,6 +17,10 @@ description:
 
   Congrats! You can now build your webgl project normally and just upload the generated files to your web server as any other WebGL game. You need the url for publishing the xnft in next step.
 
+{% callout title="Host your WebGL build on GH pages" %}
+Follow [this guide](/docs/gh-pages) to host your WebGL build on Github pages
+{% /callout %}
+
 ## Deploy your game as an xNFT
 
 As the time of writing this, you need to own a invite code to access backpack.

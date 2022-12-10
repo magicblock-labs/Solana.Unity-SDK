@@ -42,6 +42,7 @@ const navigation = [
   {
     title: 'Guides',
     links: [
+      { title: 'Host your game on Github pages', href: '/docs/gh-pages'},
       { title: 'Publishing a game as Xnft', href: '/docs/xnft'},
       { title: 'Additional examples', href: '/docs/examples'},
     ],
