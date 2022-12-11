@@ -4,7 +4,7 @@ description:
 ---
 
 
-```
+```C#
 public class CreateAccountAndInitializeStakeExample : IExample
     {
         private static readonly IRpcClient rpcClient = ClientFactory.GetClient(Cluster.TestNet);
