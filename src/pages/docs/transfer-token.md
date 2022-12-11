@@ -3,7 +3,7 @@ title: Transfer token
 description: 
 ---
 
-```
+```C#
  public class TransferTokenExample : IExample
     {
         private static readonly IRpcClient rpcClient = ClientFactory.GetClient(Cluster.TestNet);
