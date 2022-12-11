@@ -5,10 +5,14 @@ description: Learn how to configure your preferred wallet
 Learn how to configure your preferred wallet
 
 The SDK supports a veriety of wallets, including 
-* In-game wallet (new or restored)
-* In-game wallet with Web3auth authentication
-* Phantom
-* SMS (upcoming)
+
+| Wallet      | Support | Type     |
+| :---        |    :----:   |          ---: |
+| In-game (new or restore)      | ✅       | In-app   |
+| In-game (Web3auth)      | ✅       | In-app   |
+| Phantom      | ✅       | External   |
+| SMS      | 🏗       | In-app   |
+
 
 ## Interface
 `IWalletBase` defines the common [interface](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/IWalletBase.cs) 
