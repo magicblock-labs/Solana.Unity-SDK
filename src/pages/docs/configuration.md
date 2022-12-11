@@ -2,9 +2,12 @@
 title: Configurations
 description: Learn how to configure your preferred wallet
 ---
+Learn how to configure your preferred wallet
 
-The in-game wallet is the current default option, with support for Web3auth signup/login. We are adding support for more configurations. SMS support is in the pipeline and will be added soon. 
-
+The SDK supports a veriety of wallets, including 
+* In-game wallet
+* In-game wallet with Web3auth authentication
+* Phantom and SMS (upcoming). 
 
 Interface
 IWalletBase defines the common interface
