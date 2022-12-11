@@ -22,7 +22,8 @@ The WalletBase abstract class implements `IWalletBase` interface and provides co
 * Sign/partially sign a transaction
 * Send transaction
 
-The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs)
+
+{% callout title="Additional methods" %} The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs) {% /callout %}
 
 ---
 
