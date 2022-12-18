@@ -30,7 +30,7 @@ namespace Solana.Unity.SDK
         private TaskCompletionSource<Account> _loginTaskCompletionSource = new();
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource = new();
         private List<SignaturePubKeyPair> _signatures;
-
+        
         public PhantomDeepLink(
             PhantomWalletOptions phantomWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, bool autoConnectOnStartup = false) 
@@ -58,7 +58,14 @@ namespace Solana.Unity.SDK
         {
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             _signatures = transaction.Signatures;
-            transaction.Signatures = new List<SignaturePubKeyPair>();
+            if (transaction.Signatures.Count == 0)
+            {
+                transaction.Signatures.Add(new SignaturePubKeyPair()
+                {
+                    PublicKey = transaction.FeePayer,
+                    Signature = new Byte[64]
+                });
+            }
             StartSignTransaction(transaction);
             return _signedTransactionTaskCompletionSource.Task;
         }
@@ -171,11 +178,6 @@ namespace Solana.Unity.SDK
             var success = JsonUtility.FromJson<PhantomWalletTransactionSignedSuccessfully>(bytesToUtf8String);
             var base58TransBytes = Encoders.Base58.DecodeData(success.transaction);
             var transaction = Transaction.Deserialize(base58TransBytes);
-            foreach (var sng in _signatures)
-            {
-                transaction.Signatures.RemoveAll(s => s.PublicKey == sng.PublicKey);
-                transaction.Signatures.Add(sng);
-            }
             _signedTransactionTaskCompletionSource.SetResult(transaction);
         }
 
