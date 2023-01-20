@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using UnityEngine;
 
 namespace Solana.Unity.SDK.Utility
 {
@@ -68,7 +69,6 @@ namespace Solana.Unity.SDK.Utility
             decodedData = "";
             var dataCopy = new byte[length];
             Array.Copy(data, (long)offset, dataCopy, 0, length);
-
             decodedData = Encoding.UTF8.GetString(dataCopy).Replace("\u0000", "");
         }
 

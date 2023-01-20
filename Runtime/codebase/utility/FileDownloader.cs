@@ -80,12 +80,11 @@ namespace Solana.Unity.SDK.Utility
         private static async Task<T> LoadJson<T>(string path)
         {            
             var client = new HttpClient();
-
-            var response = await client.GetAsync(path);
-            response.EnsureSuccessStatusCode();
-
+            
             try
             {
+                var response = await client.GetAsync(path);
+                response.EnsureSuccessStatusCode();
                 var responseBody = await response.Content.ReadAsStringAsync();
                 var data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
                 client.Dispose();
@@ -136,6 +135,24 @@ namespace Solana.Unity.SDK.Utility
                 var dataString = JsonUtility.ToJson(data);
                 File.WriteAllText(path, dataString);
             }
+        }
+        
+        /// <summary>
+        /// Resize great textures to small, because of performance
+        /// </summary>
+        /// <param name="texture2D"> Texture to resize</param>
+        /// <param name="targetX"> Target width</param>
+        /// <param name="targetY"> Target height</param>
+        /// <returns></returns>
+        public static Texture2D Resize(Texture texture2D, int targetX, int targetY)
+        {
+            RenderTexture rt = new RenderTexture(targetX, targetY, 24);
+            RenderTexture.active = rt;
+            Graphics.Blit(texture2D, rt);
+            Texture2D result = new Texture2D(targetX, targetY);
+            result.ReadPixels(new Rect(0, 0, targetX, targetY), 0, 0);
+            result.Apply();
+            return result;
         }
 
     }
