@@ -1,6 +1,6 @@
 <div align="center">
 
-  <a href="https://solana.unity-sdk.gg/"><img height="170x" src="https://i.imgur.com/UvulxS0.png" /></a>
+  <a href="https://solana.unity-sdk.gg/"><img height="170x" src="https://i.imgur.com/WtzPSsI.png" /></a>
   
 
   <h1>Solana.Unity SDK</h1>
