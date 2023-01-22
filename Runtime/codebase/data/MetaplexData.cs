@@ -118,7 +118,7 @@ namespace Solana.Unity.SDK.Nft
                 }
                 metaplexData.data.creators = creators.ToArray();
             }
-            catch (Exception _)
+            catch (Exception)
             {
                 metaplexData.data.creators = null;
             }

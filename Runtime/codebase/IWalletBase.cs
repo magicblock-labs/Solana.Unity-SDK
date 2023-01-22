@@ -80,8 +80,9 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// Returns tokens held by the given publicKey
         /// </summary>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<TokenAccount[]> GetTokenAccounts();
+        Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Finalized);
 
         /// <summary>
         /// Sign a transaction

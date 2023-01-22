@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &8340851021818164656
+--- !u!1 &2866339766007080075
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8340851021818164658}
-  - component: {fileID: 8340851021818164657}
-  - component: {fileID: 4320523255381914141}
+  - component: {fileID: 2866339766007080073}
+  - component: {fileID: 2866339766007080074}
+  - component: {fileID: 8066644052409000742}
   m_Layer: 0
   m_Name: '[WalletController]'
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8340851021818164658
+--- !u!4 &2866339766007080073
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8340851021818164656}
+  m_GameObject: {fileID: 2866339766007080075}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 523.5468, y: 236.58032, z: -101.23384}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -33,20 +33,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8340851021818164657
+--- !u!114 &2866339766007080074
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8340851021818164656}
+  m_GameObject: {fileID: 2866339766007080075}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 653ac91d5a7e8f64ca09fdbacb357c84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rpcCluster: 0
-  customRpc: 
+  rpcCluster: 3
+  customRpc: https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/
   autoConnectOnStartup: 1
   storageMethod: 0
   web3AuthWalletOptions:
@@ -63,13 +63,13 @@ MonoBehaviour:
     phantomApiVersion: v1
     appMetaDataUrl: https://github.com/garbles-labs/Solana.Unity-SDK
     deeplinkUrlScheme: unitydl
---- !u!114 &4320523255381914141
+--- !u!114 &8066644052409000742
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8340851021818164656}
+  m_GameObject: {fileID: 2866339766007080075}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c915183a66ff2444a833276269898760, type: 3}

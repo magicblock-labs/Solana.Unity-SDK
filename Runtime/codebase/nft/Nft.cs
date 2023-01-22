@@ -12,6 +12,8 @@ using UnityEngine;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
 
+// ReSharper disable once CheckNamespace
+
 namespace Solana.Unity.SDK.Nft
 {
     [Serializable]
@@ -23,13 +25,6 @@ namespace Solana.Unity.SDK.Nft
         public Texture2D file { get; set; }
 
         public int heightAndWidth = 75;
-
-        //~NftImage() {
-        //    if (file != null)
-        //    {
-        //        GameObject.Destroy(file);
-        //    }
-        //}
     }
 
     [Serializable]
@@ -42,21 +37,6 @@ namespace Solana.Unity.SDK.Nft
         public Nft(Metaplex metaplexData)
         {
             this.metaplexData = metaplexData;
-        }
-
-        public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection) {
-            
-            var data = await GetAccountData(mint, connection);
-
-            Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(data));
-
-            var accountLayout = AccountLayout.DeserializeAccountLayout(data.Data[0]);
-            if (data is {Data: {Count: > 0}})
-            {
-                Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountLayout));
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -212,7 +192,6 @@ namespace Solana.Unity.SDK.Nft
             try
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
-                Debug.Log(responseBody);
                 T data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
                 client.Dispose();
                 return data;

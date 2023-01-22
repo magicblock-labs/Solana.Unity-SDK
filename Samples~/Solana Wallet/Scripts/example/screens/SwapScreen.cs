@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Orca;
 using Solana.Unity.Dex;
 using Solana.Unity.Dex.Models;
@@ -54,25 +55,26 @@ public class SwapScreen : SimpleScreen
     private PublicKey _whirlpool;
 
     // Initialize the dropdowns and select USDC and ORCA as default
-    async void Start()
+    void Start()
     {
         _dex = new OrcaDex(
             SimpleWallet.Instance.Wallet.Account, 
             SimpleWallet.Instance.Wallet.ActiveRpcClient,
             commitment: Commitment.Finalized);
-        dropdownTokenA.onValueChanged.AddListener(delegate { OptionSelected(dropdownTokenA); });
-        dropdownTokenB.onValueChanged.AddListener(delegate { OptionSelected(dropdownTokenB); });
+        dropdownTokenA.onValueChanged.AddListener(_ => OptionSelected(dropdownTokenA).Forget());
+        dropdownTokenB.onValueChanged.AddListener(_ => OptionSelected(dropdownTokenB).Forget());
         _dropdowns = new[] {dropdownTokenA, dropdownTokenB};
         inputAmountA.onValueChanged.AddListener(delegate { GetSwapQuote(); });
-        await Task.Run(InitializeDropDowns);
+        InitializeDropDowns().Forget();
     }
 
     public async void StartSwap()
     {
-        await Task.Run(Swap);
+        Debug.Log("Start swap");
+        await Swap();
     }
 
-    private async void Swap()
+    private async UniTask Swap()
     {
         if(_whirlpool == null || _swapQuote == null) return;
         var tr = await _dex.SwapWithQuote(_whirlpool, _swapQuote);
@@ -80,25 +82,26 @@ public class SwapScreen : SimpleScreen
         Debug.Log(result.Result);
         await SimpleWallet.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
         Debug.Log("Transaction confirmed");
-        MainThreadDispatcher.Instance().Enqueue(() =>
-        {
-            manager.ShowScreen(this,"wallet_screen");
-        });
+        await UniTask.SwitchToMainThread(); 
+        manager.ShowScreen(this,"wallet_screen");
     }
 
-    private async void GetSwapQuote()
+    private void GetSwapQuote()
     {
         _tokenSource?.Cancel();
         _tokenSource?.Dispose();
         _tokenSource = new CancellationTokenSource();
-        var token = _tokenSource.Token;
-        await Task.Run(InputAmountAChanged, token);
+        InputAmountAChanged().Forget();
+        UniTask.Create(async () =>
+        {
+            await InputAmountAChanged();
+        }).AttachExternalCancellation(_tokenSource.Token);
     }
 
     /// <summary>
     /// Calculate the swap quote on input change
     /// </summary>
-    private async Task InputAmountAChanged()
+    private async UniTask InputAmountAChanged()
     {
         if(_tokenA is null || _tokenB is null) return;
         try
@@ -120,7 +123,7 @@ public class SwapScreen : SimpleScreen
         }
     }
     
-    private async void InitializeDropDowns()
+    private async UniTask InitializeDropDowns()
     {
         _tokens = await _dex.GetTokens();
         _tokens.Add(new TokenData { 
@@ -153,16 +156,14 @@ public class SwapScreen : SimpleScreen
     /// </summary>
     /// <param name="tokenData"></param>
     /// <param name="logo"></param>
-    private Task LoadTokenLogo(TokenData tokenData, RawImage logo)
+    private async UniTask LoadTokenLogo(TokenData tokenData, RawImage logo)
     {
-        MainThreadDispatcher.Instance().Enqueue(async () => { 
-            if(tokenData is null || logo is null) return;
-            var texture = await FileLoader.LoadFile<Texture2D>(tokenData.LogoURI);
-            var _texture = FileLoader.Resize(texture, 75, 75);
-            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenData.Mint}.png"), _texture);
-            logo.texture = _texture; 
-        });
-        return Task.CompletedTask;
+        await UniTask.SwitchToMainThread();
+        if(tokenData is null || logo is null) return;
+        var texture = await FileLoader.LoadFile<Texture2D>(tokenData.LogoURI);
+        var _texture = FileLoader.Resize(texture, 75, 75);
+        FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenData.Mint}.png"), _texture);
+        logo.texture = _texture; 
     }
 
     #region Dropdown auto completion
@@ -231,7 +232,7 @@ public class SwapScreen : SimpleScreen
     }
     
     
-    private async void OptionSelected(TMP_Dropdown tmpDropdown)
+    private async UniTask OptionSelected(TMP_Dropdown tmpDropdown)
     {
         var selectedValue = tmpDropdown.options[tmpDropdown.value];
         var tokenData = _tokens.Where(t => t.Symbol == selectedValue.text).ToList().First();
