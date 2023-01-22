@@ -37,22 +37,25 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - Basic UI examples 
 - NFTs
 - Compile games to xNFTs ([Backpack](https://www.backpack.app/))
+- Native DEX operations (Orca, Jupiter coming soon...)
 
 ## 🚩 Upcoming
-- Native DEX operations (Orca coming soon...)
+- Wallet adapter and support for SMS (Solana Mobile Stack) and Seed Vault
 - Raindrops integration, see the [DAO proposal](https://app.realms.today/dao/DTP/proposal/AyEMvQTicTBZJjfVkrhMRYTGEWczwHrdXpPuV74VpRt9) 
-- Wallet adapter and support for SMS (Solana Mobile Stack)
-- Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
+- Websockets to trigger / register custom events
 
 ## 📌 Dependencies
 - Solana.Unity.Wallet
 - Solana.Unity.Rpc
+- Solana.Unity.Dex
+- Solana.Unity.Extensions
 - Soalana.Unity.KeyStore
 - Soalana.Unity.Programs
 - Newtonsoft.Json
 - Chaos.NaCl.Standard
 - Portable.BouncyCastle
 - Zxing
+- UniTask
 
 ## ➕ Installation
 
@@ -67,7 +70,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
   * Please note that the version `X.Y.Z` stated here is to be replaced with the version you would like to get.
   * You can find all the available releases [here](https://github.com/garbles-labs/Solana.Unity-SDK/releases).
   * The latest available release version is [![Last Release](https://img.shields.io/github/v/release/garbles-labs/Solana.Unity-SDK)](https://github.com/Sgarbles-labs/Solana.Unity-SDK/releases/latest)
-* You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.1/Simple Wallet/Solana Wallet/1.0.0/Simple Wallet/scenes/wallet_scene.unity`
+* You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.x/Simple Wallet/Solana Wallet/scenes/wallet_scene.unity`
 
 ## 👷 Step-by-step instructions
 1. If you have an older version of Unity that doesn't have imported Newtonsoft.Json just import it.
