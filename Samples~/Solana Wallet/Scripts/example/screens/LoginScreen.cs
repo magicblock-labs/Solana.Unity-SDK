@@ -88,6 +88,7 @@ namespace Solana.Unity.SDK.Example
 
         private async void LoginCheckerXNFT()
         {
+            if(SimpleWallet.Instance == null) return;
             var account = await SimpleWallet.Instance.LoginXNFT();
             messageTxt.text = "";
             CheckAccount(account);

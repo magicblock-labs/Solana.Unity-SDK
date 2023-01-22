@@ -1,4 +1,5 @@
 using System;
+using Solana.Unity.Extensions.TokenMint;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
@@ -144,10 +145,15 @@ namespace Solana.Unity.SDK.Example
             nftImage.gameObject.SetActive(false);
             nftTitleTxt.gameObject.SetActive(false);
             ownedAmountTxt.gameObject.SetActive(false);
-            if (data != null && data.GetType() == typeof(TokenAccount))
+            if (data != null && data.GetType() == typeof(Tuple<TokenAccount, TokenDef, Texture2D>))
             {
-                _transferTokenAccount = (TokenAccount)data;
-                ownedAmountTxt.text = $"{_transferTokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
+                var (tokenAccount, tokenDef, texture) = (Tuple<TokenAccount, TokenDef, Texture2D>)data;
+                ownedAmountTxt.text = $"{tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
+                nftTitleTxt.gameObject.SetActive(true);
+                nftImage.gameObject.SetActive(true);
+                nftTitleTxt.text = $"{tokenDef.Symbol}";
+                nftImage.texture = texture;
+                nftImage.color = Color.white;
             }
             else if (data != null && data.GetType() == typeof(Nft.Nft))
             {
@@ -155,7 +161,7 @@ namespace Solana.Unity.SDK.Example
                 nftImage.gameObject.SetActive(true);
                 _nft = (Nft.Nft)data;
                 nftTitleTxt.text = $"{_nft.metaplexData.data.name}";
-                nftImage.texture = _nft.metaplexData.nftImage.file;
+                nftImage.texture = _nft.metaplexData?.nftImage?.file;
                 nftImage.color = Color.white;
                 amountTxt.text = "1";
                 amountTxt.interactable = false;

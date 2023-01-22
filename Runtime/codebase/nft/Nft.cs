@@ -12,6 +12,8 @@ using UnityEngine;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
 
+// ReSharper disable once CheckNamespace
+
 namespace Solana.Unity.SDK.Nft
 {
     [Serializable]
@@ -23,13 +25,6 @@ namespace Solana.Unity.SDK.Nft
         public Texture2D file { get; set; }
 
         public int heightAndWidth = 75;
-
-        //~NftImage() {
-        //    if (file != null)
-        //    {
-        //        GameObject.Destroy(file);
-        //    }
-        //}
     }
 
     [Serializable]
@@ -42,21 +37,6 @@ namespace Solana.Unity.SDK.Nft
         public Nft(Metaplex metaplexData)
         {
             this.metaplexData = metaplexData;
-        }
-
-        public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection) {
-            
-            var data = await GetAccountData(mint, connection);
-
-            Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(data));
-
-            var accountLayout = AccountLayout.DeserializeAccountLayout(data.Data[0]);
-            if (data is {Data: {Count: > 0}})
-            {
-                Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountLayout));
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -89,7 +69,7 @@ namespace Solana.Unity.SDK.Nft
             {
                 met.data.json = jsonData;
                 var texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
-                var compressedTexture = Resize(texture, 75, 75);
+                var compressedTexture = FileLoader.Resize(texture, 75, 75);
                 FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
                 if (compressedTexture)
                 {
@@ -212,7 +192,6 @@ namespace Solana.Unity.SDK.Nft
             try
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
-                Debug.Log(responseBody);
                 T data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
                 client.Dispose();
                 return data;
@@ -223,23 +202,7 @@ namespace Solana.Unity.SDK.Nft
                 return default;
             }
         }
-        /// <summary>
-        /// Resize great textures to small, because of performance
-        /// </summary>
-        /// <param name="texture2D"> Texture to resize</param>
-        /// <param name="targetX"> Target width</param>
-        /// <param name="targetY"> Target height</param>
-        /// <returns></returns>
-        private static Texture2D Resize(Texture texture2D, int targetX, int targetY)
-        {
-            RenderTexture rt = new RenderTexture(targetX, targetY, 24);
-            RenderTexture.active = rt;
-            Graphics.Blit(texture2D, rt);
-            Texture2D result = new Texture2D(targetX, targetY);
-            result.ReadPixels(new Rect(0, 0, targetX, targetY), 0, 0);
-            result.Apply();
-            return result;
-        }
+
         
         /// <summary>
         /// Get AccountData

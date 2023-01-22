@@ -105,17 +105,24 @@ namespace Solana.Unity.SDK.Nft
             index += 4;
             List<CreatorData> creators = new List<CreatorData>();
 
-            for (int i = 0; i < creatorsLenght; i++)
+            try
             {
-                CreatorData creatorData = new CreatorData();
-                ObjectToByte.DecodeUTF8StringFromByte(data, index, (int)nameLength, out string creator);
-                creatorData.address = creator;
-                index += 32;
-                creatorData.verified = BitConverter.ToBoolean(data, index++);
-                creatorData.share = data[index++];
+                for (int i = 0; i < creatorsLenght; i++)
+                {
+                    CreatorData creatorData = new CreatorData();
+                    ObjectToByte.DecodeUTF8StringFromByte(data, index, (int)nameLength, out string creator);
+                    creatorData.address = creator;
+                    index += 32;
+                    creatorData.verified = BitConverter.ToBoolean(data, index++);
+                    creatorData.share = data[index++];
+                }
+                metaplexData.data.creators = creators.ToArray();
+            }
+            catch (Exception)
+            {
+                metaplexData.data.creators = null;
             }
 
-            metaplexData.data.creators = creators.ToArray();
 
             return metaplexData;
         }

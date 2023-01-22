@@ -179,13 +179,15 @@ namespace Solana.Unity.SDK
         }
         
         /// <inheritdoc />
-        public async Task<TokenAccount[]> GetTokenAccounts()
+        public async Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Finalized)
         {
             var rpc = ActiveRpcClient;
-            var result = await rpc.GetTokenAccountsByOwnerAsync(
-                Account.PublicKey, 
-                null, 
-                TokenProgram.ProgramIdKey);
+            var result = await 
+                rpc.GetTokenAccountsByOwnerAsync(
+                    Account.PublicKey, 
+                    null, 
+                    TokenProgram.ProgramIdKey,
+                    commitment);
             return result.Result?.Value?.ToArray();
         }
 
