@@ -160,6 +160,14 @@ public class SwapScreen : SimpleScreen
     {
         await UniTask.SwitchToMainThread();
         if(tokenData is null || logo is null) return;
+        #if UNITY_WEBGL 
+        // Use default token list resolver as coingecko icons have CORS issues 
+        var tokenLogoUrl = (await WalletScreen.GetTokenMintResolver())?.Resolve(tokenData.Mint)?.TokenLogoUrl;
+        if (tokenLogoUrl != null)
+        {
+            tokenData.LogoURI = tokenLogoUrl;
+        }
+        #endif
         var texture = await FileLoader.LoadFile<Texture2D>(tokenData.LogoURI);
         var _texture = FileLoader.Resize(texture, 75, 75);
         FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenData.Mint}.png"), _texture);
@@ -196,7 +204,7 @@ public class SwapScreen : SimpleScreen
         if(tmpDropdown.options.Count == 1)
         {
             tmpDropdown.value = 0;
-            OptionSelected(tmpDropdown);
+            OptionSelected(tmpDropdown).Forget();
         }else if(tmpDropdown.options.Count == 0)
         {
             _symbol = _symbol.Substring(0, Math.Max(_symbol.Length - 1, 0));
