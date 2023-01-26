@@ -37,7 +37,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(#151515, #9945FF);
+    background: linear-gradient(#151515, ##14F195);
     transform: rotateY(calc(90deg * var(--i))) translateZ(7.8rem);
 }
 
@@ -47,7 +47,7 @@
     left: 0;
     width: 16.375rem;
     height: 16.375rem;
-    background: #222;
+    background: #14F195;
     transform: rotateX(90deg) translateZ(7.8rem);
 }
 
