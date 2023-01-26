@@ -1,6 +1,6 @@
 ---
 title: Introduction
-pageTitle: Solana.Unity-SDK - Introduction
+pageTitle: Solana.Unity-SDK - Overview
 description: Open-Source Unity-Solana SDK with NFT support & Full RPC coverage.
 ---
 
@@ -10,7 +10,7 @@ Open-Source Unity-Solana SDK with NFT support & Full RPC coverage. {% .lead %}
 
 {% link-grid-link title="Installation" icon="installation" href="/docs/installation" description="Step-by-step guides to setting up your system and installing the Solana.Unity-SDK." /%}
 
-{% link-grid-link title="Wallet Configuration" icon="presets" href="/docs/configuration" description="Learn how to configure your preferred wallets." /%}
+{% link-grid-link title="Wallet Configuration" icon="presets" href="/docs/configuration" description="Learn how to set up your game wallets." /%}
 
 {% link-grid-link title="Core concepts" icon="plugins" href="/docs/associated-token-account" description="Solana.Unity-SDK core concepts." /%}
 
@@ -22,18 +22,23 @@ Open-Source Unity-Solana SDK with NFT support & Full RPC coverage. {% .lead %}
 
 ## Solana.Unity-SDK
 
-Here you'll find the documentation you need to get up and running with the Solana.Unity SDK and start leveraging Solana within your Unity-based games.
-Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 (Unity compatible) with full RPC API coverage. You can install the SDK with the Unity Package Manager to configure your preferred wallet among the available options.
-The project started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we made and the upcoming pipeline of wallet integrations, including [SMS](https://github.com/solana-mobile/solana-mobile-stack-sdk), Phantom and Web3auth support ...
+Solana.Unity SDK is comprehensive set of open-source tools to easily access Solana in your Unity-based games.
+You can install the SDK with the Unity Package Manager and set up your preferred wallet among the available options.
+Solana.Unity-SDK uses [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core) implementation, native .NET Standard 2.0 (Unity compatible) with full RPC API coverage, MPL, native DEXes operations and more.
+The project started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we made and the upcoming pipeline of wallet integrations, including [SMS](https://github.com/solana-mobile/solana-mobile-stack-sdk) and Raindrops. 
 
 ## The SDK supports:
 - Full JSON RPC API coverage
 - Wallet and accounts: Set up of a non-custodial Solana wallet in Unity (sollet and solana-keygen compatible)
-- Web3auth support (non-custodial signup/login through social accounts)
+- Phantom and Web3auth support (non-custodial signup/login through social accounts)
 - Transaction decoding from base64 and wire format and encoding back into wire format
 - Message decoding from base64 and wire format and encoding back into wire format
 - Instruction decompilation
 - TokenWallet object to send and receive SPL tokens and JIT provisioning of Associated Token Accounts
+- Basic UI examples
+- NFTs
+- Compile games to xNFTs (Backpack)
+- Native DEX operations (Orca, Jupiter coming soon...)
 
 ## Upcoming:
 - Wallet support for SMS and Seed Vault.
