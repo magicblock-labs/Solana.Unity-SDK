@@ -3,9 +3,9 @@ title: Contribution Guide
 description: Anchor - Contribution Guide
 ---
 
-Thank you for your interest in contributing to the Solana.Unity-SDK! All contributions are welcome no
-matter how big or small. This includes (but is not limited to) filing issues,
-adding documentation, fixing bugs, creating examples, and implementing features.
+Thank you for your interest in contributing to the Solana.Unity-SDK! This is an open-source community project and all contributions are welcomed, no
+matter how big or small. Contributions might include (but is not limited to) filing issues,
+adding documentation, fixing bugs, creating examples, and/or implementing features.
 
 ---
 
