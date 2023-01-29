@@ -3,7 +3,7 @@ title: DEX integration with Orca
 description:
 ---
 
-Orca is natively supported in the SDK. Utility methods are provided to easily build the transactions needed to make swaps, open positions, manage cash and interact with Whirlpool Orcas.
+Orca is natively supported in the SDK. Utility methods are provided to easily build the transactions needed to make swaps, open positions, manage cash and interact with Whirlpools.
 
 # Orca
 
