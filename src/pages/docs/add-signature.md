@@ -3,7 +3,7 @@ title: Add Signature
 description: 
 ---
 
-```C#
+```csharp
  public class AddSignatureExample : IExample
     {
         private static readonly IRpcClient rpcClient = ClientFactory.GetClient(Cluster.TestNet);

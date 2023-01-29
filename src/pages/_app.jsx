@@ -6,6 +6,7 @@ import Prism from 'prism-react-renderer/prism'
 ;(typeof global !== 'undefined' ? global : window).Prism = Prism
 
 require('prismjs/components/prism-rust')
+require('prismjs/components/prism-csharp')
 require('prismjs/components/prism-toml')
 
 import { Layout } from '@/components/Layout'
@@ -44,6 +45,7 @@ const navigation = [
     links: [
       { title: 'Host your game on Github pages', href: '/docs/gh-pages'},
       { title: 'Publishing a game as Xnft', href: '/docs/xnft'},
+      { title: 'DEX integration: Orca', href: '/docs/orca'},
       { title: 'Additional examples', href: '/docs/examples'},
     ],
   },
