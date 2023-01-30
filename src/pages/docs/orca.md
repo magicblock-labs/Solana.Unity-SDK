@@ -19,8 +19,8 @@ Orca is the easiest place to trade cryptocurrency on the Solana blockchain. For 
 
 ```csharp
 IDex dex = new OrcaDex(
-    SimpleWallet.Instance.Wallet.Account, 
-    SimpleWallet.Instance.Wallet.ActiveRpcClient
+    WalletH.Account, 
+    WalletH.Rpc
 )
 ```
 
@@ -65,7 +65,7 @@ Transaction tx = await dex.SwapWithQuote(
 - Sign and send the swap transaction:
 
 ```csharp
-await SimpleWallet.Instance.Wallet.SignAndSendTransaction(tx);
+await WalletH.Base.SignAndSendTransaction(tx);
 ```
 
 
@@ -77,8 +77,8 @@ An example of adding 5 ORCA and 5 USDC to the liquidity of the pool, minting a m
 
 ```csharp
 OrcaDex dex = new OrcaDex(
-    SimpleWallet.Instance.Wallet.Account, 
-    SimpleWallet.Instance.Wallet.ActiveRpcClient
+    WalletH.Account, 
+    WalletH.Rpc
 );
 
 var orcaToken = await dex.GetTokenBySymbol("ORCA");
@@ -102,11 +102,11 @@ Transaction tx = await dex.OpenPositionWithLiquidity(
 );
 
 var txSer = tx.Build(new List<Account>() {
-  SimpleWallet.Instance.Wallet.Account, 
+  WalletH.Account, 
   mint
 });
 
-await SimpleWallet.Instance.Wallet.SignAndSendTransaction(tx);
+await WalletH.Base.SignAndSendTransaction(tx);
 ```
 
 
