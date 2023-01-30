@@ -42,7 +42,7 @@ PublicKey whirlpool = await dex.FindWhirlpoolAddress(tokenA.MintAddress, tokenB.
 ```csharp
 SwapQuote swapQuote = await dex.GetSwapQuoteFromWhirlpool(
     whirlpool, 
-    1,
+    1 * Math.Pow(10, tokenA.Decimals),
     tokenA.MintAddress,
     slippageTolerance: 0.1,
 );
