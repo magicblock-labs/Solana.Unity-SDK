@@ -61,7 +61,7 @@ namespace Solana.Unity.SDK.Example
             var password = passwordInputField.text;
             var mnemonic = mnemonicTxt.text;
 
-            var account = await SimpleWallet.Instance.CreateAccount(mnemonic, password);
+            var account = await WalletH.Instance.CreateAccount(mnemonic, password);
             if (account != null)
             {
                 manager.ShowScreen(this, "wallet_screen");

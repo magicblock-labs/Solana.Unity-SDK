@@ -23,8 +23,8 @@ namespace Solana.Unity.SDK
 
         public PhantomWebGL(
             PhantomWalletOptions phantomWalletOptions, 
-            RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, bool autoConnectOnStartup = false) 
-            : base(rpcCluster, customRpc, autoConnectOnStartup)
+            RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, string customStreamingRpc = null,  bool autoConnectOnStartup = false) 
+            : base(rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup)
         {
             _phantomWalletOptions = phantomWalletOptions;
         }

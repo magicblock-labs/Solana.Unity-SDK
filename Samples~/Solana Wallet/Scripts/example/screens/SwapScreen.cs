@@ -58,8 +58,8 @@ public class SwapScreen : SimpleScreen
     void Start()
     {
         _dex = new OrcaDex(
-            SimpleWallet.Instance.Wallet.Account, 
-            SimpleWallet.Instance.Wallet.ActiveRpcClient,
+            WalletH.Instance.Wallet.Account, 
+            WalletH.Instance.Wallet.ActiveRpcClient,
             commitment: Commitment.Finalized);
         dropdownTokenA.onValueChanged.AddListener(_ => OptionSelected(dropdownTokenA).Forget());
         dropdownTokenB.onValueChanged.AddListener(_ => OptionSelected(dropdownTokenB).Forget());
@@ -78,9 +78,9 @@ public class SwapScreen : SimpleScreen
     {
         if(_whirlpool == null || _swapQuote == null) return;
         var tr = await _dex.SwapWithQuote(_whirlpool, _swapQuote);
-        var result = await SimpleWallet.Instance.Wallet.SignAndSendTransaction(tr);
+        var result = await WalletH.Instance.Wallet.SignAndSendTransaction(tr);
         Debug.Log(result.Result);
-        await SimpleWallet.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
+        await WalletH.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
         Debug.Log("Transaction confirmed");
         await UniTask.SwitchToMainThread(); 
         manager.ShowScreen(this,"wallet_screen");

@@ -65,19 +65,19 @@ namespace Solana.Unity.SDK.Example
         private async void LoginChecker()
         {
             var password = passwordInputField.text;
-            var account = await SimpleWallet.Instance.LoginInGameWallet(password);
+            var account = await WalletH.Instance.LoginInGameWallet(password);
             CheckAccount(account);
         }
         
         private async void LoginCheckerPhantom()
         {
-            var account = await SimpleWallet.Instance.LoginPhantom();
+            var account = await WalletH.Instance.LoginPhantom();
             CheckAccount(account);
         }
         
         private async void LoginCheckerWeb3Auth(Provider provider)
         {
-            var account = await SimpleWallet.Instance.LoginInWeb3Auth(provider);
+            var account = await WalletH.Instance.LoginInWeb3Auth(provider);
             CheckAccount(account);
         }
 
@@ -88,8 +88,8 @@ namespace Solana.Unity.SDK.Example
 
         private async void LoginCheckerXNFT()
         {
-            if(SimpleWallet.Instance == null) return;
-            var account = await SimpleWallet.Instance.LoginXNFT();
+            if(WalletH.Instance == null) return;
+            var account = await WalletH.Instance.LoginXNFT();
             messageTxt.text = "";
             CheckAccount(account);
         }

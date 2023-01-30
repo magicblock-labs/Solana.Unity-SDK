@@ -31,15 +31,16 @@ namespace Solana.Unity.SDK
             PhantomWalletOptions phantomWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet, 
             string customRpc = null, 
-            bool autoConnectOnStartup = false) : base(rpcCluster, customRpc, autoConnectOnStartup
+            string customStreamingRpc = null, 
+            bool autoConnectOnStartup = false) : base(rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup
         ) 
         {
             _phantomWalletOptions = phantomWalletOptions;
             #if UNITY_IOS || UNITY_ANDROID
-            _internalWallet = new PhantomDeepLink(phantomWalletOptions, rpcCluster, customRpc, autoConnectOnStartup);
+            _internalWallet = new PhantomDeepLink(phantomWalletOptions, rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup);
             #endif
             #if UNITY_WEBGL
-            _internalWallet = new PhantomWebGL(phantomWalletOptions, rpcCluster, customRpc, autoConnectOnStartup);
+            _internalWallet = new PhantomWebGL(phantomWalletOptions, rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup);
             #endif
         }
 

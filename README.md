@@ -38,11 +38,11 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 - NFTs
 - Compile games to xNFTs ([Backpack](https://www.backpack.app/))
 - Native DEX operations (Orca, Jupiter coming soon...)
+- Websockets to register/trigger custom events (account change, signature status, programs, ...)
 
 ## 🚩 Upcoming
 - Wallet adapter and support for SMS (Solana Mobile Stack) and Seed Vault
 - Raindrops integration, see the [DAO proposal](https://app.realms.today/dao/DTP/proposal/AyEMvQTicTBZJjfVkrhMRYTGEWczwHrdXpPuV74VpRt9) 
-- Websockets to trigger / register custom events
 
 ## 📌 Dependencies
 - Solana.Unity.Wallet

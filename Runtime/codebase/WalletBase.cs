@@ -8,6 +8,7 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
+using UnityEngine;
 
 // ReSharper disable once CheckNamespace
 
@@ -34,23 +35,26 @@ namespace Solana.Unity.SDK
         };
 
         private readonly string _customRpc;
+        private readonly string _customStreamingRpc;
 
         private IRpcClient _activeRpcClient;
-        public IRpcClient ActiveRpcClient {
-            get => StartConnection();
-            private set => _activeRpcClient = value; }
+        public IRpcClient ActiveRpcClient => StartConnection();
+
+        private IStreamingRpcClient _activeStreamingRpcClient;
+        public IStreamingRpcClient ActiveStreamingRpcClient => StartStreamingConnection();
         public Account Account { get;private set; }
         public Mnemonic Mnemonic { get;protected set; }
 
-        protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, bool autoConnectOnStartup = false)
+        protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, string customStreamingRpc = null, bool autoConnectOnStartup = false)
         {
             RpcCluster = rpcCluster;
             _customRpc = customRpc;
+            _customStreamingRpc = customStreamingRpc;
             if (autoConnectOnStartup)
             {
                 StartConnection();
+                StartStreamingConnection();
             }
-            
             Setup();
         }
 
@@ -235,6 +239,31 @@ namespace Solana.Unity.SDK
                 }
 
                 return _activeRpcClient;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Start streaming RPC connection and return a new streaming RPC Client 
+        /// </summary>
+        /// <returns></returns>
+        private IStreamingRpcClient StartStreamingConnection()
+        {
+            try
+            {
+                if (_activeStreamingRpcClient != null) return _activeStreamingRpcClient;
+                if (_customStreamingRpc != null)
+                {
+                    _activeStreamingRpcClient = ClientFactory.GetStreamingClient(_customStreamingRpc, true);
+                    _activeStreamingRpcClient.ConnectAsync()
+                        .ContinueWith( _ => Debug.Log("WebSockets connection: " + _activeStreamingRpcClient.State));
+                    return _activeStreamingRpcClient;
+                }
+
+                return null;
             }
             catch (Exception)
             {
