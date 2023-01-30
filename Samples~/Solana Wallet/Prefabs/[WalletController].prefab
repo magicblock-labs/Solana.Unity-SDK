@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2866339766007080073}
   - component: {fileID: 2866339766007080074}
-  - component: {fileID: 8066644052409000742}
+  - component: {fileID: 8555983121803245299}
   m_Layer: 0
   m_Name: '[WalletController]'
   m_TagString: Untagged
@@ -48,7 +48,7 @@ MonoBehaviour:
   rpcCluster: 3
   customRpc: https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/
   autoConnectOnStartup: 1
-  storageMethod: 0
+  webSocketsRpc: 
   web3AuthWalletOptions:
     appName: Web3Auth Sample App
     logoLight: 
@@ -63,7 +63,7 @@ MonoBehaviour:
     phantomApiVersion: v1
     appMetaDataUrl: https://github.com/garbles-labs/Solana.Unity-SDK
     deeplinkUrlScheme: unitydl
---- !u!114 &8066644052409000742
+--- !u!114 &8555983121803245299
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -72,6 +72,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 2866339766007080075}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c915183a66ff2444a833276269898760, type: 3}
+  m_Script: {fileID: 11500000, guid: fbd7daddfbeaa44729a122a269ac8fb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
