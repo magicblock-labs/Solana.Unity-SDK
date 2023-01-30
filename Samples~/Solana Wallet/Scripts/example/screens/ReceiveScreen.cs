@@ -18,7 +18,7 @@ public class ReceiveScreen : SimpleScreen
     private void Start()
     {
         airdrop_btn.onClick.AddListener(async () => {
-            await SimpleWallet.Instance.Wallet.RequestAirdrop();
+            await WalletH.Instance.Wallet.RequestAirdrop();
         });
 
         close_btn.onClick.AddListener(() =>
@@ -29,7 +29,7 @@ public class ReceiveScreen : SimpleScreen
     
     private void OnEnable()
     {
-        var isDevnet = SimpleWallet.Instance.Wallet?.RpcCluster == RpcCluster.DevNet;
+        var isDevnet = WalletH.Instance.Wallet?.RpcCluster == RpcCluster.DevNet;
         airdrop_btn.enabled = isDevnet;
         airdrop_btn.interactable = isDevnet;
     }
@@ -42,23 +42,23 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQR();
-        publicKey_txt.text = SimpleWallet.Instance.Wallet.Account.PublicKey;
+        publicKey_txt.text = WalletH.Instance.Wallet.Account.PublicKey;
     }
 
     private void CheckAndToggleAirdrop()
     {
-        airdrop_btn.gameObject.SetActive(!SimpleWallet.Instance.Wallet.ActiveRpcClient.ToString().Contains("api.mainnet"));
+        airdrop_btn.gameObject.SetActive(!WalletH.Instance.Wallet.ActiveRpcClient.ToString().Contains("api.mainnet"));
     }
 
     private void GenerateQR()
     {
-        Texture2D tex = QRGenerator.GenerateQRTexture(SimpleWallet.Instance.Wallet.Account.PublicKey, 256, 256);
+        Texture2D tex = QRGenerator.GenerateQRTexture(WalletH.Instance.Wallet.Account.PublicKey, 256, 256);
         qrCode_img.texture = tex;
     }
 
     public void CopyPublicKeyToClipboard()
     {
-        Clipboard.Copy(SimpleWallet.Instance.Wallet.Account.PublicKey.ToString());
+        Clipboard.Copy(WalletH.Instance.Wallet.Account.PublicKey.ToString());
         gameObject.GetComponent<Toast>()?.ShowToast("Public Key copied to clipboard", 3);
     }
 
