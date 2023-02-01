@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Chaos.NaCl;
 using Merkator.Tools;
 using Solana.Unity.Rpc.Models;
@@ -29,7 +29,6 @@ namespace Solana.Unity.SDK
         
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
-        private List<SignaturePubKeyPair> _signatures;
 
         public PhantomDeepLink(
             PhantomWalletOptions phantomWalletOptions,
@@ -54,11 +53,10 @@ namespace Solana.Unity.SDK
             base.Logout();
             Application.deepLinkActivated -= OnDeepLinkActivated;
         }
-        
-        public override Task<Transaction> SignTransaction(Transaction transaction)
+
+        protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
-            _signatures = transaction.Signatures;
             transaction.Signatures = new List<SignaturePubKeyPair>();
             StartSignTransaction(transaction);
             return _signedTransactionTaskCompletionSource.Task;
@@ -117,12 +115,11 @@ namespace Solana.Unity.SDK
 
         private void ParseConnectionSuccessful(string url)
         {
-            var phantomResponse = url.Split("?"[0])[1];
-            var result = HttpUtility.ParseQueryString(phantomResponse);
-            _phantomEncryptionPubKey = Encoders.Base58.DecodeData(result.Get("phantom_encryption_public_key"));
-            var phantomNonce = result.Get("nonce");
-            var data = result.Get("data");
-            var errorMessage = result.Get("errorMessage");
+            var result = ParseQueryString(url);
+            _phantomEncryptionPubKey = Encoders.Base58.DecodeData(result["phantom_encryption_public_key"]);
+            var phantomNonce = result["nonce"];
+            var data = result["data"];
+            var errorMessage = result["errorMessage"];
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 Debug.LogError($"Deeplink error: {errorMessage}");
@@ -156,11 +153,10 @@ namespace Solana.Unity.SDK
 
         private void ParseSuccessfullySignedTransaction(string url)
         {
-            var phantomResponse = url.Split("?"[0])[1];
-            var result = HttpUtility.ParseQueryString(phantomResponse);
-            var nonce = result.Get("nonce");
-            var data = result.Get("data");
-            var errorMessage = result.Get("errorMessage");
+            var result = ParseQueryString(url);
+            var nonce = result["nonce"];
+            var data = result["data"];
+            var errorMessage = result["errorMessage"];
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
@@ -172,13 +168,19 @@ namespace Solana.Unity.SDK
             var success = JsonUtility.FromJson<PhantomWalletTransactionSignedSuccessfully>(bytesToUtf8String);
             var base58TransBytes = Encoders.Base58.DecodeData(success.transaction);
             var transaction = Transaction.Deserialize(base58TransBytes);
-            foreach (var sng in _signatures)
-            {
-                transaction.Signatures.RemoveAll(s => s.PublicKey == sng.PublicKey);
-                transaction.Signatures.Add(sng);
-            }
             _signedTransactionTaskCompletionSource.SetResult(transaction);
         }
+
+        private static Dictionary<string, string> ParseQueryString(string url)
+        {
+            var querystring = url.Substring(url.IndexOf('?') + 1);
+            var pairs = querystring.Split('&'); 
+            var dict = pairs.Select(pair => {
+                var valuePair = pair.Split('='); 
+                return new KeyValuePair<string, string>(valuePair[0], valuePair[1]);
+            }) .ToDictionary((kvp) => kvp.Key, (kvp) => kvp.Value); 
+            return dict;
+        } 
 
         #endregion
     }

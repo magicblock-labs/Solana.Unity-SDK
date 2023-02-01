@@ -50,8 +50,8 @@ namespace Solana.Unity.SDK
                 return _internalWallet.Login(password);
             throw new NotImplementedException();
         }
-        
-        public override Task<Transaction> SignTransaction(Transaction transaction)
+
+        protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             if (_internalWallet != null)
                 return _internalWallet.SignTransaction(transaction);
