@@ -2,8 +2,6 @@ extern "C"
 {
   void WebSocketAllocate(const char * url){}
 
-  void WebSocketAllocate(const char * url){}
-
   int WebSocketAddSubProtocol (int instanceId, const char * subprotocol){}
 
   void WebSocketFree (int instanceId);
