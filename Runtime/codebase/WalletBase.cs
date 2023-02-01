@@ -195,8 +195,30 @@ namespace Solana.Unity.SDK
             return result.Result?.Value?.ToArray();
         }
 
+        /// <summary>
+        /// Sign a transaction
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        protected abstract Task<Transaction> _SignTransaction(Transaction transaction);
+
         /// <inheritdoc />
-        public abstract Task<Transaction> SignTransaction(Transaction transaction);
+        public virtual async Task<Transaction> SignTransaction(Transaction transaction)
+        {
+            var signatures = transaction.Signatures;
+            if (transaction.Signatures.Count == 0 && transaction.FeePayer != null)
+            {
+                transaction.Signatures.Add(new SignaturePubKeyPair
+                {
+                    PublicKey = transaction.FeePayer,
+                    Signature = new byte[64]
+                });
+            }
+            var tx = await _SignTransaction(transaction);
+            tx.Signatures.AddRange(signatures);
+            tx.Sign(new List<Account>());
+            return tx;
+        }
 
         /// <inheritdoc />
         public virtual async Task<RequestResult<string>> SignAndSendTransaction

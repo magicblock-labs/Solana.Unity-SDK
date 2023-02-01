@@ -36,7 +36,7 @@ namespace Solana.Unity.SDK
             return _loginTaskCompletionSource.Task;
         }
 
-        public override Task<Transaction> SignTransaction(Transaction transaction)
+        protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             var encode = Encoders.Base58.EncodeData(transaction.CompileMessage());

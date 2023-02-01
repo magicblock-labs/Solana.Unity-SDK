@@ -65,7 +65,7 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public override Task<Transaction> SignTransaction(Transaction transaction)
+        protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             transaction.Sign(Account);
             return Task.FromResult(transaction);
