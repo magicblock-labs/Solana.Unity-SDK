@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using AOT;
 using Solana.Unity.Rpc.Models;
@@ -18,6 +19,7 @@ namespace Solana.Unity.SDK
         
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;        
         private static Transaction _currentTransaction;
         private static Account _account;
 
@@ -43,6 +45,13 @@ namespace Solana.Unity.SDK
             _currentTransaction = transaction;
             ExternSignTransaction(encode, OnTransactionSigned);
             return _signedTransactionTaskCompletionSource.Task;
+        }
+
+        public override Task<byte[]> SignMessage(string message)
+        {
+            _signedMessageTaskCompletionSource = new TaskCompletionSource<byte[]>();
+            ExternSignMessage(message, OnMessageSigned);
+            return _signedMessageTaskCompletionSource.Task;
         }
         
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
@@ -78,6 +87,15 @@ namespace Solana.Unity.SDK
             _signedTransactionTaskCompletionSource.SetResult(_currentTransaction);
         }
 
+        /// <summary>
+        /// Called from java script when the phantom wallet signed the message and return the signature.
+        /// </summary>
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        public static void OnMessageSigned(string signature)
+        {
+            _signedMessageTaskCompletionSource.SetResult(Encoders.Base58.DecodeData(signature));
+        }
+
         #endregion
 
         #if UNITY_WEBGL
@@ -87,10 +105,14 @@ namespace Solana.Unity.SDK
 
         [DllImport("__Internal")]
         private static extern void ExternSignTransaction(string transaction, Action<string> callback);
+
+        [DllImport("__Internal")]
+        private static extern void ExternSignMessage(string message, Action<string> callback);        
         
         #else
         private static void ExternConnectPhantom(Action<string> callback){}
         private static void ExternSignTransaction(string transaction, Action<string> callback){}
+        private static void ExternSignMessage(string message, Action<string> callback){}
         #endif
     }
 }

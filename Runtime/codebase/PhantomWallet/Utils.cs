@@ -65,6 +65,33 @@ namespace Solana.Unity.SDK
                    $"&cluster={GetClusterString(cluster)}";
         }
 
+        /// <summary>
+        /// Create DeepLink URL for signing a message with Phantom and redirect to the game
+        /// </summary>
+        public static string CreateSignMessageDeepLink(
+            string message, 
+            byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey, 
+            string sessionId, string redirectScheme, string apiVersion,
+            string connectionPublicKey, RpcCluster cluster)
+        {
+            
+            var redirectUri = $"{redirectScheme}://messageSigned";
+            var base58Message = Encoders.Base58.EncodeData(Encoding.UTF8.GetBytes(message));
+            var messagePayload = new PhantomMessagePayload(base58Message, sessionId, "utf8");
+            var messagePayloadJson = JsonUtility.ToJson(messagePayload);
+            var bytesJson = Encoding.UTF8.GetBytes(messagePayloadJson);
+            var randomNonce = GenerateRandomBytes(24);
+            var k = MontgomeryCurve25519.KeyExchange(phantomEncryptionPubKey, phantomConnectionAccountPrivateKey);
+            var encryptedMessage = XSalsa20Poly1305.Encrypt(bytesJson, k, randomNonce);
+            var base58Payload = Encoders.Base58.EncodeData(encryptedMessage);
+            return $"https://phantom.app/ul/{apiVersion}/signMessage?d" +
+                   $"app_encryption_public_key={connectionPublicKey}" +
+                   $"&redirect_link={redirectUri}" +
+                   $"&nonce={Encoders.Base58.EncodeData(randomNonce)}" +
+                   $"&payload={base58Payload}" +
+                   $"&cluster={GetClusterString(cluster)}";
+        }
+
         private static string GetClusterString(RpcCluster rpcCluster)
         {
             return rpcCluster switch
@@ -101,5 +128,11 @@ namespace Solana.Unity.SDK
     public class PhantomWalletTransactionSignedSuccessfully
     {
         public string transaction;
+    }
+
+    [Serializable]
+    public class PhantomWalletMessageSignedSuccessfully
+    {
+        public string signature;
     }
 }

@@ -245,6 +245,9 @@ namespace Solana.Unity.SDK
                 Convert.ToBase64String(signedTransaction.Serialize()), preFlightCommitment: commitment);
         }
 
+        /// <inheritdoc />
+        public abstract Task<byte[]> SignMessage(string message);
+
         /// <summary>
         /// Airdrop sol on wallet
         /// </summary>

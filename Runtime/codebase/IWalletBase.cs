@@ -89,8 +89,14 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
-
         Task<Transaction> SignTransaction(Transaction transaction);
+
+        /// <summary>
+        /// Sign a message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        Task<byte[]> SignMessage(string message);
 
         /// <summary>
         /// Sign and send a transaction

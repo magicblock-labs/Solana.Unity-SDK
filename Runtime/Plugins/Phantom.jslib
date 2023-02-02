@@ -43,4 +43,32 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+
+    ExternSignMessage: async function (message, callback) {
+        if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
+            try {
+               const messageString = UTF8ToString(message);
+               const encodedMessage = new TextEncoder().encode(messageString);
+               const signedMessage = await window.phantom.solana.request({
+                  method: 'signMessage',
+                  params: {
+                     message: encodedMessage,
+                     display: "utf8",
+                  },
+               });
+                console.log(signedMessage);
+                var sign = signedMessage.signature;
+                var lenSign = lengthBytesUTF8(sign) + 1;
+                var strPtr = _malloc(lenSign);
+                stringToUTF8(sign, strPtr, lenSign);
+                Module.dynCall_vi(callback, strPtr);
+            } catch (err) {
+                window.alert('Phantom error: ' + err.message);
+                console.error(err.message);
+            }
+        } else {
+            window.alert('Please install phantom browser extension.');
+        }
+    },
+    
 });
