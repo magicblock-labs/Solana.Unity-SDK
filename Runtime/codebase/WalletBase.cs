@@ -205,18 +205,32 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public virtual async Task<Transaction> SignTransaction(Transaction transaction)
         {
-            var signatures = transaction.Signatures;
-            if (transaction.Signatures.Count == 0 && transaction.FeePayer != null)
+            Debug.Log("A");
+            foreach (var signaturePubKeyPair in transaction.Signatures)
             {
-                transaction.Signatures.Add(new SignaturePubKeyPair
-                {
-                    PublicKey = transaction.FeePayer,
-                    Signature = new byte[64]
-                });
+                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
+            }
+            var signatures = transaction.Signatures;
+            transaction.Sign(Account);
+            transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures);
+            Debug.Log("B");
+            foreach (var signaturePubKeyPair in transaction.Signatures)
+            {
+                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
             }
             var tx = await _SignTransaction(transaction);
+            Debug.Log("C");
+            foreach (var signaturePubKeyPair in transaction.Signatures)
+            {
+                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
+            }
             tx.Signatures.AddRange(signatures);
-            tx.Sign(new List<Account>());
+            tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
+            Debug.Log("C");
+            foreach (var signaturePubKeyPair in transaction.Signatures)
+            {
+                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
+            }
             return tx;
         }
 
@@ -291,6 +305,22 @@ namespace Solana.Unity.SDK
             {
                 return null;
             }
+        }
+        
+        
+        private static List<SignaturePubKeyPair> DeduplicateTransactionSignatures(
+            List<SignaturePubKeyPair> signatures)
+        {
+            var signaturesList = new List<SignaturePubKeyPair>();
+            var signaturesSet = new HashSet<PublicKey>();
+            var emptySgn = new byte[64];
+            foreach (var sgn in signatures)
+            {
+                if (sgn.Signature.Equals(emptySgn) || signaturesSet.Contains(sgn.PublicKey)) continue;
+                signaturesSet.Add(sgn.PublicKey);
+                signaturesList.Add(sgn);
+            }
+            return signaturesList;
         }
     }
 }

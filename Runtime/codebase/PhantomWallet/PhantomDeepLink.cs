@@ -57,7 +57,6 @@ namespace Solana.Unity.SDK
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
-            transaction.Signatures = new List<SignaturePubKeyPair>();
             StartSignTransaction(transaction);
             return _signedTransactionTaskCompletionSource.Task;
         }
