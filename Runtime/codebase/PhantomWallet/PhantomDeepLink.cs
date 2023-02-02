@@ -117,9 +117,9 @@ namespace Solana.Unity.SDK
         {
             var result = ParseQueryString(url);
             _phantomEncryptionPubKey = Encoders.Base58.DecodeData(result["phantom_encryption_public_key"]);
-            var phantomNonce = result["nonce"];
-            var data = result["data"];
-            var errorMessage = result["errorMessage"];
+            result.TryGetValue("nonce", out var phantomNonce);
+            result.TryGetValue("data", out var data);
+            result.TryGetValue("errorMessage", out var errorMessage);
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 Debug.LogError($"Deeplink error: {errorMessage}");
@@ -154,9 +154,9 @@ namespace Solana.Unity.SDK
         private void ParseSuccessfullySignedTransaction(string url)
         {
             var result = ParseQueryString(url);
-            var nonce = result["nonce"];
-            var data = result["data"];
-            var errorMessage = result["errorMessage"];
+            result.TryGetValue("nonce", out var nonce);
+            result.TryGetValue("data", out var data);
+            result.TryGetValue("errorMessage", out var errorMessage);
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
