@@ -33,8 +33,8 @@ namespace Solana.Unity.SDK
 
         public PhantomDeepLink(
             PhantomWalletOptions phantomWalletOptions,
-            RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, string customStreamingRpc = null, bool autoConnectOnStartup = false) 
-            : base(rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup)
+            RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
+            : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             _phantomWalletOptions = phantomWalletOptions;
             Application.deepLinkActivated += OnDeepLinkActivated;
@@ -74,6 +74,17 @@ namespace Solana.Unity.SDK
             throw new NotImplementedException();
         }
         
+        private RpcCluster GetCluster()
+        {
+            return RpcCluster switch
+            {
+                RpcCluster.DevNet => RpcCluster.DevNet,
+                RpcCluster.TestNet => RpcCluster.TestNet,
+                RpcCluster.Custom => CustomRpcUri.Contains("devnet") ? RpcCluster.DevNet : RpcCluster.MainNet,
+                _ => RpcCluster.MainNet
+            };
+        }
+        
         #region DeepLinks
 
         private void StartLogin()
@@ -83,7 +94,7 @@ namespace Solana.Unity.SDK
                 metadataUrl: _phantomWalletOptions.appMetaDataUrl,
                 apiVersion: _phantomWalletOptions.phantomApiVersion,
                 connectionPublicKey: Encoders.Base58.EncodeData(PhantomConnectionAccountPublicKey),
-                cluster: RpcCluster
+                cluster: GetCluster()
             );
             Application.OpenURL(url);
         }
@@ -98,7 +109,7 @@ namespace Solana.Unity.SDK
                 redirectScheme:  _phantomWalletOptions.deeplinkUrlScheme,
                 apiVersion: _phantomWalletOptions.phantomApiVersion,
                 sessionId: _sessionId,
-                cluster: RpcCluster
+                cluster: GetCluster()
                 
             );
             Application.OpenURL(url);
@@ -114,7 +125,7 @@ namespace Solana.Unity.SDK
                 redirectScheme:  _phantomWalletOptions.deeplinkUrlScheme,
                 apiVersion: _phantomWalletOptions.phantomApiVersion,
                 sessionId: _sessionId,
-                cluster: RpcCluster
+                cluster: GetCluster()
                 
             );
             Application.OpenURL(url);

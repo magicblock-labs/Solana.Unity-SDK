@@ -43,10 +43,10 @@ namespace Solana.Unity.SDK
         
         public Web3AuthWallet(Web3AuthWalletOptions web3AuthWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet,
-            string customRpc = null,
-            string customStreamingRpc = null,
+            string customRpcUri = null,
+            string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false
-            ) : base(rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup)
+            ) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             _web3AuthWalletOptions = web3AuthWalletOptions;
             var gameObject = new GameObject("Web3Auth");

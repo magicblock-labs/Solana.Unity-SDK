@@ -34,8 +34,8 @@ namespace Solana.Unity.SDK
             { 2, Cluster.TestNet }
         };
 
-        private readonly string _customRpc;
-        private readonly string _customStreamingRpc;
+        protected readonly string CustomRpcUri;
+        protected readonly string CustomStreamingRpcUri;
 
         private IRpcClient _activeRpcClient;
         public IRpcClient ActiveRpcClient => StartConnection();
@@ -45,11 +45,11 @@ namespace Solana.Unity.SDK
         public Account Account { get;private set; }
         public Mnemonic Mnemonic { get;protected set; }
 
-        protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, string customStreamingRpc = null, bool autoConnectOnStartup = false)
+        protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false)
         {
             RpcCluster = rpcCluster;
-            _customRpc = customRpc;
-            _customStreamingRpc = customStreamingRpc;
+            CustomRpcUri = customRpcUri;
+            CustomStreamingRpcUri = customStreamingRpcUri;
             if (autoConnectOnStartup)
             {
                 StartConnection();
@@ -274,7 +274,7 @@ namespace Solana.Unity.SDK
                 }
                 if (_activeRpcClient == null && RpcCluster == RpcCluster.Custom)
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_customRpc);
+                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri);
                 }
 
                 return _activeRpcClient;
@@ -294,9 +294,9 @@ namespace Solana.Unity.SDK
             try
             {
                 if (_activeStreamingRpcClient != null) return _activeStreamingRpcClient;
-                if (_customStreamingRpc != null)
+                if (CustomStreamingRpcUri != null)
                 {
-                    _activeStreamingRpcClient = ClientFactory.GetStreamingClient(_customStreamingRpc, true);
+                    _activeStreamingRpcClient = ClientFactory.GetStreamingClient(CustomStreamingRpcUri, true);
                     _activeStreamingRpcClient.ConnectAsync()
                         .ContinueWith( _ => Debug.Log("WebSockets connection: " + _activeStreamingRpcClient.State));
                     return _activeStreamingRpcClient;

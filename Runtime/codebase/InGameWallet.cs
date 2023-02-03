@@ -16,8 +16,8 @@ namespace Solana.Unity.SDK
         private const string EncryptedKeystoreKey = "EncryptedKeystore";
 
         public InGameWallet(RpcCluster rpcCluster = RpcCluster.DevNet, 
-            string customRpc = null, string customStreamingRpc = null, 
-            bool autoConnectOnStartup = false) : base(rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup)
+            string customRpcUri = null, string customStreamingRpcUri = null, 
+            bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
         }
 

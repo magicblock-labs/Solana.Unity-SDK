@@ -19,8 +19,8 @@ namespace Solana.Unity.SDK
         private static Transaction _currentTransaction;
         private static Account _account;
 
-        public XNFTWallet(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpc = null, string customStreamingRpc = null, bool autoConnectOnStartup = false) 
-            : base(rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup)
+        public XNFTWallet(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
+            : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
 
         }
