@@ -47,13 +47,12 @@ mergeInto(LibraryManager.library, {
     ExternSignMessage: async function (message, callback) {
         if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
             try {
-               const messageString = UTF8ToString(message);
-               const encodedMessage = new TextEncoder().encode(messageString);
+               const messageBase64String = UTF8ToString(message);
+               const messageBytes = Uint8Array.from(atob(messageBase64String), (c) => c.charCodeAt(0));
                const signedMessage = await window.phantom.solana.request({
                   method: 'signMessage',
                   params: {
-                     message: encodedMessage,
-                     display: "utf8",
+                     message: messageBytes
                   },
                });
                 console.log(signedMessage);

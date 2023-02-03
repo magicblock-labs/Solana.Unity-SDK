@@ -246,7 +246,7 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public abstract Task<byte[]> SignMessage(string message);
+        public abstract Task<byte[]> SignMessage(byte[] message);
 
         /// <summary>
         /// Airdrop sol on wallet

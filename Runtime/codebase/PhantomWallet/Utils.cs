@@ -69,14 +69,14 @@ namespace Solana.Unity.SDK
         /// Create DeepLink URL for signing a message with Phantom and redirect to the game
         /// </summary>
         public static string CreateSignMessageDeepLink(
-            string message, 
+            byte[] message, 
             byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey, 
             string sessionId, string redirectScheme, string apiVersion,
             string connectionPublicKey, RpcCluster cluster)
         {
             
             var redirectUri = $"{redirectScheme}://messageSigned";
-            var base58Message = Encoders.Base58.EncodeData(Encoding.UTF8.GetBytes(message));
+            var base58Message = Encoders.Base58.EncodeData(message);
             var messagePayload = new PhantomMessagePayload(base58Message, sessionId, "utf8");
             var messagePayloadJson = JsonUtility.ToJson(messagePayload);
             var bytesJson = Encoding.UTF8.GetBytes(messagePayloadJson);

@@ -62,7 +62,7 @@ namespace Solana.Unity.SDK
             return _signedTransactionTaskCompletionSource.Task;
         }
 
-        public override Task<byte[]> SignMessage(string message)
+        public override Task<byte[]> SignMessage(byte[] message)
         {
             _signedMessageTaskCompletionSource = new TaskCompletionSource<byte[]>();
             StartSignMessage(message);
@@ -104,7 +104,7 @@ namespace Solana.Unity.SDK
             Application.OpenURL(url);
         }
 
-        private void StartSignMessage(string message)
+        private void StartSignMessage(byte[] message)
         {
             var url = Utils.CreateSignMessageDeepLink(
                 message: message,

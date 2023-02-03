@@ -49,7 +49,7 @@ namespace Solana.Unity.SDK
             return _signedTransactionTaskCompletionSource.Task;
         }
 
-        public override Task<byte[]> SignMessage(string message)
+        public override Task<byte[]> SignMessage(byte[] message)
         {
             throw new NotImplementedException();
         }

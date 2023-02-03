@@ -58,7 +58,7 @@ namespace Solana.Unity.SDK
             throw new NotImplementedException();
         }
 
-        public override Task<byte[]> SignMessage(string message)
+        public override Task<byte[]> SignMessage(byte[] message)
         {
             if (_internalWallet != null)
                 return _internalWallet.SignMessage(message);

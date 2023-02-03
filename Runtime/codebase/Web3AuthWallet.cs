@@ -111,10 +111,9 @@ namespace Solana.Unity.SDK
             return Task.FromResult(transaction);
         }
 
-        public override Task<byte[]> SignMessage(string message)
+        public override Task<byte[]> SignMessage(byte[] message)
         {
-            var encodedMessage = Encoding.UTF8.GetBytes(message);
-            return Task.FromResult(Account.Sign(encodedMessage));
+            return Task.FromResult(Account.Sign(message));
         }
         
         public Task<Account> LoginWithProvider(Provider provider)
