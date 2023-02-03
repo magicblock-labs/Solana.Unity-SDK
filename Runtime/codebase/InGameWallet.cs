@@ -71,6 +71,11 @@ namespace Solana.Unity.SDK
             return Task.FromResult(transaction);
         }
 
+        public override Task<byte[]> SignMessage(byte[] message)
+        {
+            return Task.FromResult(Account.Sign(message));
+        }
+
         private static string LoadPlayerPrefs(string key)
         {
             return PlayerPrefs.GetString(key);

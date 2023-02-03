@@ -29,6 +29,7 @@ namespace Solana.Unity.SDK
         
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
 
         public PhantomDeepLink(
             PhantomWalletOptions phantomWalletOptions,
@@ -59,6 +60,13 @@ namespace Solana.Unity.SDK
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             StartSignTransaction(transaction);
             return _signedTransactionTaskCompletionSource.Task;
+        }
+
+        public override Task<byte[]> SignMessage(byte[] message)
+        {
+            _signedMessageTaskCompletionSource = new TaskCompletionSource<byte[]>();
+            StartSignMessage(message);
+            return _signedMessageTaskCompletionSource.Task;
         }
 
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
@@ -95,6 +103,22 @@ namespace Solana.Unity.SDK
             );
             Application.OpenURL(url);
         }
+
+        private void StartSignMessage(byte[] message)
+        {
+            var url = Utils.CreateSignMessageDeepLink(
+                message: message,
+                phantomEncryptionPubKey: _phantomEncryptionPubKey,
+                connectionPublicKey: Encoders.Base58.EncodeData(PhantomConnectionAccountPublicKey),
+                phantomConnectionAccountPrivateKey: PhantomConnectionAccountPrivateKey,
+                redirectScheme:  _phantomWalletOptions.deeplinkUrlScheme,
+                apiVersion: _phantomWalletOptions.phantomApiVersion,
+                sessionId: _sessionId,
+                cluster: RpcCluster
+                
+            );
+            Application.OpenURL(url);
+        }
         
         #endregion        
 
@@ -109,6 +133,10 @@ namespace Solana.Unity.SDK
             else if(url.Contains("onPhantomConnected"))
             {
                 ParseConnectionSuccessful(url);
+            }
+            else if(url.Contains("messageSigned"))
+            {
+                ParseSuccessfullySignedMessage(url);
             }
         }
 
@@ -168,6 +196,25 @@ namespace Solana.Unity.SDK
             var base58TransBytes = Encoders.Base58.DecodeData(success.transaction);
             var transaction = Transaction.Deserialize(base58TransBytes);
             _signedTransactionTaskCompletionSource.SetResult(transaction);
+        }
+
+        private void ParseSuccessfullySignedMessage(string url)
+        {
+            var result = ParseQueryString(url);
+            result.TryGetValue("nonce", out var nonce);
+            result.TryGetValue("data", out var data);
+            result.TryGetValue("errorMessage", out var errorMessage);
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
+                return;
+            }
+            var k = MontgomeryCurve25519.KeyExchange(_phantomEncryptionPubKey, PhantomConnectionAccountPrivateKey);
+            var unencryptedMessage = XSalsa20Poly1305.TryDecrypt(Encoders.Base58.DecodeData(data), k, Encoders.Base58.DecodeData(nonce));
+            var bytesToUtf8String = Encoding.UTF8.GetString(unencryptedMessage);
+            var success = JsonUtility.FromJson<PhantomWalletMessageSignedSuccessfully>(bytesToUtf8String);
+            var base58SigBytes = Encoders.Base58.DecodeData(success.signature);
+            _signedMessageTaskCompletionSource.SetResult(base58SigBytes);
         }
 
         private static Dictionary<string, string> ParseQueryString(string url)

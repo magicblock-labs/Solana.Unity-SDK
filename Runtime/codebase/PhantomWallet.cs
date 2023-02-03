@@ -58,6 +58,13 @@ namespace Solana.Unity.SDK
             throw new NotImplementedException();
         }
 
+        public override Task<byte[]> SignMessage(byte[] message)
+        {
+            if (_internalWallet != null)
+                return _internalWallet.SignMessage(message);
+            throw new NotImplementedException();
+        }
+
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
             throw new NotImplementedException("Can't create a new account in phantom wallet");
