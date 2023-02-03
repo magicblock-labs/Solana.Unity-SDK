@@ -40,7 +40,7 @@ namespace Solana.Unity.SDK
             _internalWallet = new PhantomDeepLink(phantomWalletOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             #endif
             #if UNITY_WEBGL
-            _internalWallet = new PhantomWebGL(phantomWalletOptions, rpcCluster, customRpc, customStreamingRpc, autoConnectOnStartup);
+            _internalWallet = new PhantomWebGL(phantomWalletOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             #endif
         }
 
