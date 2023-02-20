@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
@@ -205,32 +206,12 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public virtual async Task<Transaction> SignTransaction(Transaction transaction)
         {
-            Debug.Log("A");
-            foreach (var signaturePubKeyPair in transaction.Signatures)
-            {
-                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
-            }
             var signatures = transaction.Signatures;
             transaction.Sign(Account);
             transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures);
-            Debug.Log("B");
-            foreach (var signaturePubKeyPair in transaction.Signatures)
-            {
-                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
-            }
             var tx = await _SignTransaction(transaction);
-            Debug.Log("C");
-            foreach (var signaturePubKeyPair in transaction.Signatures)
-            {
-                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
-            }
             tx.Signatures.AddRange(signatures);
             tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
-            Debug.Log("C");
-            foreach (var signaturePubKeyPair in transaction.Signatures)
-            {
-                Debug.Log(signaturePubKeyPair.Signature +  signaturePubKeyPair.PublicKey);
-            }
             return tx;
         }
 
@@ -319,7 +300,7 @@ namespace Solana.Unity.SDK
             var emptySgn = new byte[64];
             foreach (var sgn in signatures)
             {
-                if (sgn.Signature.Equals(emptySgn) || signaturesSet.Contains(sgn.PublicKey)) continue;
+                if (sgn.Signature.SequenceEqual(emptySgn) || signaturesSet.Contains(sgn.PublicKey)) continue;
                 signaturesSet.Add(sgn.PublicKey);
                 signaturesList.Add(sgn);
             }
