@@ -52,7 +52,7 @@ public class SwapScreen : SimpleScreen
     private IDex _dex;
     private CancellationTokenSource _tokenSource;
     private SwapQuote _swapQuote;
-    private PublicKey _whirlpool;
+    private Pool _whirlpool;
 
     // Initialize the dropdowns and select USDC and ORCA as default
     void Start()
@@ -77,7 +77,7 @@ public class SwapScreen : SimpleScreen
     private async UniTask Swap()
     {
         if(_whirlpool == null || _swapQuote == null) return;
-        var tr = await _dex.SwapWithQuote(_whirlpool, _swapQuote);
+        var tr = await _dex.SwapWithQuote(_whirlpool.Address, _swapQuote);
         var result = await WalletH.Instance.Wallet.SignAndSendTransaction(tr);
         Debug.Log(result.Result);
         await WalletH.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
@@ -109,7 +109,7 @@ public class SwapScreen : SimpleScreen
             var inputAAmount = float.Parse(inputAmountA.text);
             _whirlpool = await _dex.FindWhirlpoolAddress(_tokenA.MintAddress, _tokenB.MintAddress);
             _swapQuote = await _dex
-                .GetSwapQuoteFromWhirlpool(_whirlpool, 
+                .GetSwapQuoteFromWhirlpool(_whirlpool.Address, 
                     (BigInteger)(inputAAmount * Math.Pow(10, _tokenA.Decimals)),
                     _tokenA.MintAddress);
             var quote = (double)_swapQuote.EstimatedAmountOut/Math.Pow(10, _tokenB.Decimals);
