@@ -67,7 +67,6 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         private static void OnPhantomConnected(string walletPubKey)
         {
-            Debug.Log($"Wallet {walletPubKey} connected!");
             _account = new Account("", walletPubKey);
             _loginTaskCompletionSource.SetResult(_account);
         }
