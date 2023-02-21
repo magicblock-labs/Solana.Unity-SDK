@@ -7,7 +7,7 @@ Orca is natively supported in the SDK. Utility methods are provided to easily bu
 
 # Orca
 
-Orca is the easiest place to trade cryptocurrency on the Solana blockchain. For a detailed description refer to the official [Orca documentation](https://docs.orca.so/orca-for-traders/master)
+Orca is the easiest place to trade cryptocurrency on the Solana blockchain. For a detailed description refer to the official [Orca documentation](https://docs.orca.so/orca-for-traders/master) and [Orca Developer Portal](https://orca-so.gitbook.io/orca-developer-portal/orca/welcome).
 
 
 ---
@@ -34,22 +34,22 @@ TokenData tokenB = await dex.GetTokenBySymbol("ORCA");
 - Find the whirlpool:
 
 ```csharp
-PublicKey whirlpool = await dex.FindWhirlpoolAddress(tokenA.MintAddress, tokenB.MintAddress)
+Pool whirlpool = await dex.FindWhirlpoolAddress(tokenA.MintAddress, tokenB.MintAddress)
 ```
 
 - Get a swap quote for 1 USDC:
 
 ```csharp
 SwapQuote swapQuote = await dex.GetSwapQuoteFromWhirlpool(
-    whirlpool, 
-    1 * Math.Pow(10, tokenA.Decimals),
+    whirlpool.Address, 
+    DecimalUtil.ToUlong(1, tokenA.Decimals),
     tokenA.MintAddress,
     slippageTolerance: 0.1,
 );
 ```
 
 ```csharp
-var quote = (double)swapQuote.EstimatedAmountOut/Math.Pow(10, tokenB.Decimals);
+var quote = DecimalUtil.FromBigInteger(swapQuote.EstimatedAmountOut, tokenB.Decimals);
 Debug.Log(quote); // Amount of espected Orca token to receive
 ```
 
@@ -96,8 +96,8 @@ Transaction tx = await dex.OpenPositionWithLiquidity(
     mint,
     -1792,
     1152,
-    5*Math.Pow(10, tokenA.Decimals),
-    5*Math.Pow(10, tokenB.Decimals),
+    DecimalUtil.ToUlong(5, tokenA.Decimals),
+    DecimalUtil.ToUlong(5, tokenB.Decimals),
     commitment: Commitment.Confirmed
 );
 
