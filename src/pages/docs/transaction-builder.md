@@ -3,7 +3,7 @@ title: Transaction builder
 description: 
 ---
 
-Learn about Transaction on the official Anchor [documentation](https://www.anchor-lang.com/docs/intro-to-solana)
+Learn about Transactions on the official Anchor [documentation](https://www.anchor-lang.com/docs/intro-to-solana)
 
 ```csharp
 using Solana.Unity.Programs;
