@@ -3,6 +3,8 @@ title: Add Signature
 description: 
 ---
 
+Learn about Signatures on the official Solana [documentation](https://docs.solana.com/developing/programming-model/accounts#signers)
+
 ```csharp
  public class AddSignatureExample : IExample
     {
