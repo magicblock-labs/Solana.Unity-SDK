@@ -10,6 +10,7 @@ using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
 using UnityEngine;
+using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
@@ -36,7 +37,7 @@ namespace Solana.Unity.SDK
         };
 
         protected readonly string CustomRpcUri;
-        protected readonly string CustomStreamingRpcUri;
+        protected string CustomStreamingRpcUri;
 
         private IRpcClient _activeRpcClient;
         public IRpcClient ActiveRpcClient => StartConnection();
@@ -235,10 +236,9 @@ namespace Solana.Unity.SDK
         /// <param name="amount">Amount of sol</param>
         /// <param name="commitment"></param>
         /// <returns>Amount of sol</returns>
-        public async Task<string> RequestAirdrop(ulong amount = SolLamports, Commitment commitment = Commitment.Finalized)
+        public async Task<RequestResult<string>> RequestAirdrop(ulong amount = SolLamports, Commitment commitment = Commitment.Finalized)
         {
-            var result = await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount, commitment);
-            return result.Result;
+            return await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount, commitment); ;
         }
         
         /// <summary>
@@ -272,6 +272,10 @@ namespace Solana.Unity.SDK
         /// <returns></returns>
         private IStreamingRpcClient StartStreamingConnection()
         {
+            if (_activeStreamingRpcClient == null && CustomStreamingRpcUri.IsNullOrEmpty())
+            {
+                CustomStreamingRpcUri = ActiveRpcClient.NodeAddress.AbsoluteUri.Replace("https://", "wss://");
+            }
             try
             {
                 if (_activeStreamingRpcClient != null) return _activeStreamingRpcClient;

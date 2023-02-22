@@ -44,20 +44,22 @@ namespace Solana.Unity.SDK.Example
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
-            loginBtnXNFT.onClick.AddListener(LoginCheckerXNFT);
+            loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
 
             if (Application.platform != RuntimePlatform.Android && 
                 Application.platform != RuntimePlatform.IPhonePlayer
                 && Application.platform != RuntimePlatform.WindowsPlayer
-                && Application.platform != RuntimePlatform.LinuxEditor
                 && Application.platform != RuntimePlatform.WindowsEditor
+                && Application.platform != RuntimePlatform.LinuxPlayer
+                && Application.platform != RuntimePlatform.LinuxEditor
+                && Application.platform != RuntimePlatform.OSXPlayer
                 && Application.platform != RuntimePlatform.OSXEditor)
             {
                 loginBtnGoogle.gameObject.SetActive(false);
                 loginBtnTwitter.gameObject.SetActive(false);
             }
             loginBtnXNFT.gameObject.SetActive(false);
-            //loginBtnXNFT.gameObject.SetActive(Application.platform == RuntimePlatform.WebGLPlayer);
+
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
         }
@@ -65,31 +67,31 @@ namespace Solana.Unity.SDK.Example
         private async void LoginChecker()
         {
             var password = passwordInputField.text;
-            var account = await WalletH.Instance.LoginInGameWallet(password);
+            var account = await Web3.Instance.LoginInGameWallet(password);
             CheckAccount(account);
         }
         
         private async void LoginCheckerPhantom()
         {
-            var account = await WalletH.Instance.LoginPhantom();
+            var account = await Web3.Instance.LoginPhantom();
             CheckAccount(account);
         }
         
         private async void LoginCheckerWeb3Auth(Provider provider)
         {
-            var account = await WalletH.Instance.LoginInWeb3Auth(provider);
+            var account = await Web3.Instance.LoginInWeb3Auth(provider);
             CheckAccount(account);
         }
 
         public void TryLoginBackPack()
         {
-            LoginCheckerXNFT();
+            LoginCheckerXnft();
         }
 
-        private async void LoginCheckerXNFT()
+        private async void LoginCheckerXnft()
         {
-            if(WalletH.Instance == null) return;
-            var account = await WalletH.Instance.LoginXNFT();
+            if(Web3.Instance == null) return;
+            var account = await Web3.Instance.LoginXNFT();
             messageTxt.text = "";
             CheckAccount(account);
         }
