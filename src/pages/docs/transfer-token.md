@@ -5,6 +5,11 @@ description:
 
 You can learn about Token Program on the official Solana [documentation](https://spl.solana.com/token) 
 
+The Token program defines a common implementation for Fungible and Non Fungible tokens.
+
+Balances can be transferred between Accounts using the Transfer instruction. The owner of the source Account must be present as a signer in the Transfer instruction when the source and destination accounts are different.
+
+
 ```csharp
  public class TransferTokenExample : IExample
     {
