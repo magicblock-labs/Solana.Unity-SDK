@@ -3,6 +3,7 @@ title: Staking
 description: 
 ---
 
+You can learn about Staking on the official Solana [documentation](https://spl.solana.com/stake-pool/overview#staking)
 
 ```csharp
 public class CreateAccountAndInitializeStakeExample : IExample
