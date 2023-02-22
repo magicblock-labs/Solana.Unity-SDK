@@ -5,6 +5,8 @@ description:
 
 You can learn about Staking on the official Solana [documentation](https://spl.solana.com/stake-pool/overview#staking)
 
+SOL token holders can earn rewards and help secure the network by staking tokens to one or more validators. Rewards for staked tokens are based on the current inflation rate, total number of SOL staked on the network, and an individual validator’s uptime and commission (fee).
+
 ```csharp
 public class CreateAccountAndInitializeStakeExample : IExample
     {
