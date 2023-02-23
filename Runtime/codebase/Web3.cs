@@ -6,12 +6,10 @@ using UnityEngine;
 
 // ReSharper disable once CheckNamespace
 
-namespace Solana.Unity.SDK.Example
+namespace Solana.Unity.SDK
 {
-    public enum StorageMethod { Json, SimpleTxt }
-
     [RequireComponent(typeof(MainThreadDispatcher))]
-    public class WalletH : MonoBehaviour
+    public class Web3 : MonoBehaviour
     {
         [SerializeField]
         private RpcCluster rpcCluster = RpcCluster.DevNet;
@@ -20,8 +18,6 @@ namespace Solana.Unity.SDK.Example
         public bool autoConnectOnStartup;
         public string webSocketsRpc;
 
-        private StorageMethod _storageMethod;
-        
         public Web3AuthWalletOptions web3AuthWalletOptions;
         
         public PhantomWalletOptions phantomWalletOptions;
@@ -30,7 +26,7 @@ namespace Solana.Unity.SDK.Example
 
         public WalletBase Wallet;
 
-        public static WalletH Instance;
+        public static Web3 Instance;
         
         // Convenience shortnames for accessing commonly used wallet methods
         public static IRpcClient Rpc => Instance != null ? Instance.Wallet?.ActiveRpcClient : null;
@@ -48,28 +44,6 @@ namespace Solana.Unity.SDK.Example
             {
                 Destroy(gameObject);
             }
-        }
-        
-        public void Start()
-        {
-            ChangeState(_storageMethod.ToString());
-            if (PlayerPrefs.HasKey(StorageMethodStateKey))
-            {
-                var storageMethodString = LoadPlayerPrefs(StorageMethodStateKey);
-
-                if(storageMethodString != _storageMethod.ToString())
-                {
-                    storageMethodString = _storageMethod.ToString();
-                    ChangeState(storageMethodString);
-                }
-
-                if (storageMethodString == StorageMethod.Json.ToString())
-                    StorageMethodReference = StorageMethod.Json;
-                else if (storageMethodString == StorageMethod.SimpleTxt.ToString())
-                    StorageMethodReference = StorageMethod.SimpleTxt;
-            }
-            else
-                StorageMethodReference = StorageMethod.SimpleTxt;          
         }
 
         public async Task<Account> LoginInGameWallet(string password)
@@ -119,8 +93,8 @@ namespace Solana.Unity.SDK.Example
             rpcCluster = RpcCluster.Custom;
             customRpc = value switch
             {
-                (int) RpcCluster.MainNet => "https://rpc.ankr.com/solana",
-                _ => "https://rpc.ankr.com/solana_devnet"
+                (int) RpcCluster.MainNet => "https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/",
+                _ => "https://api.devnet.solana.com"
             };
         }
         
@@ -130,17 +104,6 @@ namespace Solana.Unity.SDK.Example
             Wallet = null;
         }
 
-        private void ChangeState(string state)
-        {
-            SavePlayerPrefs(StorageMethodStateKey, _storageMethod.ToString());
-        }
-
-        public StorageMethod StorageMethodReference
-        {
-            get => _storageMethod;
-            private set { _storageMethod = value; ChangeState(_storageMethod.ToString()); }
-        }
-        
         #region Data Functions
 
         private static void SavePlayerPrefs(string key, string value)
@@ -165,11 +128,25 @@ namespace Solana.Unity.SDK.Example
     }
     
     /// <summary>
+    /// Keeps WalletH for compatibility with older versions of the SDK
+    /// </summary>
+    [Obsolete("Deprecated, use Web3 instead", true)]
+    public static class WalletH
+    {
+        public static Web3 Instance => Web3.Instance;
+        public static IRpcClient Rpc => Instance != null ? Instance.Wallet?.ActiveRpcClient : null;
+        public static IStreamingRpcClient WsRpc => Instance != null ? Instance.Wallet?.ActiveStreamingRpcClient : null;
+        public static Account Account => Instance != null ? Instance.Wallet?.Account : null;
+        public static WalletBase Base => Instance != null ? Instance.Wallet : null;
+    }
+    
+    
+    /// <summary>
     /// Keeps SimpleWallet for compatibility with older versions of the SDK
     /// </summary>
-    [Obsolete("Deprecated, use WalletH instead", true)]
+    [Obsolete("Deprecated, use Web3 instead", true)]
     public static class SimpleWallet
     {
-        public static WalletH Instance => WalletH.Instance;
+        public static Web3 Instance => Web3.Instance;
     }
 }

@@ -65,7 +65,7 @@ namespace Solana.Unity.SDK.Example
 
             logoutBtn.onClick.AddListener(() =>
             {
-                WalletH.Instance.Logout();
+                Web3.Instance.Logout();
                 manager.ShowScreen(this, "login_screen");
                 if(parentManager != null)
                     parentManager.ShowScreen(this, "[Connect_Wallet_Screen]");
@@ -76,8 +76,8 @@ namespace Solana.Unity.SDK.Example
 
             _stopTask = new CancellationTokenSource();
 
-            WalletH.WsRpc.SubscribeAccountInfo(
-                WalletH.Instance.Wallet.Account.PublicKey,
+            Web3.WsRpc.SubscribeAccountInfo(
+                Web3.Instance.Wallet.Account.PublicKey,
                 (_, accountInfo) =>
                 {
                     Debug.Log("Account changed!, updated lamport: " + accountInfo.Value.Lamports);
@@ -95,25 +95,26 @@ namespace Solana.Unity.SDK.Example
 
         private void OnEnable()
         {
-            var hasPrivateKey = !string.IsNullOrEmpty(WalletH.Instance.Wallet?.Account.PrivateKey);
+            Loading.StopLoading();
+            var hasPrivateKey = !string.IsNullOrEmpty(Web3.Instance.Wallet?.Account.PrivateKey);
             savePrivateKeyBtn.gameObject.SetActive(hasPrivateKey);
-            var hasMnemonics = !string.IsNullOrEmpty(WalletH.Instance.Wallet?.Mnemonic?.ToString());
+            var hasMnemonics = !string.IsNullOrEmpty(Web3.Instance.Wallet?.Mnemonic?.ToString());
             saveMnemonicsBtn.gameObject.SetActive(hasMnemonics);
         }
 
         private void SavePrivateKeyOnClick()
         {
             if (!gameObject.activeSelf) return;
-            if (string.IsNullOrEmpty(WalletH.Instance.Wallet.Account.PrivateKey?.ToString())) return;
-            Clipboard.Copy(WalletH.Instance.Wallet.Account.PrivateKey.ToString());
+            if (string.IsNullOrEmpty(Web3.Instance.Wallet.Account.PrivateKey?.ToString())) return;
+            Clipboard.Copy(Web3.Instance.Wallet.Account.PrivateKey.ToString());
             gameObject.GetComponent<Toast>()?.ShowToast("Private Key copied to clipboard", 3);
         }
         
         private void SaveMnemonicsOnClick()
         {
             if (!gameObject.activeSelf) return;
-            if (string.IsNullOrEmpty(WalletH.Instance.Wallet.Mnemonic?.ToString())) return;
-            Clipboard.Copy(WalletH.Instance.Wallet.Mnemonic.ToString());
+            if (string.IsNullOrEmpty(Web3.Instance.Wallet.Mnemonic?.ToString())) return;
+            Clipboard.Copy(Web3.Instance.Wallet.Mnemonic.ToString());
             gameObject.GetComponent<Toast>()?.ShowToast("Mnemonics copied to clipboard", 3);
         }
 
@@ -124,8 +125,8 @@ namespace Solana.Unity.SDK.Example
 
         private async Task UpdateWalletBalanceDisplay()
         {
-            if (WalletH.Instance.Wallet.Account is null) return;
-            var sol = await WalletH.Base.GetBalance(Commitment.Confirmed);
+            if (Web3.Instance.Wallet.Account is null) return;
+            var sol = await Web3.Base.GetBalance(Commitment.Confirmed);
             MainThreadDispatcher.Instance().Enqueue(() =>
             {
                 lamports.text = $"{sol}";
@@ -134,7 +135,7 @@ namespace Solana.Unity.SDK.Example
 
         private async UniTask GetOwnedTokenAccounts()
         {
-            var tokens = await WalletH.Base.GetTokenAccounts(Commitment.Confirmed);
+            var tokens = await Web3.Base.GetTokenAccounts(Commitment.Confirmed);
             // Remove tokens not owned anymore and update amounts
             var tkToRemove = new List<TokenItem>();
             _instantiatedTokens.ForEach(tk =>
@@ -168,7 +169,7 @@ namespace Solana.Unity.SDK.Example
                         tk.transform.localScale = Vector3.one;
 
                         Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
-                            WalletH.Instance.Wallet.ActiveRpcClient).AsUniTask().ContinueWith(nft =>
+                            Web3.Instance.Wallet.ActiveRpcClient).AsUniTask().ContinueWith(nft =>
                         {
                             TokenItem tkInstance = tk.GetComponent<TokenItem>();
                             _instantiatedTokens.Add(tkInstance);

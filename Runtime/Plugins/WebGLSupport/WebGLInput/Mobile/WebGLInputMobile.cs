@@ -10,21 +10,17 @@ namespace WebGLSupport
 {
     class WebGLInputMobilePlugin
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
+        #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")]
         public static extern int WebGLInputMobileRegister(Action<int> OnTouchEnd);
 
         [DllImport("__Internal")]
         public static extern void WebGLInputMobileOnFocusOut(int id, Action<int> OnFocusOut);
-#else
-        /// <summary>
-        /// ID を割り振り
-        /// </summary>
-        /// <returns></returns>
+        #else
         public static int WebGLInputMobileRegister(Action<int> OnTouchEnd) { return 0; }
 
         public static void WebGLInputMobileOnFocusOut(int id, Action<int> OnFocusOut) {}
-#endif
+        #endif
     }
 
     public class WebGLInputMobile : MonoBehaviour, IPointerDownHandler
@@ -35,16 +31,11 @@ namespace WebGLSupport
 
         private void Awake()
         {
-#if !(UNITY_WEBGL && !UNITY_EDITOR)
-            // WebGL 以外、更新メソッドは動作しないようにします
+            #if !(UNITY_WEBGL && !UNITY_EDITOR)
             enabled = false;
-#endif
+            #endif
         }
-
-        /// <summary>
-        /// 押されたら、touchend イベントを登録する
-        /// </summary>
-        /// <param name="eventData"></param>
+        
         public void OnPointerDown(PointerEventData eventData)
         {
             if (id != -1) return;
@@ -84,4 +75,3 @@ namespace WebGLSupport
         }
     }
 }
-
