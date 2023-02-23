@@ -93,7 +93,7 @@ namespace Solana.Unity.SDK
             rpcCluster = RpcCluster.Custom;
             customRpc = value switch
             {
-                (int) RpcCluster.MainNet => "https://api.mainnet-beta.solana.com",
+                (int) RpcCluster.MainNet => "https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/",
                 _ => "https://api.devnet.solana.com"
             };
         }
