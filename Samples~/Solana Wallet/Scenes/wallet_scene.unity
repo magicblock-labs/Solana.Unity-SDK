@@ -453,6 +453,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3118238621310648666, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2f60ffc4c8b3e408494a1f846644033c, type: 3}
+    - target: {fileID: 6516072180410286456, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.5000076
+      objectReference: {fileID: 0}
     - target: {fileID: 7650025151828161750, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
       propertyPath: m_Name
       value: wallet_holder
@@ -556,6 +564,10 @@ PrefabInstance:
     - target: {fileID: 7650025152717384953, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: Solana.Unity.SDK.Web3, com.solana.unity_sdk
+      objectReference: {fileID: 0}
+    - target: {fileID: 8213148139640534112, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.5000076
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
