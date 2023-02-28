@@ -11,20 +11,20 @@
 
   <p>
     <a href="https://developers.garbles.fun"><img alt="Tutorials" src="https://img.shields.io/badge/docs-tutorials-blueviolet" /></a>
-    <a href="https://github.com/garbles-labs/Solana.Unity-SDK/issues"><img alt="Issues" src="https://img.shields.io/github/issues/garbles-labs/Solana.Unity-SDK?color=blueviolet" /></a>
+    <a href="https://github.com/magicblock-labs/Solana.Unity-SDK/issues"><img alt="Issues" src="https://img.shields.io/github/issues/magicblock-labs/Solana.Unity-SDK?color=blueviolet" /></a>
     <a href="https://discord.com/invite/MBkdC3gxcv"><img alt="Discord Chat" src="https://img.shields.io/discord/943797222162726962?color=blueviolet" /></a>
-    <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/github/license/garbles-labs/Solana.Unity-SDK?color=blueviolet" /></a>
+    <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/github/license/magicblock-labs/Solana.Unity-SDK?color=blueviolet" /></a>
   </p>
 </div>
   
-Solana.Unity-SDK is the interface to access [Solana.Unity-Core](https://github.com/garbles-labs/Solana.Unity-Core), Solnet implementation in .NET Standard 2.0 (Unity compatible).
+Solana.Unity-SDK is the interface to access [Solana.Unity-Core](https://github.com/magicblock-labs/Solana.Unity-Core), Solnet implementation in .NET Standard 2.0 (Unity compatible).
 The SDK supports an In-game wallet with Web3auth authentication, phantom and SMS (upcoming). A set of convenience methods allows Unity developers to access all the methods implemented in Solana.Unity-Core, including MPL, native dex transactions and more...
 
 Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/allartprotocol/unity-solana-wallet), but it has been detached due to the several changes we have made and upcoming pipeline of integrations. 
 
 ## 📝 [Documentation](http://developers.garbles.fun/)
 
-## 🚀 [Live Demo](https://garbles-labs.github.io/Solana.Unity-SDK/)
+## 🚀 [Live Demo](https://magicblock-labs.github.io/Solana.Unity-SDK/)
 
 ## ✨ Features
 - Full JSON RPC API coverage
@@ -63,13 +63,13 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 * Click the add **+** button in the status bar.
 * The options for adding packages appear.
 * Select Add package from git URL from the add menu. A text box and an Add button appear.
-* Enter the `https://github.com/garbles-labs/Solana.Unity-SDK.git` Git URL in the text box and click Add.
+* Enter the `https://github.com/magicblock-labs/Solana.Unity-SDK.git` Git URL in the text box and click Add.
 * Once the package is installed, in the Package Manager inspector you will have Samples. Click on Import
 * You may also install a specific package version by using the URL with the specified version.
-  * `https://github.com/garbles-labs/Solana.Unity-SDK.git#vX.Y.X`
+  * `https://github.com/magicblock-labs/Solana.Unity-SDK.git#vX.Y.X`
   * Please note that the version `X.Y.Z` stated here is to be replaced with the version you would like to get.
-  * You can find all the available releases [here](https://github.com/garbles-labs/Solana.Unity-SDK/releases).
-  * The latest available release version is [![Last Release](https://img.shields.io/github/v/release/garbles-labs/Solana.Unity-SDK)](https://github.com/Sgarbles-labs/Solana.Unity-SDK/releases/latest)
+  * You can find all the available releases [here](https://github.com/magicblock-labs/Solana.Unity-SDK/releases).
+  * The latest available release version is [![Last Release](https://img.shields.io/github/v/release/magicblock-labs/Solana.Unity-SDK)](https://github.com/Smagicblock-labs/Solana.Unity-SDK/releases/latest)
 * You will find a sample scene with a configured wallet in `Samples/Solana SDK/0.0.x/Simple Wallet/Solana Wallet/scenes/wallet_scene.unity`
 
 ## 👷 Step-by-step instructions
@@ -89,6 +89,6 @@ Open Source is at the heart of what we do at Garbles Labs. We believe building s
 
 Thanks go to these wonderful people:
 
-<a href="https://github.com/garbles-labs/Solana.Unity-SDK/graphs/contributors"><img width="100%" src="https://garbles-labs.github.io/Solana.Unity-SDK/metrics.repository.svg"></a>
+<a href="https://github.com/magicblock-labs/Solana.Unity-SDK/graphs/contributors"><img width="100%" src="https://magicblock-labs.github.io/Solana.Unity-SDK/metrics.repository.svg"></a>
 
-<a href="https://github.com/garbles-labs/Solana.Unity-SDK/stargazers"><img width="100%" src="https://garbles-labs.github.io/Solana.Unity-SDK/people.repository.svg"></a>
+<a href="https://github.com/magicblock-labs/Solana.Unity-SDK/stargazers"><img width="100%" src="https://magicblock-labs.github.io/Solana.Unity-SDK/people.repository.svg"></a>
