@@ -22,7 +22,7 @@ jobs:
           committer_branch: gh-pages
           filename: metrics.repository.svg
           token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
-          user: garbles-labs
+          user: magicblock-labs
           repo: Solana.Unity-SDK
           plugin_contributors: yes
           plugin_contributors_contributions: yes
@@ -34,7 +34,7 @@ jobs:
           committer_branch: gh-pages
           filename: people.repository.svg
           token: ${{ secrets.METRICS_TOKEN_WITH_SCOPES }}
-          user: garbles-labs
+          user: magicblock-labs
           repo: Solana.Unity-SDK
           plugin_people: yes
           plugin_people_types: stargazers, watchers
