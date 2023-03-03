@@ -83,7 +83,7 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 
 ## 💚 Open Source
-Open Source is at the heart of what we do at Garbles Labs. We believe building software in the open, with thriving communities, helps leave the world a little better than we found it.
+Open Source is at the heart of what we do at Magicblock. We believe building software in the open, with thriving communities, helps leave the world a little better than we found it.
 
 ## ✨ Contributors & Community
 
