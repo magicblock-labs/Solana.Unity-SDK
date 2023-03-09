@@ -40,9 +40,9 @@ export function Hero() {
                 Solana-Unity integration Framework
               </p>
               <div className="mt-8 flex space-x-4 md:justify-center lg:justify-start">
-                <ButtonLink href="https://garbles-labs.github.io/Solana.Unity-SDK/">View Demo</ButtonLink>
+                <ButtonLink href="https://magicblock-labs.github.io/Solana.Unity-SDK/">View Demo</ButtonLink>
                 <ButtonLink
-                  href="https://github.com/garbles-labs/Solana.Unity-SDK"
+                  href="https://github.com/magicblock-labs/Solana.Unity-SDK"
                   variant="secondary"
                 >
                   View on GitHub
