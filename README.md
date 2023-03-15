@@ -26,6 +26,8 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 ## 🚀 [Live Demo](https://magicblock-labs.github.io/Solana.Unity-SDK/)
 
+[![](https://solana.unity-sdk.gg/demo.gif)](https://garbles-labs.github.io/Solana.Unity-SDK/)
+
 ## ✨ Features
 - Full JSON RPC API coverage
 - Wallet and accounts: Set up of a non-custodial Solana wallet in Unity (sollet and solana-keygen compatible)
