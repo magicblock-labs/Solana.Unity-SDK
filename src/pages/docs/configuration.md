@@ -11,7 +11,8 @@ The SDK supports a veriety of wallets, including
 | In-game (new or restore)      | ✅       | In-app   |
 | In-game (Web3auth)      | ✅       | In-app   |
 | Phantom      | ✅       | External   |
-| SMS      | 🏗       | In-app   |
+| SMS      | 🏗       | External  |
+| Seed Vault      | 🏗       | In-app   |
 
 
 ## Interface
@@ -30,4 +31,31 @@ The WalletBase abstract class implements `IWalletBase` interface and provides co
 {% callout title="Additional methods" %} The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs) {% /callout %}
 
 ---
+
+## Configuring Deeplinks
+
+Some of the wallet, e.g. Phantom, are currently implemented using DeepLinks. Deep links are URLs that link to a specific piece of content or functionality within an app, in the context of Solana transactions, deep links can be used to sign a transaction by allowing users to approve a transaction using their Solana wallet.
+
+### Enabling deep linking for Android applications
+
+To enable deep linking for Android applications, use an [intent filter](https://developer.android.com/guide/components/intents-filters). An intent filter overrides the standard Android App [Manifest](https://docs.unity3d.com/Manual/android-manifest.html) to include a specific intent filter section for [Activity](https://developer.android.com/reference/android/app/Activity). 
+
+To set up the wallet intent filter:
+
+1. In the Project window, go to Assets > Plugins > Android.
+2. Create a new file and call it AndroidManifest.xml. Unity automatically processes this file when you build your application.
+3. Copy the [code sample](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Samples~/Solana%20Wallet/Plugins/Android/AndroidManifest.xml) into the new file and save it.
+
+*android:scheme="unitydl" should match the value defined in the wallet configuration* 
+
+See the detailed explanation on the Unity [documentation page](https://docs.unity3d.com/Manual/deep-linking-android.html).
+
+### Enabling deep linking for IOS applications
+
+See the detailed explanation on the Unity [documentation page]([https://docs.unity3d.com/Manual/deep-linking-android.html)](https://docs.unity3d.com/Manual/deep-linking-ios.html).
+
+*the defined schema should match the value defined in the wallet configuration* 
+
+
+
 
