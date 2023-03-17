@@ -52,7 +52,7 @@ See the detailed explanation on the Unity [documentation page](https://docs.unit
 
 ### Enabling deep linking for IOS applications
 
-See the detailed explanation on the Unity [documentation page]([https://docs.unity3d.com/Manual/deep-linking-android.html)](https://docs.unity3d.com/Manual/deep-linking-ios.html).
+See the detailed explanation on the Unity [documentation page](https://docs.unity3d.com/Manual/deep-linking-android.html) .
 
 *the defined schema should match the value defined in the wallet configuration* 
 
