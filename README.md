@@ -24,6 +24,10 @@ Solana.Unity-SDK started as a fork of [unity-solana-wallet](https://github.com/a
 
 ## 📝 [Documentation](http://developers.garbles.fun/)
 
+## 🎮 [Unity Asset Store](https://assetstore.unity.com/packages/decentralization/infrastructure/solana-sdk-for-unity-246931)
+
+The SDK is also available on the [Unity Asset Store](https://assetstore.unity.com/packages/decentralization/infrastructure/solana-sdk-for-unity-246931)
+
 ## 🚀 [Live Demo](https://magicblock-labs.github.io/Solana.Unity-SDK/)
 
 [![](https://solana.unity-sdk.gg/demo.gif)](https://garbles-labs.github.io/Solana.Unity-SDK/)

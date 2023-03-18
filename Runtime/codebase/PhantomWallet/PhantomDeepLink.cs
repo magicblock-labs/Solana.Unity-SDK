@@ -80,7 +80,7 @@ namespace Solana.Unity.SDK
             {
                 RpcCluster.DevNet => RpcCluster.DevNet,
                 RpcCluster.TestNet => RpcCluster.TestNet,
-                RpcCluster.Custom => CustomRpcUri.Contains("devnet") ? RpcCluster.DevNet : RpcCluster.MainNet,
+                RpcCluster.MainNet => RpcCluster.MainNet,
                 _ => RpcCluster.MainNet
             };
         }

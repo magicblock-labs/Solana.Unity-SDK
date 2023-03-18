@@ -35,7 +35,6 @@ mergeInto(LibraryManager.library, {
                 stringToUTF8(sign, strPtr, lenSign);
                 Module.dynCall_vi(callback, strPtr);
             } catch (err) {
-                window.alert('Phantom error: ' + err.message);
                 console.error(err.message);
             }
         } else {
@@ -62,7 +61,6 @@ mergeInto(LibraryManager.library, {
                 stringToUTF8(sign, strPtr, lenSign);
                 Module.dynCall_vi(callback, strPtr);
             } catch (err) {
-                window.alert('Phantom error: ' + err.message);
                 console.error(err.message);
             }
         } else {

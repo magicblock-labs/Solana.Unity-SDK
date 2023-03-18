@@ -22,6 +22,8 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private Button loginBtnPhantom;
         [SerializeField]
+        private Button loginBtnSms;
+        [SerializeField]
         private Button loginBtnXNFT;
         [SerializeField]
         private TextMeshProUGUI messageTxt;
@@ -44,6 +46,7 @@ namespace Solana.Unity.SDK.Example
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
+            loginBtnSms.onClick.AddListener(LoginCheckerSms);
             loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
 
             if (Application.platform != RuntimePlatform.Android && 
@@ -59,6 +62,12 @@ namespace Solana.Unity.SDK.Example
                 loginBtnTwitter.gameObject.SetActive(false);
             }
             loginBtnXNFT.gameObject.SetActive(false);
+            
+            if (Application.platform == RuntimePlatform.Android)
+            {
+                loginBtnPhantom.gameObject.SetActive(false);
+                loginBtnSms.gameObject.SetActive(true);
+            }
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
@@ -74,6 +83,12 @@ namespace Solana.Unity.SDK.Example
         private async void LoginCheckerPhantom()
         {
             var account = await Web3.Instance.LoginPhantom();
+            CheckAccount(account);
+        }
+        
+        private async void LoginCheckerSms()
+        {
+            var account = await Web3.Instance.LoginSolanaMobileStack();
             CheckAccount(account);
         }
         
