@@ -13,14 +13,15 @@ namespace Solana.Unity.SDK
     {
         [SerializeField]
         private RpcCluster rpcCluster = RpcCluster.DevNet;
-        [HideIfEnumValue("rpcCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
-        public string customRpc;
+        public string customRpc = string.Empty;
         public bool autoConnectOnStartup;
         public string webSocketsRpc;
 
         public Web3AuthWalletOptions web3AuthWalletOptions;
         
         public PhantomWalletOptions phantomWalletOptions;
+        
+        public SolanaMobileWalletAdapterOptions solanaMobileWalletOptions;
         
         private const string StorageMethodStateKey = "StorageMethodKey";
 
@@ -78,22 +79,32 @@ namespace Solana.Unity.SDK
                 Wallet = phantomWallet;
             return acc;
         }
+        
+        public async Task<Account> LoginSolanaMobileStack()
+        {
+            var solanaWallet = new SolanaMobileWalletAdapter(solanaMobileWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            var acc = await solanaWallet.Login();
+            if (acc != null)
+                Wallet = solanaWallet;
+            return acc;
+        }
 
         public async Task<Account> LoginXNFT()
         {
-            var XNFTWallet = new XNFTWallet(rpcCluster, customRpc, webSocketsRpc, false);
-            var acc = await XNFTWallet.Login();
+            var xnftWallet = new XNFTWallet(rpcCluster, customRpc, webSocketsRpc, false);
+            var acc = await xnftWallet.Login();
             if (acc != null)
-                Wallet = XNFTWallet;
+                Wallet = xnftWallet;
             return acc;
         }
 
         public void RpcNodeDropdownSelected(int value)
         {
-            rpcCluster = RpcCluster.Custom;
+            rpcCluster = (RpcCluster) value;
             customRpc = value switch
             {
                 (int) RpcCluster.MainNet => "https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/",
+                (int)RpcCluster.TestNet => "https://api.testnet.solana.com",
                 _ => "https://api.devnet.solana.com"
             };
         }

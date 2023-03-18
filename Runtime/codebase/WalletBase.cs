@@ -20,8 +20,7 @@ namespace Solana.Unity.SDK
     {
         MainNet = 0,
         DevNet = 1,
-        TestNet = 2,
-        Custom = 3
+        TestNet = 2
     }
 
     public abstract class WalletBase : IWalletBase
@@ -34,6 +33,14 @@ namespace Solana.Unity.SDK
             { 0, Cluster.MainNet },
             { 1, Cluster.DevNet },
             { 2, Cluster.TestNet }
+        };
+        
+        protected readonly Dictionary<int, string> RPCNameMap = new ()
+        {
+            { 0, "mainnet-beta" },
+            { 1, "devnet" },
+            { 2, "testnet" },
+            { 3, "mainnet-beta" },
         };
 
         protected readonly string CustomRpcUri;
@@ -209,7 +216,7 @@ namespace Solana.Unity.SDK
         {
             var signatures = transaction.Signatures;
             transaction.Sign(Account);
-            transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures);
+            transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
             var tx = await _SignTransaction(transaction);
             tx.Signatures.AddRange(signatures);
             tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
@@ -224,7 +231,8 @@ namespace Solana.Unity.SDK
         {
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
-                Convert.ToBase64String(signedTransaction.Serialize()), preFlightCommitment: commitment);
+                Convert.ToBase64String(signedTransaction.Serialize()),
+                skipPreflight: true, preFlightCommitment: commitment);
         }
 
         /// <inheritdoc />
@@ -249,11 +257,11 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                if (_activeRpcClient == null && RpcCluster != RpcCluster.Custom)
+                if (_activeRpcClient == null && CustomRpcUri.IsNullOrEmpty())
                 {
                     _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster]);
                 }
-                if (_activeRpcClient == null && RpcCluster == RpcCluster.Custom)
+                if (_activeRpcClient == null && !CustomRpcUri.IsNullOrEmpty())
                 {
                     _activeRpcClient = ClientFactory.GetClient(CustomRpcUri);
                 }
@@ -297,14 +305,14 @@ namespace Solana.Unity.SDK
         
         
         private static List<SignaturePubKeyPair> DeduplicateTransactionSignatures(
-            List<SignaturePubKeyPair> signatures)
+            List<SignaturePubKeyPair> signatures, bool allowEmptySignatures = false)
         {
             var signaturesList = new List<SignaturePubKeyPair>();
             var signaturesSet = new HashSet<PublicKey>();
             var emptySgn = new byte[64];
             foreach (var sgn in signatures)
             {
-                if (sgn.Signature.SequenceEqual(emptySgn) || signaturesSet.Contains(sgn.PublicKey)) continue;
+                if ((sgn.Signature.SequenceEqual(emptySgn) && !allowEmptySignatures) || signaturesSet.Contains(sgn.PublicKey)) continue;
                 signaturesSet.Add(sgn.PublicKey);
                 signaturesList.Add(sgn);
             }

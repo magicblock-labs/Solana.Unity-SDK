@@ -69,7 +69,7 @@ namespace Solana.Unity.SDK.Nft
             {
                 met.data.json = jsonData;
                 var texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
-                var compressedTexture = FileLoader.Resize(texture, 75, 75);
+                var compressedTexture = FileLoader.Resize(texture, 256, 256);
                 FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
                 if (compressedTexture)
                 {
