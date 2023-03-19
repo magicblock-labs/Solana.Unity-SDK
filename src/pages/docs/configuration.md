@@ -11,7 +11,7 @@ The SDK supports a veriety of wallets, including
 | In-game (new or restore)      | ✅       | In-app   |
 | In-game (Web3auth)      | ✅       | In-app   |
 | Phantom      | ✅       | External   |
-| SMS      | 🏗       | External  |
+| SMS      | ✅       | External  |
 | Seed Vault      | 🏗       | In-app   |
 
 
