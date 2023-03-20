@@ -37,7 +37,7 @@ Solana Mobile Stack is a set of libraries for wallets and apps, allowing develop
 For more information about SMS check out the official [documentation](https://solanamobile.com/developers). 
 
 ## Mobile Wallet Adapter
-To configure a wallet following the Mobile Wallet Adapter standar use the [SolanaMobileWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaMobileWalletAdapter.cs) wallet implementation.
+To configure a wallet following the Mobile Wallet Adapter standard use the [SolanaMobileWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaMobileWalletAdapter.cs) wallet implementation.
 
 ```csharp
 WalletBase wallet = new SolanaMobileWalletAdapter(solanaMobileWalletOptions, RpcCluster.DevNet, ...);
