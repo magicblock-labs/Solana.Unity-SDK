@@ -31,6 +31,17 @@ The WalletBase abstract class implements `IWalletBase` interface and provides co
 {% callout title="Additional methods" %} The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs) {% /callout %}
 
 ---
+## SMS
+
+Solana Mobile Stack is a set of libraries for wallets and apps, allowing developers to create rich mobile experiences for the Solana network.
+For more information about SMS check out the official [documentation](https://solanamobile.com/developers). 
+
+## Mobile Wallet Adapter
+To configure a wallet following the Mobile Wallet Adapter standar use the [SolanaMobileWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaMobileWalletAdapter.cs) wallet implementation.
+
+```csharp
+WalletBase wallet = new SolanaMobileWalletAdapter(solanaMobileWalletOptions, RpcCluster.DevNet, ...);
+``` 
 
 ## Configuring Deeplinks
 
