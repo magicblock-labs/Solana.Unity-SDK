@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Solana.Unity.Rpc.Types;
 using UnityEngine;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
@@ -45,12 +46,17 @@ namespace Solana.Unity.SDK.Nft
         /// <param name="mint"></param>
         /// <param name="connection">Rpc client</param>
         /// <param name="tryUseLocalContent">If use local content for image</param>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        public static async Task<Nft> TryGetNftData(string mint, IRpcClient connection, bool tryUseLocalContent = true)
+        public static async Task<Nft> TryGetNftData(
+            string mint,
+            IRpcClient connection, 
+            bool tryUseLocalContent = true,
+            Commitment commitment = Commitment.Confirmed)
         {
             var metaplexDataPubKey = FindProgramAddress(mint);
 
-            var data = await GetAccountData(metaplexDataPubKey.Key, connection);
+            var data = await GetAccountData(metaplexDataPubKey.Key, connection, commitment);
             if (tryUseLocalContent)
             { 
                 var nft = TryLoadNftFromLocal(mint);
@@ -203,16 +209,20 @@ namespace Solana.Unity.SDK.Nft
             }
         }
 
-        
+
         /// <summary>
         /// Get AccountData
         /// </summary>
         /// <param name="accountPublicKey"></param>
         /// <param name="rpcClient"></param>
+        /// <param name="commitment"></param>
         /// <returns></returns>
-        public static async Task<AccountInfo> GetAccountData(string accountPublicKey, IRpcClient rpcClient)
+        public static async Task<AccountInfo> GetAccountData(
+            string accountPublicKey, 
+            IRpcClient rpcClient,
+            Commitment commitment = Commitment.Confirmed)
         {
-            var result = await rpcClient.GetAccountInfoAsync(accountPublicKey);
+            var result = await rpcClient.GetAccountInfoAsync(accountPublicKey, commitment);
             return result.Result is {Value: { }} ? result.Result.Value : null;
         }
     }
