@@ -218,7 +218,8 @@ namespace Solana.Unity.SDK
             transaction.Sign(Account);
             transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
             var tx = await _SignTransaction(transaction);
-            tx.Signatures.AddRange(signatures);
+            signatures.AddRange(tx.Signatures);
+            tx.Signatures = signatures;
             tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
             return tx;
         }
@@ -304,6 +305,12 @@ namespace Solana.Unity.SDK
         }
         
         
+        /// <summary>
+        /// Deduplicate transaction signatures, remove empty signatures if allowEmptySignatures is false
+        /// </summary>
+        /// <param name="signatures"></param>
+        /// <param name="allowEmptySignatures"></param>
+        /// <returns></returns>
         private static List<SignaturePubKeyPair> DeduplicateTransactionSignatures(
             List<SignaturePubKeyPair> signatures, bool allowEmptySignatures = false)
         {
@@ -312,6 +319,16 @@ namespace Solana.Unity.SDK
             var emptySgn = new byte[64];
             foreach (var sgn in signatures)
             {
+                if (sgn.Signature.SequenceEqual(emptySgn) && !allowEmptySignatures)
+                {
+                    var notEmptySig = signatures.FirstOrDefault(
+                        s => s.PublicKey.Equals(sgn.PublicKey) && !s.Signature.SequenceEqual(emptySgn));
+                    if (notEmptySig != null && !signaturesSet.Contains(notEmptySig.PublicKey))
+                    {
+                        signaturesSet.Add(notEmptySig.PublicKey);
+                        signaturesList.Add(notEmptySig);
+                    }
+                }
                 if ((sgn.Signature.SequenceEqual(emptySgn) && !allowEmptySignatures) || signaturesSet.Contains(sgn.PublicKey)) continue;
                 signaturesSet.Add(sgn.PublicKey);
                 signaturesList.Add(sgn);
