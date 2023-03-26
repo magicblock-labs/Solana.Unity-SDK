@@ -137,21 +137,8 @@ namespace Solana.Unity.SDK
             MainThreadUtil.Setup();
         }
     }
-    
-    /// <summary>
-    /// Keeps WalletH for compatibility with older versions of the SDK
-    /// </summary>
-    [Obsolete("Deprecated, use Web3 instead", true)]
-    public static class WalletH
-    {
-        public static Web3 Instance => Web3.Instance;
-        public static IRpcClient Rpc => Instance != null ? Instance.Wallet?.ActiveRpcClient : null;
-        public static IStreamingRpcClient WsRpc => Instance != null ? Instance.Wallet?.ActiveStreamingRpcClient : null;
-        public static Account Account => Instance != null ? Instance.Wallet?.Account : null;
-        public static WalletBase Base => Instance != null ? Instance.Wallet : null;
-    }
-    
-    
+
+
     /// <summary>
     /// Keeps SimpleWallet for compatibility with older versions of the SDK
     /// </summary>

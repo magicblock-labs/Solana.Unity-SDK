@@ -3,11 +3,65 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Solana.Unity.Metaplex.NFT.Library;
+using Solana.Unity.Wallet;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Solana.Unity.SDK.Utility
 {
+    
+    public class PublicKeyJsonConverter : JsonConverter<PublicKey>
+    {
+        public override void WriteJson(JsonWriter writer, PublicKey value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override PublicKey ReadJson(JsonReader reader, Type objectType, PublicKey existingValue, bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            var pk = serializer.Deserialize<string>(reader);
+            if (pk == null) return null;
+            return new PublicKey(pk);
+        }
+    }
+
+    public class CreatorJsonConverter : JsonConverter<Creator>
+    {
+        public override void WriteJson(JsonWriter writer, Creator value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.key.ToString() + "-" + value.share + "-" + value.verified);
+        }
+
+        public override Creator ReadJson(JsonReader reader, Type objectType, Creator existingValue, bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            var parse = serializer.Deserialize<string>(reader)?.Split("-");
+            if (parse is not { Length: 3 })
+                return null;
+            return new Creator(new PublicKey(parse[0]), (byte)int.Parse(parse[1]), bool.Parse(parse[2]));
+        }
+    }
+    
+    public class CollectionJsonConverter : JsonConverter<Collection>
+    {
+        public override void WriteJson(JsonWriter writer, Collection value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.key.ToString() + "-" + value.verified);
+        }
+
+        public override Collection ReadJson(JsonReader reader, Type objectType, Collection existingValue, bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            var parse = serializer.Deserialize<string>(reader)?.Split("-");
+            if (parse is not { Length: 2 })
+                return null;
+            return new Collection(new PublicKey(parse[0]),  bool.Parse(parse[1]));
+        }
+    }
+
     public static class FileLoader
     {
         public static async Task<T> LoadFile<T>(string path, string optionalName = "")
@@ -114,11 +168,21 @@ namespace Solana.Unity.SDK.Utility
             var contents = File.ReadAllText(path);
             try
             {
-                var data = JsonUtility.FromJson<T>(contents);
+                var serializeOptions = new JsonSerializerSettings()
+                {
+                    Converters =
+                    {
+                        new PublicKeyJsonConverter(),
+                        new CreatorJsonConverter(),
+                        new CollectionJsonConverter()
+                    }
+                };
+                var data = JsonConvert.DeserializeObject<T>(contents, serializeOptions);
                 return data;
             }
-            catch
+            catch(Exception e)
             {
+                Debug.Log(e.Message);
                 return default;
             }
         }
@@ -132,7 +196,16 @@ namespace Solana.Unity.SDK.Utility
             }
             else
             {
-                var dataString = JsonUtility.ToJson(data);
+                var serializeOptions = new JsonSerializerSettings()
+                {
+                    Converters =
+                    {
+                        new PublicKeyJsonConverter(),
+                        new CreatorJsonConverter(),
+                        new CollectionJsonConverter()
+                    }
+                };
+                var dataString = JsonConvert.SerializeObject(data, serializeOptions);
                 File.WriteAllText(path, dataString);
             }
         }

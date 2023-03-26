@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Solana.Unity.Metaplex.NFT.Library;
 using UnityEngine;
 using Solana.Unity.SDK.Utility;
 
@@ -58,72 +59,14 @@ namespace Solana.Unity.SDK.Nft
     }
 
     [Serializable]
-    public class Metaplex : iNftStandard<Metaplex>
+    public class Metaplex
     {
-        public string authority;
-        public string mint;
-        public MetaplexData data;
         public iNftFile<Texture2D> nftImage;
+        public readonly MetadataAccount data;
 
-        public Metaplex()
+        public Metaplex(MetadataAccount metadataAccount)
         {
-            data = new MetaplexData();
-        }
-
-        public Metaplex ParseData(string base64Data)
-        {
-            byte[] data = Convert.FromBase64String(base64Data);
-
-            int index = 1;
-            Metaplex metaplexData = this;
-
-            ObjectToByte.DecodeBase58StringFromByte(data, index, 32, out metaplexData.authority);
-            index += 32;
-            ObjectToByte.DecodeBase58StringFromByte(data, index, 32, out metaplexData.mint);
-            index += 32;
-
-            ObjectToByte.DecodeUIntFromByte(data, index, out uint nameLength);
-            index += 4;
-            ObjectToByte.DecodeUTF8StringFromByte(data, index, (int)nameLength, out metaplexData.data.name);
-            index += (int)nameLength;
-
-            ObjectToByte.DecodeUIntFromByte(data, index, out uint symbolLength);
-            index += 4;
-            ObjectToByte.DecodeUTF8StringFromByte(data, index, (int)symbolLength, out metaplexData.data.symbol);
-            index += (int)symbolLength;
-
-            ObjectToByte.DecodeUIntFromByte(data, index, out uint urlLenght);
-            index += 4;
-            ObjectToByte.DecodeUTF8StringFromByte(data, index, (int)urlLenght, out metaplexData.data.url);
-            index += (int)urlLenght;
-
-            metaplexData.data.seller_fee_basis_points = BitConverter.ToUInt16(data, index);
-
-            index += 3;
-
-            ObjectToByte.DecodeUIntFromByte(data, index, out uint creatorsLenght);
-            index += 4;
-            List<CreatorData> creators = new List<CreatorData>();
-            try
-            {
-                for (int i = 0; i < creatorsLenght; i++)
-                {
-                    CreatorData creatorData = new CreatorData();
-                    ObjectToByte.DecodeUTF8StringFromByte(data, index, (int)nameLength, out string creator);
-                    creatorData.address = creator;
-                    index += 32;
-                    creatorData.verified = BitConverter.ToBoolean(data, index++);
-                    creatorData.share = data[index++];
-                    creators.Add(creatorData);
-                }
-                metaplexData.data.creators = creators.ToArray();
-            }
-            catch (Exception)
-            {
-                metaplexData.data.creators = null;
-            }
-
-            return metaplexData;
+            data = metadataAccount;
         }
     }
 }
