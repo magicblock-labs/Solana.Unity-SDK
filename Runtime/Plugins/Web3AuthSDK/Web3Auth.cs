@@ -84,7 +84,9 @@ public class Web3Auth: MonoBehaviour
 
         if (this.web3AuthOptions.loginConfig != null)
             this.initParams["loginConfig"] = JsonConvert.SerializeObject(this.web3AuthOptions.loginConfig);
-        
+
+        this.initParams["network"] = network.ToString().ToLower();
+
     }
 
     private void onDeepLinkActivated(string url)
