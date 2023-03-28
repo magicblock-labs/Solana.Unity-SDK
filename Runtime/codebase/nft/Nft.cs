@@ -1,17 +1,12 @@
 using Solana.Unity.SDK.Utility;
 using Solana.Unity.Rpc;
-using Solana.Unity.Rpc.Models;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
+using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Rpc.Types;
 using UnityEngine;
 using Solana.Unity.Wallet;
-using Solana.Unity.Wallet.Utilities;
 
 // ReSharper disable once CheckNamespace
 
@@ -54,9 +49,6 @@ namespace Solana.Unity.SDK.Nft
             bool tryUseLocalContent = true,
             Commitment commitment = Commitment.Confirmed)
         {
-            var metaplexDataPubKey = FindProgramAddress(mint);
-
-            var data = await GetAccountData(metaplexDataPubKey.Key, connection, commitment);
             if (tryUseLocalContent)
             { 
                 var nft = TryLoadNftFromLocal(mint);
@@ -65,28 +57,27 @@ namespace Solana.Unity.SDK.Nft
                     return nft;
                 }
             }
-
-            if (data?.Data == null || data.Data.Count <= 0) return null;
-            var met = new Metaplex().ParseData(data.Data[0]);
-            var jsonData = await FileLoader.LoadFile<MetaplexJsonData>(met.data.url);
+            var newData = await MetadataAccount.GetAccount( connection, new PublicKey(mint));
+            
+            if (newData?.metadata == null || newData?.offchainData == null) return null;
+            var met = new Metaplex(newData);
 
             var nftImage = new NftImage();
-            if (jsonData != null)
+            if (newData.offchainData != null)
             {
-                met.data.json = jsonData;
-                var texture = await FileLoader.LoadFile<Texture2D>(met.data.json.image);
+                var texture = await FileLoader.LoadFile<Texture2D>(newData.offchainData.default_image);
                 var compressedTexture = FileLoader.Resize(texture, 256, 256);
                 FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
                 if (compressedTexture)
                 {
-                    nftImage.externalUrl = jsonData.image;
+                    nftImage.externalUrl = newData.offchainData.default_image;
                     //nftImage.file = Resize(texture, nftImage.heightAndWidth, nftImage.heightAndWidth);
                     nftImage.file = compressedTexture;
                     met.nftImage = nftImage;
                 }
             }
             var newNft = new Nft(met);
-            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft);
+            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft.metaplexData.data);
             return newNft;
         }
 
@@ -97,9 +88,11 @@ namespace Solana.Unity.SDK.Nft
         /// <returns></returns>
         public static Nft TryLoadNftFromLocal(string mint)
         {
-            var local = FileLoader.LoadFileFromLocalPath<Nft>($"{Path.Combine(Application.persistentDataPath, mint)}.json");
-
-            if (local == null) return null;
+            var metadataAccount = FileLoader.LoadFileFromLocalPath<MetadataAccount>($"{Path.Combine(Application.persistentDataPath, mint)}.json");
+            if (metadataAccount == null) return null;
+            
+            var local = new Nft(new Metaplex(metadataAccount));
+            
             var tex = FileLoader.LoadFileFromLocalPath<Texture2D>($"{Path.Combine(Application.persistentDataPath, mint)}.png");
             if (tex)
             {
@@ -112,118 +105,6 @@ namespace Solana.Unity.SDK.Nft
             }
 
             return local;
-        }
-
-        /// <summary>
-        /// Returns public key of nft
-        /// </summary>
-        /// <param name="seed"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static PublicKey CreateAddress(List<byte[]> seed)
-        {
-            var buffer = new List<byte>();
-
-            foreach (var item in seed)
-            {
-                if (item.Length > 32)
-                {
-                    throw new Exception("Too long");
-                }
-
-                buffer.AddRange(item);
-            }
-
-            buffer.AddRange(seed[1]);
-            var derive = Encoding.UTF8.GetBytes("ProgramDerivedAddress");
-            buffer.AddRange(derive);
-
-            var sha256 = SHA256.Create();
-            var hash1 = sha256.ComputeHash(buffer.ToArray());
-
-            if (hash1.IsOnCurve())
-            {
-                throw new Exception("Not on curve");
-            }
-
-            var publicKey = new PublicKey(hash1);
-            return publicKey;
-        }
-
-        /// <summary>
-        /// Returns metaplex data pubkey from mint pubkey and programId
-        /// </summary>
-        /// <param name="mintPublicKey"></param>
-        /// <param name="programId"></param>
-        /// <returns></returns>
-        public static PublicKey FindProgramAddress(string mintPublicKey, string programId = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
-        {
-            List<byte[]> seeds = new List<byte[]>();
-
-            int nonce = 255;
-            seeds.Add(Encoding.UTF8.GetBytes("metadata"));
-            seeds.Add(new PublicKey(programId).KeyBytes);
-            seeds.Add(new PublicKey(mintPublicKey).KeyBytes);
-            seeds.Add(new[] { (byte)nonce });
-
-            PublicKey publicKey = null;
-
-            while (nonce != 0)
-            {
-                try
-                {
-                    seeds[3] = new[] { (byte)nonce };
-                    publicKey = CreateAddress(seeds);
-                    return publicKey;
-                }
-                catch
-                {
-                    nonce--;
-                }
-            }
-
-            return publicKey;
-        }
-
-        /// <summary>
-        /// Returns metaplex json data from forwarded jsonUrl
-        /// </summary>
-        public static async Task<T> GetMetaplexJsonData<T>(string jsonUrl)
-        {
-            HttpClient client = new HttpClient();
-
-            HttpResponseMessage response = await client.GetAsync(jsonUrl);
-            response.EnsureSuccessStatusCode();
-
-            try
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                T data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
-                client.Dispose();
-                return data;
-            }
-            catch
-            {
-                client.Dispose();
-                return default;
-            }
-        }
-
-
-        /// <summary>
-        /// Get AccountData
-        /// </summary>
-        /// <param name="accountPublicKey"></param>
-        /// <param name="rpcClient"></param>
-        /// <param name="commitment"></param>
-        /// <returns></returns>
-        public static async Task<AccountInfo> GetAccountData(
-            string accountPublicKey, 
-            IRpcClient rpcClient,
-            Commitment commitment = Commitment.Confirmed)
-        {
-            var result = await rpcClient.GetAccountInfoAsync(accountPublicKey, commitment);
-            return result.Result is {Value: { }} ? result.Result.Value : null;
         }
     }
 }

@@ -24,6 +24,7 @@ namespace Solana.Unity.SDK
         public string themeColor = "#123456";
         public string redirectUrl = "torusapp://com.torus.Web3AuthUnity/auth";
         public string clientId = "BAwFgL-r7wzQKmtcdiz2uHJKNZdK7gzEf2q-m55xfzSZOw8jLOyIi4AVvvzaEQO5nv2dFLEmf9LBkF8kaq3aErg";
+        public Web3Auth.Network network = Web3Auth.Network.TESTNET;
     }
     
     public class Web3AuthWallet : WalletBase
@@ -32,15 +33,10 @@ namespace Solana.Unity.SDK
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private readonly Web3AuthWalletOptions _web3AuthWalletOptions;
         private Provider _loginProvider = Provider.GOOGLE;
+        private TaskCompletionSource<Web3AuthResponse> _taskCompletionSource;
         
-        private readonly Dictionary<int, Web3Auth.Network> _rpcClusterMap = new()
-        {
-            { 0, Web3Auth.Network.MAINNET },
-            { 1, Web3Auth.Network.TESTNET},
-            { 2, Web3Auth.Network.TESTNET},
-            { 3, Web3Auth.Network.TESTNET}
-        };
-        
+        public event Action<Account> OnLoginNotify;
+
         public Web3AuthWallet(Web3AuthWalletOptions web3AuthWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet,
             string customRpcUri = null,
@@ -55,7 +51,7 @@ namespace Solana.Unity.SDK
             {
                 redirectUrl = new Uri(_web3AuthWalletOptions.redirectUrl),
                 clientId = _web3AuthWalletOptions.clientId,
-                network = _rpcClusterMap[(int)rpcCluster],
+                network = _web3AuthWalletOptions.network,
                 whiteLabel = new WhiteLabelData()
                 {
                     name = _web3AuthWalletOptions.appName,
@@ -80,11 +76,22 @@ namespace Solana.Unity.SDK
         {
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
-            _loginTaskCompletionSource.SetResult(wallet.Account);
+            
+            if (_loginTaskCompletionSource != null)
+            {
+                _loginTaskCompletionSource?.SetResult(wallet.Account);
+            }
+            else
+            {
+                OnLoginNotify?.Invoke(wallet.Account);
+                Account = wallet.Account;
+            }
         }
 
         protected override Task<Account> _Login(string password = null)
         {
+            if (Account != null)
+                return Task.FromResult(Account);
             var options = new LoginParams
             {
                 loginProvider = _loginProvider
@@ -98,6 +105,7 @@ namespace Solana.Unity.SDK
         {
             base.Logout();
             _web3Auth.onLogin -= OnLogin;
+            _web3Auth.logout();
         }
 
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)

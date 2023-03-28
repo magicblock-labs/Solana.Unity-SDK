@@ -1,7 +1,7 @@
 mergeInto(LibraryManager.library, {
 
     ExternConnectPhantom: async function (callback) {
-        if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
+        if ('phantom' in window && window.phantom != undefined && window.phantom.solana != undefined) {
             try {
                 const resp = await window.phantom.solana.connect();
                 var pubKey = resp.publicKey.toString();
@@ -20,7 +20,7 @@ mergeInto(LibraryManager.library, {
     },
 
     ExternSignTransaction: async function (transaction, callback) {
-        if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
+        if ('phantom' in window && window.phantom != undefined && window.phantom.solana != undefined) {
             try {
                const signedTransaction = await window.phantom.solana.request({
                   method: 'signTransaction',
@@ -44,7 +44,7 @@ mergeInto(LibraryManager.library, {
 
 
     ExternSignMessage: async function (message, callback) {
-        if ('phantom' in window && window.phantom != null && window.phantom.solana != null) {
+        if ('phantom' in window && window.phantom != undefined && window.phantom.solana != undefined) {
             try {
                const messageBase64String = UTF8ToString(message);
                const messageBytes = Uint8Array.from(atob(messageBase64String), (c) => c.charCodeAt(0));

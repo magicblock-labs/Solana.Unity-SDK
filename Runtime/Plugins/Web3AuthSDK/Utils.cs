@@ -8,40 +8,40 @@ using UnityEngine;
 
 public static class Utils
 {
-    //https://qiita.com/lucifuges/items/b17d602417a9a249689f
-#if UNITY_IOS
+#if !UNITY_EDITOR && UNITY_IOS
     [DllImport("__Internal")]
-    extern static void launchUrl(string url);
+    extern static void web3auth_launch(string url, string redirectUri, string objectName);
+#endif
+
+#if !UNITY_EDITOR && UNITY_WEBGL
     [DllImport("__Internal")]
-    extern static void dismiss();
+    public extern static string GetCurrentURL();
+
+    [DllImport("__Internal")]
+    extern static void OpenURL(string url);
+
+    [DllImport("__Internal")]
+    public extern static void RemoveAuthCodeFromURL();
 #endif
 
 
-    public static void LaunchUrl(string url)
+    public static void LaunchUrl(string url, string redirectUri = null, string objectName = null)
     {
-#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+#if UNITY_EDITOR || UNITY_STANDALONE
         Application.OpenURL(url);
 #elif UNITY_ANDROID
         using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
         using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
-        using (var intentBuilder = new AndroidJavaObject("androidx.browser.customtabs.CustomTabsIntent$Builder"))
-        using (var intent = intentBuilder.Call<AndroidJavaObject>("build"))
-        using (var uriClass = new AndroidJavaClass("android.net.Uri"))
-        using (var uri = uriClass.CallStatic<AndroidJavaObject>("parse", url))
+        using (var browserView = new AndroidJavaObject("com.web3auth.unity.android.BrowserView"))
         {
-            intent.Call("launchUrl", activity, uri);
+            browserView.CallStatic("launchUrl", activity, url);
         }
 
 #elif UNITY_IOS
-    launchUrl(url);;
-#endif
-    }
-
-
-    public static void Dismiss()
-    {
-#if UNITY_IOS && !UNITY_EDITOR
-    dismiss();
+    var uri = new Uri(redirectUri);
+    web3auth_launch(url, uri.Scheme, objectName);
+#elif UNITY_WEBGL
+    OpenURL(url);
 #endif
     }
 

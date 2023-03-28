@@ -1,6 +1,6 @@
 mergeInto(LibraryManager.library, {
   ExternConnectXNFT: async function (callback) {
-    if ("xnft" in window && window.xnft != null && window.xnft.solana != null) {
+    if ("xnft" in window && window.xnft != undefined && window.xnft.solana != undefined && window.xnft.solana.publicKey != undefined) {
       try {
         var pubKey = window.xnft.solana.publicKey.toString();
         var lenPubKey = lengthBytesUTF8(pubKey) + 1;
@@ -11,12 +11,12 @@ mergeInto(LibraryManager.library, {
         console.error(err.message);
       }
     } else {
-      console.error("Please open this xNFT app in Backpack wallet");
+      console.log("Not running in Backpack wallet");
     }
   },
 
   ExternSignTransactionXNFT: async function (transaction, callback) {
-    if ("xnft" in window && window.xnft != null && window.xnft.solana != null) {
+    if ("xnft" in window && window.xnft != undefined && window.xnft.solana != undefined) {
       try {
         const messageBase58 = UTF8ToString(transaction);
         const message = solanaWeb3.Message.from(bs58.decode(messageBase58));
@@ -32,7 +32,7 @@ mergeInto(LibraryManager.library, {
         console.error(err.message);
       }
     } else {
-      console.error("Please open this xNFT app in Backpack wallet");
+      console.error("Not running in Backpack wallet");
     }
   },
 });

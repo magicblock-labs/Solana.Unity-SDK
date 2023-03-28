@@ -168,7 +168,9 @@ public class SwapScreen : SimpleScreen
             tokenData.LogoURI = tokenLogoUrl;
         }
         #endif
-        var texture = await FileLoader.LoadFile<Texture2D>(tokenData.LogoURI);
+        var tokenDataLogoUri = tokenData.LogoURI;
+        tokenDataLogoUri = tokenDataLogoUri.Replace("assets.coingecko.com/", "www.garbles.fun/cors-proxy/gecko/");
+        var texture = await FileLoader.LoadFile<Texture2D>(tokenDataLogoUri);
         var _texture = FileLoader.Resize(texture, 75, 75);
         FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenData.Mint}.png"), _texture);
         logo.texture = _texture; 

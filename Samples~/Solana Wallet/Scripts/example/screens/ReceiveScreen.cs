@@ -24,6 +24,7 @@ public class ReceiveScreen : SimpleScreen
         {
             manager.ShowScreen(this, "wallet_screen");
         });
+        Web3.OnWalletChangeState += CheckAndToggleAirdrop;
     }
     
     private void OnEnable()
@@ -46,7 +47,7 @@ public class ReceiveScreen : SimpleScreen
 
     private void CheckAndToggleAirdrop()
     {
-        airdrop_btn.gameObject.SetActive(!Web3.Instance.Wallet.ActiveRpcClient.ToString().Contains("api.mainnet"));
+        airdrop_btn.gameObject.SetActive(Web3.Base.RpcCluster == RpcCluster.DevNet);
     }
 
     private void GenerateQr()

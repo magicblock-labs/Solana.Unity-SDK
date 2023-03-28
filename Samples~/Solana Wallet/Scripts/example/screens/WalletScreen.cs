@@ -85,6 +85,17 @@ namespace Solana.Unity.SDK.Example
                 },
                 Commitment.Confirmed
             );
+            Web3.OnWalletChangeState += OnWalletChangeState;
+        }
+
+        private void OnWalletChangeState()
+        {
+            if(Web3.Base == null) return;
+            swapBtn.transition = Web3.Base.RpcCluster == RpcCluster.MainNet ?
+                Selectable.Transition.Animation
+                : Selectable.Transition.ColorTint;
+            swapBtn.interactable = Web3.Base.RpcCluster == RpcCluster.MainNet;
+
         }
 
         private void RefreshWallet()
@@ -145,8 +156,6 @@ namespace Solana.Unity.SDK.Example
                 if (match.Length == 0 || match.Any(m => m.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 0))
                 {
                     tkToRemove.Add(tk);
-                    Destroy(tk.gameObject);
-                    _instantiatedTokens.Remove(tk);
                 }
                 else
                 {
@@ -154,7 +163,17 @@ namespace Solana.Unity.SDK.Example
                     tk.UpdateAmount(newAmount);
                 }
             });
-            tkToRemove.ForEach(tk => _instantiatedTokens.Remove(tk));
+            // Remove duplicated tokens
+            _instantiatedTokens = _instantiatedTokens
+                .GroupBy(x => x.TokenAccount.Account.Data.Parsed.Info.Mint)
+                .Select(x => x.First())
+                .ToList();
+            
+            tkToRemove.ForEach(tk =>
+            {
+                _instantiatedTokens.Remove(tk);
+                Destroy(tk.gameObject);
+            });
             // Add new tokens
             if (tokens is {Length: > 0})
             {
