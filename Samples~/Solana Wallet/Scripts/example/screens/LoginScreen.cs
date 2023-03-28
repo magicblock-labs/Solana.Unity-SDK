@@ -34,6 +34,13 @@ namespace Solana.Unity.SDK.Example
         {
             dropdownRpcCluster.interactable = true;
             passwordInputField.text = string.Empty;
+
+            if (Web3.Base != null)
+            {
+                dropdownRpcCluster.interactable = false;
+                manager.ShowScreen(this, "wallet_screen");
+                gameObject.SetActive(false);
+            }
         }
 
         private void Start()
@@ -48,19 +55,7 @@ namespace Solana.Unity.SDK.Example
             loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
             loginBtnSms.onClick.AddListener(LoginCheckerSms);
             loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
-
-            if (Application.platform != RuntimePlatform.Android && 
-                Application.platform != RuntimePlatform.IPhonePlayer
-                && Application.platform != RuntimePlatform.WindowsPlayer
-                && Application.platform != RuntimePlatform.WindowsEditor
-                && Application.platform != RuntimePlatform.LinuxPlayer
-                && Application.platform != RuntimePlatform.LinuxEditor
-                && Application.platform != RuntimePlatform.OSXPlayer
-                && Application.platform != RuntimePlatform.OSXEditor)
-            {
-                loginBtnGoogle.gameObject.SetActive(false);
-                loginBtnTwitter.gameObject.SetActive(false);
-            }
+            
             loginBtnXNFT.gameObject.SetActive(false);
             
             if (Application.platform == RuntimePlatform.Android)

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
 using Solana.Unity.Extensions.TokenMint;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK.Utility;
@@ -48,7 +49,7 @@ namespace Solana.Unity.SDK.Example
                 await UniTask.SwitchToMainThread();
                 _nft = nftData;
                 ammount_txt.text = "";
-                pub_txt.text = nftData.metaplexData.data.name;
+                pub_txt.text = nftData.metaplexData?.data?.offchainData?.name;
 
                 if (logo != null)
                 {
@@ -60,7 +61,7 @@ namespace Solana.Unity.SDK.Example
                 ammount_txt.text =
                     tokenAccount.Account.Data.Parsed.Info.TokenAmount.AmountDecimal.ToString(CultureInfo
                         .CurrentCulture);
-                pub_txt.text = nftData?.metaplexData?.data?.symbol ?? tokenAccount.Account.Data.Parsed.Info.Mint;
+                pub_txt.text = nftData?.metaplexData?.data?.offchainData?.symbol ?? tokenAccount.Account.Data.Parsed.Info.Mint;
                 var tokenMintResolver = await WalletScreen.GetTokenMintResolver();
                 _tokenDef = tokenMintResolver.Resolve(tokenAccount.Account.Data.Parsed.Info.Mint);
                 await UniTask.SwitchToMainThread();

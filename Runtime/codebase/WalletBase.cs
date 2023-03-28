@@ -51,7 +51,7 @@ namespace Solana.Unity.SDK
 
         private IStreamingRpcClient _activeStreamingRpcClient;
         public IStreamingRpcClient ActiveStreamingRpcClient => StartStreamingConnection();
-        public Account Account { get;private set; }
+        public Account Account { get;protected set; }
         public Mnemonic Mnemonic { get;protected set; }
 
         protected WalletBase(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false)

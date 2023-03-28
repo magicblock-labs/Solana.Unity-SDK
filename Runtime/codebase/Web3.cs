@@ -16,6 +16,8 @@ namespace Solana.Unity.SDK
         public string customRpc = string.Empty;
         public bool autoConnectOnStartup;
         public string webSocketsRpc;
+        
+        #region Wallet Options
 
         public Web3AuthWalletOptions web3AuthWalletOptions;
         
@@ -23,17 +25,42 @@ namespace Solana.Unity.SDK
         
         public SolanaMobileWalletAdapterOptions solanaMobileWalletOptions;
         
-        private const string StorageMethodStateKey = "StorageMethodKey";
+        #endregion
+        
+        public delegate void WalletChange();
+        private static event WalletChange OnWalletChangeStateInternal;
+        public static event WalletChange OnWalletChangeState
+        {
+            add
+            {
+                OnWalletChangeStateInternal += value;
+                OnWalletChangeStateInternal?.Invoke();
+            }
+            remove => OnWalletChangeStateInternal -= value;
+        }
 
-        public WalletBase Wallet;
+        private static WalletBase _wallet;
+        public WalletBase Wallet {
+        
+            get => _wallet;
+            private set { 
+                _wallet = value;
+                OnWalletChangeStateInternal?.Invoke();
+            }
+        }
 
         public static Web3 Instance;
-        
-        // Convenience shortnames for accessing commonly used wallet methods
+
+        #region Convenience shortnames for accessing commonly used wallet methods
         public static IRpcClient Rpc => Instance != null ? Instance.Wallet?.ActiveRpcClient : null;
         public static IStreamingRpcClient WsRpc => Instance != null ? Instance.Wallet?.ActiveStreamingRpcClient : null;
         public static Account Account => Instance != null ? Instance.Wallet?.Account : null;
         public static WalletBase Base => Instance != null ? Instance.Wallet : null;
+        
+        #endregion
+        
+        private Web3AuthWallet _web3AuthWallet;
+
 
         public void Awake()
         {
@@ -44,6 +71,25 @@ namespace Solana.Unity.SDK
             else
             {
                 Destroy(gameObject);
+            }
+        }
+
+        private void Start()
+        {
+            try
+            {
+                RpcNodeDropdownSelected(PlayerPrefs.GetInt("rpcCluster", 0));
+                _web3AuthWallet ??= new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc);
+                _web3AuthWallet.OnLoginNotify += (w) =>
+                { 
+                    if(w == null) return;
+                    Wallet = _web3AuthWallet;
+                    Debug.Log("Wallet set to Web3Auth, " + Wallet.GetType().FullName);
+                };
+            }
+            catch (Exception e)
+            {
+                Debug.Log("We3Auth session not detected, " +  e.Message);
             }
         }
 
@@ -64,13 +110,14 @@ namespace Solana.Unity.SDK
         
         public async Task<Account> LoginInWeb3Auth(Provider provider)
         {
-            var web3AuthWallet = new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
-            var acc = await web3AuthWallet.LoginWithProvider(provider);
+            _web3AuthWallet ??=
+                new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            var acc = await _web3AuthWallet.LoginWithProvider(provider);
             if (acc != null)
-                Wallet = web3AuthWallet;
+                Wallet = _web3AuthWallet;
             return acc;
         }
-        
+
         public async Task<Account> LoginPhantom()
         {
             var phantomWallet = new PhantomWallet(phantomWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
@@ -100,11 +147,13 @@ namespace Solana.Unity.SDK
 
         public void RpcNodeDropdownSelected(int value)
         {
+            PlayerPrefs.SetInt("rpcCluster", value);
+            PlayerPrefs.Save();
             rpcCluster = (RpcCluster) value;
             customRpc = value switch
             {
                 (int) RpcCluster.MainNet => "https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/",
-                (int)RpcCluster.TestNet => "https://api.testnet.solana.com",
+                (int) RpcCluster.TestNet => "https://api.testnet.solana.com",
                 _ => "https://api.devnet.solana.com"
             };
         }

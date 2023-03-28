@@ -36,5 +36,7 @@ public enum Provider
     [EnumMember(Value = "email_password")]
     EMAIL_PASSWORD,
     [EnumMember(Value = "jwt")]
-    JWT
+    JWT,
+    [EnumMember(Value = "CUSTOM_VERIFIER")]
+    CUSTOM_VERIFIER
 }
