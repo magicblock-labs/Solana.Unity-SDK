@@ -73,7 +73,7 @@ namespace Solana.Unity.SDK.Utility
             }
             else
             {
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
                 return await LoadJsonWebRequest<T>(path);
 #else
                 return await LoadJson<T>(path);
@@ -83,7 +83,7 @@ namespace Solana.Unity.SDK.Utility
 
         private static async Task<T> LoadTexture<T>(string filePath, CancellationToken token = default)
         {
-            using var uwr = UnityWebRequestTexture.GetTexture(filePath);
+            using var uwr = UnityWebRequest.Get(filePath);
             uwr.SendWebRequest();
 
             while (!uwr.isDone && !token.IsCancellationRequested)
@@ -96,9 +96,10 @@ namespace Solana.Unity.SDK.Utility
                 Debug.Log(uwr.error);
                 return default;
             }
-
-            var texture = DownloadHandlerTexture.GetContent(uwr);
-            return (T)Convert.ChangeType(texture, typeof(T));
+            var data = uwr.downloadHandler.data;
+            var tex = new Texture2D(2, 2);
+            tex.LoadImage(data);
+            return (T)Convert.ChangeType(tex, typeof(T));
         }
 
         private static async Task<T> LoadJsonWebRequest<T>(string path)
