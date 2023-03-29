@@ -57,7 +57,7 @@ namespace Solana.Unity.SDK.Nft
                     return nft;
                 }
             }
-            var newData = await MetadataAccount.GetAccount( connection, new PublicKey(mint));
+            var newData = await MetadataAccount.GetAccount( connection, new PublicKey(mint), commitment);
             
             if (newData?.metadata == null || newData?.offchainData == null) return null;
             var met = new Metaplex(newData);

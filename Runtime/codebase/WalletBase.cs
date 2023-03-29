@@ -155,7 +155,7 @@ namespace Solana.Unity.SDK
                 amount,
                 Account
             ));
-            return await SignAndSendTransaction(transaction, commitment);
+            return await SignAndSendTransaction(transaction, commitment: commitment);
         }
         
         /// <inheritdoc />
@@ -176,7 +176,7 @@ namespace Solana.Unity.SDK
                 },
                 Signatures = new List<SignaturePubKeyPair>()
             };
-            return await SignAndSendTransaction(transaction, commitment);
+            return await SignAndSendTransaction(transaction, commitment: commitment);
         }
 
         /// <inheritdoc />
@@ -228,6 +228,7 @@ namespace Solana.Unity.SDK
         public virtual async Task<RequestResult<string>> SignAndSendTransaction
         (
             Transaction transaction, 
+            bool skipPreflight = true,
             Commitment commitment = Commitment.Finalized)
         {
             var signedTransaction = await SignTransaction(transaction);

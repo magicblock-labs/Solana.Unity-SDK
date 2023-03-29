@@ -102,8 +102,9 @@ namespace Solana.Unity.SDK
         /// Sign and send a transaction
         /// </summary>
         /// <param name="transaction"></param>
+        /// <param name="skipPreflight"></param>
         /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction, Commitment commitment);
+        Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction, bool skipPreflight, Commitment commitment);
     }
 }
