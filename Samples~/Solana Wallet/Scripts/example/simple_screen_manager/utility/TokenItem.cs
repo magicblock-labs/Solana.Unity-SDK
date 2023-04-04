@@ -44,7 +44,7 @@ namespace Solana.Unity.SDK.Example
         {
             _parentScreen = screen;
             TokenAccount = tokenAccount;
-            if (nftData != null && int.Parse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount) == 1)
+            if (nftData != null && ulong.Parse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount) == 1)
             {
                 await UniTask.SwitchToMainThread();
                 _nft = nftData;
