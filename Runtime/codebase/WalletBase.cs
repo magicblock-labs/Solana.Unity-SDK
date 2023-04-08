@@ -94,7 +94,6 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public async Task<Account> CreateAccount(string mnemonic = null, string password = null)
         {
-            Mnemonic = new Mnemonic(mnemonic);
             Account = await _CreateAccount(mnemonic, password);
             return Account;
         }
