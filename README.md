@@ -47,9 +47,10 @@ The SDK is also available on the [Unity Asset Store](https://assetstore.unity.co
 - Compile games to xNFTs ([Backpack](https://www.backpack.app/))
 - Native DEX operations (Orca, Jupiter coming soon...)
 - Websockets to register/trigger custom events (account change, signature status, programs, ...)
+- Solana Mobile Stack support
 
 ## 🚩 Upcoming
-- Wallet adapter and support for SMS (Solana Mobile Stack) and Seed Vault
+- Wallet adapter and Seed Vault
 - Raindrops integration, see the [DAO proposal](https://app.realms.today/dao/DTP/proposal/AyEMvQTicTBZJjfVkrhMRYTGEWczwHrdXpPuV74VpRt9) 
 
 ## 📌 Dependencies
