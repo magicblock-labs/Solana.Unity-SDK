@@ -30,8 +30,8 @@ You also need to ask for the deploy password in the [official backpack developer
 After that you can just go to [https://www.xnft.gg/publish](https://www.xnft.gg/publish) to deploy your xnft in mainnet-beta or [https://devnet.xnft.gg/publish](https://devnet.xnft.gg/publish) to deploy the xnft in devnet. Connect you wallet and then follow the instructions:
 
 - copy this file https://github.com/coral-xyz/xnft-quickstart/blob/master/xnft.json 
-- edit xnft.json (Make sure to add a "tag": "game" line) and add your app's icon and screenshots in an Assets folder.
-- Zip togehter the xnft.json file and the assets folder.  
+- edit xnft.json (add a "tag": "game" line) and add your app's icon and screenshots in an Assets folder.
+- Zip togehter the xnft.json file and the Assets folder.  
 - Go to xnft.gg/Publish
 - Drop the zipped Manifest and mint. 
 
