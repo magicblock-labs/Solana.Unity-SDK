@@ -29,14 +29,10 @@ You also need to ask for the deploy password in the [official backpack developer
 
 After that you can just go to [https://www.xnft.gg/publish](https://www.xnft.gg/publish) to deploy your xnft in mainnet-beta or [https://devnet.xnft.gg/publish](https://devnet.xnft.gg/publish) to deploy the xnft in devnet. Connect you wallet and then follow the instructions:
 
-- clone https://github.com/coral-xyz/xnft-quickstart 
-- add your app's icon and screenshots in the Assets folder and edit xnft.json (Make sure to add a "tag": "game" line).
-- Zip togehter the assets folder and xnft.json file.  
-- Go to xnft.gg, "Publish new xNFT"
-- Select Storage Option: First you need to select which storage service you want to use to store your xNFT:
-  ![Select XNFT Storage](/xnft/select_xnft_storage.png)
-- Write your web server's url (the one you deployed the webgl project) and hit next to deploy your xnft game using the Iframe Source Url option.
-  ![Iframe Source](/xnft/select_iframe_source.png) 
-- Mint 
+- copy this file https://github.com/coral-xyz/xnft-quickstart/blob/master/xnft.json 
+- edit xnft.json (Make sure to add a "tag": "game" line) and add your app's icon and screenshots in an Assets folder.
+- Zip togehter the xnft.json file and the assets folder.  
+- Go to xnft.gg/Publish
+- Drop the zipped Manifest and mint. 
 
 Congrats! You're done publishing your game as an xNFT!
