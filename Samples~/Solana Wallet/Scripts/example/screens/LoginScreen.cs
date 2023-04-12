@@ -29,6 +29,8 @@ namespace Solana.Unity.SDK.Example
         private TextMeshProUGUI messageTxt;
         [SerializeField]
         private TMP_Dropdown dropdownRpcCluster;
+        
+        //public GameObject WalletButtonPrefab;
 
         private void OnEnable()
         {
@@ -52,7 +54,7 @@ namespace Solana.Unity.SDK.Example
             loginBtn.onClick.AddListener(LoginChecker);
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
-            loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
+            loginBtnPhantom.onClick.AddListener(LoginCheckerWalletAdapter);
             loginBtnSms.onClick.AddListener(LoginCheckerSms);
             loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
             
@@ -66,6 +68,43 @@ namespace Solana.Unity.SDK.Example
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
+            
+            WalletAdapter.InitializeWallets();
+            //AddWalletAdapterButtons();
+            
+               
+            
+        }
+        
+        private async void AddWalletAdapterButtons()
+        {
+            /*Debug.Log("Adding Wallet Adapter Buttons");
+            var addedWallets = new HashSet<string>();
+            
+            Debug.Log($"Len: {WalletAdapter.Wallets.Length}");
+            
+            foreach (var wallet in WalletAdapter.Wallets)
+            {
+                if (addedWallets.Contains(wallet.name))
+                {
+                    continue;
+                }
+                
+                var g = Instantiate(WalletButtonPrefab);
+                var walletView = g.GetComponent<WalletButton>();
+                walletView.WalletNameLabel.text = wallet.name;
+                walletView.Name = wallet.name;
+                walletView.DetectedLabel.SetActive(wallet.installed);
+                walletView.CanSign.SetActive(wallet.canSign);
+                
+                walletView.OnSelectedAction = walletName =>
+                {
+                    Debug.Log($"Selected Wallet: {walletName} - {wallet.name}");
+                    Debug.Log("Calling LoginWalletAdapter");
+                    var account = Web3.Instance.LoginWalletAdapter(wallet.name);
+                    Debug.Log($"Account: {account}");
+                };
+            }*/
         }
 
         private async void LoginChecker()
@@ -102,6 +141,14 @@ namespace Solana.Unity.SDK.Example
         {
             if(Web3.Instance == null) return;
             var account = await Web3.Instance.LoginXNFT();
+            messageTxt.text = "";
+            CheckAccount(account);
+        }
+        
+        private async void LoginCheckerWalletAdapter()
+        {
+            if(Web3.Instance == null) return;
+            var account = await Web3.Instance.LoginWalletAdapter();
             messageTxt.text = "";
             CheckAccount(account);
         }

@@ -144,6 +144,15 @@ namespace Solana.Unity.SDK
                 Wallet = xnftWallet;
             return acc;
         }
+        
+        public async Task<Account> LoginWalletAdapter()
+        {
+            var walletAdapter = new WalletAdapter(rpcCluster, customRpc, webSocketsRpc, false);
+            var acc = await walletAdapter.Login();
+            if (acc != null)
+                Wallet = walletAdapter;
+            return acc;
+        }
 
         public void RpcNodeDropdownSelected(int value)
         {
@@ -154,7 +163,7 @@ namespace Solana.Unity.SDK
             {
                 (int) RpcCluster.MainNet => "https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/",
                 (int) RpcCluster.TestNet => "https://api.testnet.solana.com",
-                _ => "https://api.devnet.solana.com"
+                _ => "https://fragrant-chaotic-cherry.solana-devnet.discover.quiknode.pro/4df9bb07c0646878b03cee08c3c23ce00d34fd7b/"
             };
         }
         
