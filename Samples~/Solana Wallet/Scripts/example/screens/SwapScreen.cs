@@ -15,6 +15,7 @@ using Solana.Unity.Dex.Quotes;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Example;
+using Solana.Unity.SDK.Nft;
 using Solana.Unity.SDK.Utility;
 using TMPro;
 using UnityEngine;
@@ -164,12 +165,16 @@ public class SwapScreen : SimpleScreen
         // Use default token list resolver as coingecko icons have CORS issues 
         var tokenLogoUrl = (await WalletScreen.GetTokenMintResolver())?.Resolve(tokenData.Mint)?.TokenLogoUrl;
         if (tokenLogoUrl != null)
-        {
+        { 
             tokenData.LogoURI = tokenLogoUrl;
+        }
+        else
+        {
+            var tokenInfo = await Nft.TryGetNftData(tokenData.Mint, Web3.Rpc);
+            tokenData.LogoURI = tokenInfo?.metaplexData?.data?.offchainData?.default_image;
         }
         #endif
         var tokenDataLogoUri = tokenData.LogoURI;
-        tokenDataLogoUri = tokenDataLogoUri.Replace("assets.coingecko.com/", "www.garbles.fun/cors-proxy/gecko/");
         var texture = await FileLoader.LoadFile<Texture2D>(tokenDataLogoUri);
         var _texture = FileLoader.Resize(texture, 75, 75);
         FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenData.Mint}.png"), _texture);
