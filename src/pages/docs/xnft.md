@@ -35,4 +35,6 @@ After that you can just go to [https://www.xnft.gg/publish](https://www.xnft.gg/
 - Go to xnft.gg/Publish
 - Drop the zipped Manifest and mint. 
 
+![Select XNFT Storage](/xnft/drop_maifest.png)
+
 Congrats! You're done publishing your game as an xNFT!
