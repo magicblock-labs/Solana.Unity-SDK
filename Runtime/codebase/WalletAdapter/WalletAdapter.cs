@@ -19,6 +19,7 @@ namespace Solana.Unity.SDK
         private static Transaction _currentTransaction;
         private static Account _account;
         
+        [Serializable]
         public class WalletSpecs
         {
             public string name;
@@ -30,31 +31,41 @@ namespace Solana.Unity.SDK
                 return $"{name}: installed? {installed}, can sign? {canSign}";
             }
         }
+        
+        [Serializable]
+        public class WalletSpecsObject
+        {
+            public WalletSpecs[] wallets;
+        }
 
-        public static WalletSpecs[] Wallets = new WalletSpecs[1];
-        public static WalletSpecs CurrentWallet;
+        private static WalletSpecs[] _wallets;
+        private static WalletSpecs _currentWallet;
             
 
         public WalletAdapter(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
             : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
-           
+            InitWallets();
         }
         
-        public static void InitializeWallets() {
-            Debug.Log("WalletAdapter Builder");
-            Wallets[0] = new WalletSpecs(){name = "Phantom", installed = false, canSign = false};
-            Debug.Log("WalletAdapter Wallets-> " + Wallets[0].ToString());
-            Debug.Log("WalletAdapter Wallets-> " + Wallets[0].name);
-            CurrentWallet = Wallets[0];
+        private static void InitWallets() {
+            Debug.Log("InitWallets");
+            var wallets = ExternGetWallets();
+            Debug.Log("WalletAdapter wallets-> " + wallets);
+            _wallets = JsonUtility.FromJson<WalletSpecsObject>(wallets).wallets;
+            Debug.Log("WalletAdapter Wallets-> " + _wallets);
+            _currentWallet = _wallets[0];
+            Debug.Log("WalletAdapter CurrentWallet Name-> " + _currentWallet.name);
         }
+        
+        
 
         protected override Task<Account> _Login(string password = null)
         {
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             try
             {
-                ExternConnectWallet(CurrentWallet.name,OnWalletConnected);
+                ExternConnectWallet(_currentWallet.name,OnWalletConnected);
             }
             catch (EntryPointNotFoundException)
             {
@@ -66,12 +77,12 @@ namespace Solana.Unity.SDK
 
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
-            Debug.Log("WalletAdapter SignTransaction -> wallet: " + CurrentWallet.name);
+            Debug.Log("WalletAdapter SignTransaction -> wallet: " + _currentWallet.name);
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             _currentTransaction = transaction;
             var base64TransactionStr = Convert.ToBase64String(transaction.Serialize()) ;
             Debug.Log("WalletAdapter SignTransaction base64TransactionStr-> " + base64TransactionStr);
-            ExternSignTransactionWallet(CurrentWallet.name,base64TransactionStr, OnTransactionSigned);
+            ExternSignTransactionWallet(_currentWallet.name,base64TransactionStr, OnTransactionSigned);
             return _signedTransactionTaskCompletionSource.Task;
         }
 
@@ -123,10 +134,15 @@ namespace Solana.Unity.SDK
 
                 [DllImport("__Internal")]
                 private static extern void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback);
+        
+                [DllImport("__Internal")]
+                private static extern string ExternGetWallets();
+                
                 
         #else
                 private static void ExternConnectWallet(string walletName, Action<string> callback){}
                 private static void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback){}
+                private static string ExternGetWallets(){}
                 
         #endif
     }
