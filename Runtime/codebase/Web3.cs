@@ -169,7 +169,7 @@ namespace Solana.Unity.SDK
         
         public void Logout()
         {
-            Wallet.Logout();
+            Wallet?.Logout();
             Wallet = null;
         }
 

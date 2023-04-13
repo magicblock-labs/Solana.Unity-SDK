@@ -3,13 +3,13 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
-using Solana.Unity.Extensions.TokenMint;
+using Solana.Unity.Extensions.Models.TokenMint;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK.Utility;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
@@ -28,7 +28,6 @@ namespace Solana.Unity.SDK.Example
         private Nft.Nft _nft;
         private SimpleScreen _parentScreen;
         private Texture2D _texture;
-        private TokenDef _tokenDef;
 
         private void Awake()
         {
@@ -44,7 +43,7 @@ namespace Solana.Unity.SDK.Example
         {
             _parentScreen = screen;
             TokenAccount = tokenAccount;
-            if (nftData != null && int.Parse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount) == 1)
+            if (nftData != null && ulong.Parse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount) == 1)
             {
                 await UniTask.SwitchToMainThread();
                 _nft = nftData;
@@ -61,20 +60,33 @@ namespace Solana.Unity.SDK.Example
                 ammount_txt.text =
                     tokenAccount.Account.Data.Parsed.Info.TokenAmount.AmountDecimal.ToString(CultureInfo
                         .CurrentCulture);
-                pub_txt.text = nftData?.metaplexData?.data?.offchainData?.symbol ?? tokenAccount.Account.Data.Parsed.Info.Mint;
-                var tokenMintResolver = await WalletScreen.GetTokenMintResolver();
-                _tokenDef = tokenMintResolver.Resolve(tokenAccount.Account.Data.Parsed.Info.Mint);
-                await UniTask.SwitchToMainThread();
-                await LoadTokenLogo(_tokenDef);
+                pub_txt.text = nftData?.metaplexData?.data?.offchainData?.name ?? tokenAccount.Account.Data.Parsed.Info.Mint;
+                if (nftData?.metaplexData?.data?.offchainData?.symbol != null)
+                {
+                    pub_txt.text += $" ({nftData?.metaplexData?.data?.offchainData?.symbol})";
+                }
+
+                if (nftData?.metaplexData?.data?.offchainData?.default_image != null)
+                {
+                    await LoadAndCacheTokenLogo(nftData.metaplexData?.data?.offchainData?.default_image, tokenAccount.Account.Data.Parsed.Info.Mint);
+                }
+                else
+                {
+                    var tokenMintResolver = await WalletScreen.GetTokenMintResolver();
+                    TokenDef tokenDef = tokenMintResolver.Resolve(tokenAccount.Account.Data.Parsed.Info.Mint);
+                    if(tokenDef.TokenName.IsNullOrEmpty() || tokenDef.Symbol.IsNullOrEmpty()) return;
+                    pub_txt.text = $"{tokenDef.TokenName} ({tokenDef.Symbol})";
+                    await LoadAndCacheTokenLogo(tokenDef.TokenLogoUrl, tokenDef.TokenMint);
+                }
             }
         }
 
-        private async Task LoadTokenLogo(TokenDef tokenDef)
+        private async Task LoadAndCacheTokenLogo(string logoUrl, string tokenMint)
         {
-            if(tokenDef is null || logo is null) return;
-            var texture = await FileLoader.LoadFile<Texture2D>(tokenDef.TokenLogoUrl);
+            if(logoUrl.IsNullOrEmpty() || tokenMint.IsNullOrEmpty() || logo is null) return;
+            var texture = await FileLoader.LoadFile<Texture2D>(logoUrl);
             _texture = FileLoader.Resize(texture, 75, 75);
-            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenDef.TokenMint}.png"), _texture);
+            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{tokenMint}.png"), _texture);
             logo.texture = _texture;
         }
 
@@ -87,7 +99,7 @@ namespace Solana.Unity.SDK.Example
             else
             {
                 _parentScreen.manager.ShowScreen(_parentScreen, "transfer_screen",  
-                    Tuple.Create(TokenAccount, _tokenDef, _texture));
+                    Tuple.Create(TokenAccount, pub_txt.text, _texture));
             }
         }
 

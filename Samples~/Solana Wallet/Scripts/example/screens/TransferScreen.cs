@@ -1,11 +1,9 @@
 using System;
-using Solana.Unity.Extensions.TokenMint;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 using UnityEngine.UI;
 
 // ReSharper disable once CheckNamespace
@@ -146,13 +144,13 @@ namespace Solana.Unity.SDK.Example
             nftImage.gameObject.SetActive(false);
             nftTitleTxt.gameObject.SetActive(false);
             ownedAmountTxt.gameObject.SetActive(false);
-            if (data != null && data.GetType() == typeof(Tuple<TokenAccount, TokenDef, Texture2D>))
+            if (data != null && data.GetType() == typeof(Tuple<TokenAccount, string, Texture2D>))
             {
-                var (tokenAccount, tokenDef, texture) = (Tuple<TokenAccount, TokenDef, Texture2D>)data;
+                var (tokenAccount, tokenDef, texture) = (Tuple<TokenAccount, string, Texture2D>)data;
                 ownedAmountTxt.text = $"{tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
                 nftTitleTxt.gameObject.SetActive(true);
                 nftImage.gameObject.SetActive(true);
-                nftTitleTxt.text = $"{tokenDef.Symbol}";
+                nftTitleTxt.text = $"{tokenDef}";
                 nftImage.texture = texture;
                 nftImage.color = Color.white;
             }
