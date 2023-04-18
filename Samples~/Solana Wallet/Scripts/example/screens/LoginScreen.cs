@@ -29,8 +29,6 @@ namespace Solana.Unity.SDK.Example
         private TextMeshProUGUI messageTxt;
         [SerializeField]
         private TMP_Dropdown dropdownRpcCluster;
-        
-        //public GameObject WalletButtonPrefab;
 
         private void OnEnable()
         {
