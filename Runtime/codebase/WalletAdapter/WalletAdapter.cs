@@ -52,6 +52,7 @@ namespace Solana.Unity.SDK
         private static void InitWallets() {
             Debug.Log("InitWallets");
             # if UNITY_WEBGL && !UNITY_EDITOR
+            InitWalletAdapter();
             var walletsData = ExternGetWallets();
             # else
             var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Math Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true},{\"name\":\"Ledger\",\"installed\":true},{\"name\":\"Torus\",\"installed\":true},{\"name\":\"Anchor\",\"installed\":true}]}\n";
@@ -170,6 +171,9 @@ namespace Solana.Unity.SDK
         
                 [DllImport("__Internal")]
                 private static extern string ExternGetWallets();
+
+                [DllImport("__Internal")]
+                private static extern void InitWalletAdapter();
                 
                 
         #else

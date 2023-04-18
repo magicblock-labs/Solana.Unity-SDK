@@ -1,4 +1,14 @@
 ﻿mergeInto(LibraryManager.library, {
+    InitWalletAdapter: async function () {
+        // Add UnityWalletAdapter from CDN
+        if(window.walletAdapterLib == undefined){
+            console.log("Adding JS")
+            var script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/gh/nicoeft/unity-wallet-adapter@main/dist/wallet-adapter-lib.js";
+            document.head.appendChild(script);
+        }
+        console.log(window.walletAdapterLib);
+    },
      ExternGetWallets: function() {
         console.log("ExternGetWallets called");
         try {
@@ -48,3 +58,7 @@
          }
     },
 } );
+
+
+
+ 
