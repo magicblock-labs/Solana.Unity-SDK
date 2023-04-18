@@ -68,45 +68,7 @@ namespace Solana.Unity.SDK.Example
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
-            
-            WalletAdapter.InitializeWallets();
-            //AddWalletAdapterButtons();
-            
-               
-            
         }
-        
-        private async void AddWalletAdapterButtons()
-        {
-            /*Debug.Log("Adding Wallet Adapter Buttons");
-            var addedWallets = new HashSet<string>();
-            
-            Debug.Log($"Len: {WalletAdapter.Wallets.Length}");
-            
-            foreach (var wallet in WalletAdapter.Wallets)
-            {
-                if (addedWallets.Contains(wallet.name))
-                {
-                    continue;
-                }
-                
-                var g = Instantiate(WalletButtonPrefab);
-                var walletView = g.GetComponent<WalletButton>();
-                walletView.WalletNameLabel.text = wallet.name;
-                walletView.Name = wallet.name;
-                walletView.DetectedLabel.SetActive(wallet.installed);
-                walletView.CanSign.SetActive(wallet.canSign);
-                
-                walletView.OnSelectedAction = walletName =>
-                {
-                    Debug.Log($"Selected Wallet: {walletName} - {wallet.name}");
-                    Debug.Log("Calling LoginWalletAdapter");
-                    var account = Web3.Instance.LoginWalletAdapter(wallet.name);
-                    Debug.Log($"Account: {account}");
-                };
-            }*/
-        }
-
         private async void LoginChecker()
         {
             var password = passwordInputField.text;
