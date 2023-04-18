@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AOT;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
-using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
@@ -13,22 +12,22 @@ namespace Solana.Unity.SDK
 {
     public class WalletAdapter: WalletBase
     {
-        
+
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static Transaction _currentTransaction;
         private static Account _account;
+        private static GameObject _walletAdapterScreen;
         
         [Serializable]
         public class WalletSpecs
         {
             public string name;
             public bool installed;
-            public bool canSign;
 
             public override string ToString()
             {
-                return $"{name}: installed? {installed}, can sign? {canSign}";
+                return $"{name}: installed? {installed}";
             }
         }
         
@@ -38,7 +37,9 @@ namespace Solana.Unity.SDK
             public WalletSpecs[] wallets;
         }
 
-        private static WalletSpecs[] _wallets;
+        
+        public static WalletSpecs[] Wallets { get; private set; }
+
         private static WalletSpecs _currentWallet;
             
 
@@ -50,29 +51,61 @@ namespace Solana.Unity.SDK
         
         private static void InitWallets() {
             Debug.Log("InitWallets");
-            var wallets = ExternGetWallets();
-            Debug.Log("WalletAdapter wallets-> " + wallets);
-            _wallets = JsonUtility.FromJson<WalletSpecsObject>(wallets).wallets;
-            Debug.Log("WalletAdapter Wallets-> " + _wallets);
-            _currentWallet = _wallets[0];
-            Debug.Log("WalletAdapter CurrentWallet Name-> " + _currentWallet.name);
-        }
-        
-        
+            # if UNITY_WEBGL && !UNITY_EDITOR
+            var walletsData = ExternGetWallets();
+            # else
+            var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Math Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true},{\"name\":\"Ledger\",\"installed\":true},{\"name\":\"Torus\",\"installed\":true},{\"name\":\"Anchor\",\"installed\":true}]}\n";
+            # endif
+            Debug.Log("WalletAdapter walletsData-> " + walletsData);
+            Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
+            Debug.Log("WalletAdapter Wallets-> " + Wallets);
+            
 
-        protected override Task<Account> _Login(string password = null)
+        }
+
+
+
+        protected override async Task<Account> _Login(string password = null)
         {
+            await SetCurrentWallet();
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             try
             {
-                ExternConnectWallet(_currentWallet.name,OnWalletConnected);
+                ExternConnectWallet(_currentWallet.name, OnWalletConnected);
             }
-            catch (EntryPointNotFoundException)
+            catch (Exception e)
             {
+                Debug.LogError("WalletAdapter _Login -> Exception: " + e);
                 _loginTaskCompletionSource.SetResult(null);
-                return _loginTaskCompletionSource.Task;
             }
-            return _loginTaskCompletionSource.Task;
+            _walletAdapterScreen.SetActive(false);
+            return await _loginTaskCompletionSource.Task;
+        }
+        
+        private static async Task SetCurrentWallet()
+        {
+            if (_walletAdapterScreen == null)
+            {
+                GameObject walletAdapterUIPrefab = Resources.Load<GameObject>("SolanaUnitySDK/WalletAdapterUI");
+                var walletAdapterUI = GameObject.Instantiate(walletAdapterUIPrefab);
+                _walletAdapterScreen = walletAdapterUI.transform.GetChild(0).gameObject;
+            }
+            else
+            {
+                _walletAdapterScreen.SetActive(true);
+            }
+            
+            var waitForWalletSelectionTask = new TaskCompletionSource<string>();
+            _walletAdapterScreen.GetComponent<WalletAdapterScreen>().OnSelectedAction = walletName =>
+            {
+                Debug.Log("WalletAdapter OnSelectedAction -> walletName: " + walletName);
+                waitForWalletSelectionTask.SetResult(walletName);
+                Debug.Log("WalletAdapter OnSelectedAction - after SetResult");
+            };
+            var walletName = await waitForWalletSelectionTask.Task;
+            Debug.Log("WalletAdapter after waitForWalletSelectionTask -> walletName: " + walletName);
+            _currentWallet = Array.Find(Wallets, wallet => wallet.name == walletName);
+            Debug.Log("WalletAdapter after Array.Find -> _currentWallet.name: " + _currentWallet.name);
         }
 
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
