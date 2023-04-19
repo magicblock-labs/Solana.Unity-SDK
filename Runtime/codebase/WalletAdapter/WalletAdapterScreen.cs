@@ -16,41 +16,27 @@ namespace Solana.Unity.SDK
         [SerializeField]
         public Action<string> OnSelectedAction;
         [SerializeField]
-        private HashSet<string> addedWallets;
-
+        private HashSet<string> _addedWallets = new HashSet<string>();
         
-         private void Start()
-        {
-            Debug.Log("WalletAdapterScreen Start");
-            addedWallets = new HashSet<string>();
-            Debug.Log("WalletAdapterScreen Start Done");
-        }
          
         private void OnEnable()
         {
-            Debug.Log("WalletAdapterScreen OnEnable");
-            AddWalletAdapterButtons();
-            Debug.Log("WalletAdapterScreen OnEnable Done");
+            UpdateWalletAdapterButtons();
         }
         
         
          
-         private async void AddWalletAdapterButtons()
+         private void UpdateWalletAdapterButtons()
          {
              Debug.Log("Adding Wallet Adapter Buttons");
-            
-             
              Debug.Log($"Len: {WalletAdapter.Wallets.Length}");
-             
-             
-             
              foreach (var wallet in WalletAdapter.Wallets)
              {
-                 if (addedWallets.Contains(wallet.name))
+                 if (_addedWallets.Contains(wallet.name))
                  {
                      continue;  
                  }
-                 addedWallets.Add(wallet.name);
+                 _addedWallets.Add(wallet.name);
                 Debug.Log($"Wallet: {wallet.name}");
                 var g = Instantiate(walletButtonPrefab, walletListScrollTransform);
                  var walletView = g.GetComponent<WalletAdapterButton>();
@@ -67,11 +53,12 @@ namespace Solana.Unity.SDK
                  };
                  
              }
+             
          }
          
          public void OnClose()
          {
-             gameObject.SetActive(false);
+             transform.parent.gameObject.SetActive(false);
          }
          
          

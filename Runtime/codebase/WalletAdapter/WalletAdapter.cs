@@ -17,7 +17,7 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static Transaction _currentTransaction;
         private static Account _account;
-        private static GameObject _walletAdapterScreen;
+        private static GameObject _walletAdapterUI;
         
         [Serializable]
         public class WalletSpecs
@@ -79,25 +79,25 @@ namespace Solana.Unity.SDK
                 Debug.LogError("WalletAdapter _Login -> Exception: " + e);
                 _loginTaskCompletionSource.SetResult(null);
             }
-            _walletAdapterScreen.SetActive(false);
+            _walletAdapterUI.SetActive(false);
             return await _loginTaskCompletionSource.Task;
         }
         
         private static async Task SetCurrentWallet()
         {
-            if (_walletAdapterScreen == null)
+            if (_walletAdapterUI == null)
             {
                 GameObject walletAdapterUIPrefab = Resources.Load<GameObject>("SolanaUnitySDK/WalletAdapterUI");
-                var walletAdapterUI = GameObject.Instantiate(walletAdapterUIPrefab);
-                _walletAdapterScreen = walletAdapterUI.transform.GetChild(0).gameObject;
+                _walletAdapterUI = GameObject.Instantiate(walletAdapterUIPrefab);
             }
             else
             {
-                _walletAdapterScreen.SetActive(true);
+                _walletAdapterUI.SetActive(true);
             }
             
             var waitForWalletSelectionTask = new TaskCompletionSource<string>();
-            _walletAdapterScreen.GetComponent<WalletAdapterScreen>().OnSelectedAction = walletName =>
+            var walletAdapterScreen = _walletAdapterUI.transform.GetChild(0).gameObject.GetComponent<WalletAdapterScreen>();
+            walletAdapterScreen.OnSelectedAction = walletName =>
             {
                 Debug.Log("WalletAdapter OnSelectedAction -> walletName: " + walletName);
                 waitForWalletSelectionTask.SetResult(walletName);
