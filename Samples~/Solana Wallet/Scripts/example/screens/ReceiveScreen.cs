@@ -47,6 +47,7 @@ public class ReceiveScreen : SimpleScreen
 
     private void CheckAndToggleAirdrop()
     {
+        if(Web3.Base == null) return;
         airdrop_btn.gameObject.SetActive(Web3.Base.RpcCluster == RpcCluster.DevNet);
     }
 
