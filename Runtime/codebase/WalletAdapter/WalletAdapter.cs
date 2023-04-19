@@ -14,6 +14,7 @@ namespace Solana.Unity.SDK
     {
 
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
+        private static TaskCompletionSource<bool> _loadedScriptTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static Transaction _currentTransaction;
         private static Account _account;
@@ -46,22 +47,25 @@ namespace Solana.Unity.SDK
         public WalletAdapter(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
             : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
-            InitWallets();
+           
         }
         
-        private static void InitWallets() {
+        private static async Task InitWallets() {
             Debug.Log("InitWallets");
             # if UNITY_WEBGL && !UNITY_EDITOR
-            InitWalletAdapter();
+            if (Wallets == null){
+                _loadedScriptTaskCompletionSource = new TaskCompletionSource<bool>();
+                InitWalletAdapter(OnScriptLoaded);
+                await _loadedScriptTaskCompletionSource.Task;
+            }
             var walletsData = ExternGetWallets();
             # else
-            var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Math Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true},{\"name\":\"Ledger\",\"installed\":true},{\"name\":\"Torus\",\"installed\":true},{\"name\":\"Anchor\",\"installed\":true}]}\n";
+            var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Ledger Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true}]}\n";
             # endif
+
             Debug.Log("WalletAdapter walletsData-> " + walletsData);
             Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
             Debug.Log("WalletAdapter Wallets-> " + Wallets);
-            
-
         }
 
 
@@ -85,6 +89,7 @@ namespace Solana.Unity.SDK
         
         private static async Task SetCurrentWallet()
         {
+            await InitWallets();
             if (_walletAdapterUI == null)
             {
                 GameObject walletAdapterUIPrefab = Resources.Load<GameObject>("SolanaUnitySDK/WalletAdapterUI");
@@ -158,6 +163,16 @@ namespace Solana.Unity.SDK
             });
             _signedTransactionTaskCompletionSource.SetResult(_currentTransaction);
         }
+        
+        /// <summary>
+        /// Called from javascript when the wallet adapter script is loaded
+        /// </summary>
+        [MonoPInvokeCallback(typeof(Action<bool>))]
+        private static void OnScriptLoaded(bool success)
+        {
+            Debug.Log("WalletAdapter OnScriptLoaded -> success: " + success);
+            _loadedScriptTaskCompletionSource.SetResult(success);
+        }
 
         #endregion
 
@@ -173,13 +188,14 @@ namespace Solana.Unity.SDK
                 private static extern string ExternGetWallets();
 
                 [DllImport("__Internal")]
-                private static extern void InitWalletAdapter();
+                private static extern void InitWalletAdapter(Action<bool> callback);
                 
                 
         #else
                 private static void ExternConnectWallet(string walletName, Action<string> callback){}
                 private static void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback){}
                 private static string ExternGetWallets(){}
+                private static void InitWalletAdapter(Action<bool> callback){}
                 
         #endif
     }
