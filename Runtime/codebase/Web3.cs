@@ -147,7 +147,7 @@ namespace Solana.Unity.SDK
         
         public async Task<Account> LoginWalletAdapter()
         {
-            var walletAdapter = new WalletAdapter(rpcCluster, customRpc, webSocketsRpc, false);
+            var walletAdapter = new SolanaWalletAdapterWebGL(rpcCluster, customRpc, webSocketsRpc, false);
             var acc = await walletAdapter.Login();
             if (acc != null)
                 Wallet = walletAdapter;

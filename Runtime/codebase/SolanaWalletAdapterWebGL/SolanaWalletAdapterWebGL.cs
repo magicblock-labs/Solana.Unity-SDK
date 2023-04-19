@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Solana.Unity.SDK
 {
-    public class WalletAdapter: WalletBase
+    public class SolanaWalletAdapterWebGL: WalletBase
     {
 
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
@@ -44,7 +44,7 @@ namespace Solana.Unity.SDK
         private static WalletSpecs _currentWallet;
             
 
-        public WalletAdapter(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
+        public SolanaWalletAdapterWebGL(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
             : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
            

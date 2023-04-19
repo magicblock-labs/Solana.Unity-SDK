@@ -29,8 +29,8 @@ namespace Solana.Unity.SDK
          private void UpdateWalletAdapterButtons()
          {
              Debug.Log("Adding Wallet Adapter Buttons");
-             Debug.Log($"Len: {WalletAdapter.Wallets.Length}");
-             foreach (var wallet in WalletAdapter.Wallets)
+             Debug.Log($"Len: {SolanaWalletAdapterWebGL.Wallets.Length}");
+             foreach (var wallet in SolanaWalletAdapterWebGL.Wallets)
              {
                  if (_addedWallets.Contains(wallet.name))
                  {
@@ -58,6 +58,7 @@ namespace Solana.Unity.SDK
          
          public void OnClose()
          {
+             Debug.Log("Closing ");
              transform.parent.gameObject.SetActive(false);
          }
          
