@@ -62,7 +62,6 @@ namespace Solana.Unity.SDK
             if (autoConnectOnStartup)
             {
                 StartConnection();
-                StartStreamingConnection();
             }
             Setup();
         }
