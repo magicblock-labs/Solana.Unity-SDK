@@ -11,17 +11,24 @@ using UnityEngine;
 
 namespace Solana.Unity.SDK
 {
+    [Serializable]
+    public class SolanaWalletAdapterWebGLOptions
+    {
+        public GameObject walletAdapterButtonPrefab;
+
+        public GameObject walletAdapterUIPrefab;
+    }
     public class SolanaWalletAdapterWebGL: WalletBase
     {
-
+        private static SolanaWalletAdapterWebGLOptions _walletOptions;
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<bool> _loadedScriptTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
         private static Transaction _currentTransaction;
         private static Account _account;
-        private static GameObject _walletAdapterUI;
-        
+        public static GameObject WalletAdapterUI { get; private set; }
+
         [Serializable]
         public class WalletSpecs
         {
@@ -46,10 +53,15 @@ namespace Solana.Unity.SDK
         private static WalletSpecs _currentWallet;
             
 
-        public SolanaWalletAdapterWebGL(RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) 
+        public SolanaWalletAdapterWebGL(
+            SolanaWalletAdapterWebGLOptions solanaWalletOptions,
+            RpcCluster rpcCluster = RpcCluster.DevNet,
+            string customRpcUri = null,
+            string customStreamingRpcUri = null,
+            bool autoConnectOnStartup = false) 
             : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
-           
+            _walletOptions = solanaWalletOptions;
         }
         
         private static async Task InitWallets() {
@@ -81,29 +93,27 @@ namespace Solana.Unity.SDK
                 Debug.LogError("WalletAdapter _Login -> Exception: " + e);
                 _loginTaskCompletionSource.SetResult(null);
             }
-            _walletAdapterUI.SetActive(false);
+            WalletAdapterUI.SetActive(false);
             return await _loginTaskCompletionSource.Task;
         }
         
         private static async Task SetCurrentWallet()
         {
             await InitWallets();
-            if (_walletAdapterUI == null)
+            if (WalletAdapterUI == null)
             {
-                GameObject walletAdapterUIPrefab = Resources.Load<GameObject>("SolanaUnitySDK/WalletAdapterUI");
-                _walletAdapterUI = GameObject.Instantiate(walletAdapterUIPrefab);
+                WalletAdapterUI = GameObject.Instantiate(_walletOptions.walletAdapterUIPrefab);
             }
-            else
-            {
-                _walletAdapterUI.SetActive(true);
-            }
-            
+           
             var waitForWalletSelectionTask = new TaskCompletionSource<string>();
-            var walletAdapterScreen = _walletAdapterUI.transform.GetChild(0).gameObject.GetComponent<WalletAdapterScreen>();
+            var walletAdapterScreen = WalletAdapterUI.transform.GetChild(0).gameObject.GetComponent<WalletAdapterScreen>();
+            walletAdapterScreen.viewPortContent = WalletAdapterUI.transform.GetChild(0).Find("Scroll View").Find("Viewport").Find("Content").GetComponent<RectTransform>();
+            walletAdapterScreen.buttonPrefab = _walletOptions.walletAdapterButtonPrefab;
             walletAdapterScreen.OnSelectedAction = walletName =>
             {
                 waitForWalletSelectionTask.SetResult(walletName);
             };
+            WalletAdapterUI.SetActive(true);
             var walletName = await waitForWalletSelectionTask.Task;
             _currentWallet = Array.Find(Wallets, wallet => wallet.name == walletName);
         }

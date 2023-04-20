@@ -353,7 +353,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8029027132386834915
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1359,5 +1359,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c6f044899034844b7b569b2f1875501, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walletButtonPrefab: {fileID: 8276506777937863331, guid: 527144d38ac497242b9257b579a37d46, type: 3}
-  walletListScrollTransform: {fileID: 8029027132157631011}
+  buttonPrefab: {fileID: 0}
+  viewPortContent: {fileID: 0}
