@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using AOT;
 using Solana.Unity.Rpc.Models;
@@ -16,6 +17,7 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<bool> _loadedScriptTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
         private static Transaction _currentTransaction;
         private static Account _account;
         private static GameObject _walletAdapterUI;
@@ -51,7 +53,6 @@ namespace Solana.Unity.SDK
         }
         
         private static async Task InitWallets() {
-            Debug.Log("InitWallets");
             # if UNITY_WEBGL && !UNITY_EDITOR
             if (Wallets == null){
                 _loadedScriptTaskCompletionSource = new TaskCompletionSource<bool>();
@@ -62,10 +63,7 @@ namespace Solana.Unity.SDK
             # else
             var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Ledger Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true}]}\n";
             # endif
-
-            Debug.Log("WalletAdapter walletsData-> " + walletsData);
             Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
-            Debug.Log("WalletAdapter Wallets-> " + Wallets);
         }
 
 
@@ -104,30 +102,27 @@ namespace Solana.Unity.SDK
             var walletAdapterScreen = _walletAdapterUI.transform.GetChild(0).gameObject.GetComponent<WalletAdapterScreen>();
             walletAdapterScreen.OnSelectedAction = walletName =>
             {
-                Debug.Log("WalletAdapter OnSelectedAction -> walletName: " + walletName);
                 waitForWalletSelectionTask.SetResult(walletName);
-                Debug.Log("WalletAdapter OnSelectedAction - after SetResult");
             };
             var walletName = await waitForWalletSelectionTask.Task;
-            Debug.Log("WalletAdapter after waitForWalletSelectionTask -> walletName: " + walletName);
             _currentWallet = Array.Find(Wallets, wallet => wallet.name == walletName);
-            Debug.Log("WalletAdapter after Array.Find -> _currentWallet.name: " + _currentWallet.name);
         }
 
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
-            Debug.Log("WalletAdapter SignTransaction -> wallet: " + _currentWallet.name);
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
             _currentTransaction = transaction;
             var base64TransactionStr = Convert.ToBase64String(transaction.Serialize()) ;
-            Debug.Log("WalletAdapter SignTransaction base64TransactionStr-> " + base64TransactionStr);
             ExternSignTransactionWallet(_currentWallet.name,base64TransactionStr, OnTransactionSigned);
             return _signedTransactionTaskCompletionSource.Task;
         }
 
         public override Task<byte[]> SignMessage(byte[] message)
         {
-            throw new NotImplementedException();
+            _signedMessageTaskCompletionSource = new TaskCompletionSource<byte[]>();
+            var base64MessageStr = Convert.ToBase64String(message) ;
+            ExternSignMessageWallet(_currentWallet.name,base64MessageStr, OnMessageSigned);
+            return _signedMessageTaskCompletionSource.Task;
         }
         
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
@@ -155,7 +150,6 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnTransactionSigned(string signature)
         {
-            Debug.Log($"OnTransactionSigned -> signature {signature}");
             _currentTransaction.Signatures.Add(new SignaturePubKeyPair()
             {
                 PublicKey = _account.PublicKey,
@@ -165,12 +159,20 @@ namespace Solana.Unity.SDK
         }
         
         /// <summary>
+        /// Called from javascript when the wallet adapter signed the message and return the signature.
+        /// </summary>
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        public static void OnMessageSigned(string signature)
+        {
+            _signedMessageTaskCompletionSource.SetResult(Convert.FromBase64String(signature));
+        }
+        
+        /// <summary>
         /// Called from javascript when the wallet adapter script is loaded
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<bool>))]
         private static void OnScriptLoaded(bool success)
         {
-            Debug.Log("WalletAdapter OnScriptLoaded -> success: " + success);
             _loadedScriptTaskCompletionSource.SetResult(success);
         }
 
@@ -183,6 +185,9 @@ namespace Solana.Unity.SDK
 
                 [DllImport("__Internal")]
                 private static extern void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback);
+                
+                [DllImport("__Internal")]
+                private static extern void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback);
         
                 [DllImport("__Internal")]
                 private static extern string ExternGetWallets();
@@ -194,6 +199,7 @@ namespace Solana.Unity.SDK
         #else
                 private static void ExternConnectWallet(string walletName, Action<string> callback){}
                 private static void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback){}
+                private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
                 private static string ExternGetWallets(){}
                 private static void InitWalletAdapter(Action<bool> callback){}
                 
