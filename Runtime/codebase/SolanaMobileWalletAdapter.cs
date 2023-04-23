@@ -122,6 +122,12 @@ namespace Solana.Unity.SDK
             return Transaction.Deserialize(res.SignedPayloads[0]);
         }
 
+        public override void Logout()
+        {
+            base.Logout();
+            PlayerPrefs.DeleteKey("pk");
+        }
+
         public override async Task<byte[]> SignMessage(byte[] message)
         {
             if (_authToken.IsNullOrEmpty())
