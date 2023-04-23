@@ -21,6 +21,7 @@ namespace Solana.Unity.SDK
         public string identityUri = "https://solana.unity-sdk.gg/";
         public string iconUri = "/favicon.ico";
         public string name = "Solana.Unity-SDK";
+        public bool keepConnectionAlive = true;
     }
     
     
@@ -52,6 +53,11 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Account> _Login(string password = null)
         {
+            if (_walletOptions.keepConnectionAlive)
+            {
+                string pk = PlayerPrefs.GetString("pk", null);
+                if (pk != null) return new Account(string.Empty, new PublicKey(pk));
+            }
             AuthorizationResult authorization = null;
             var localAssociationScenario = new LocalAssociationScenario();
             var cluster = RPCNameMap[(int)RpcCluster];
@@ -74,6 +80,10 @@ namespace Solana.Unity.SDK
             }
             _authToken = authorization.AuthToken;
             var publicKey = new PublicKey(authorization.PublicKey);
+            if (_walletOptions.keepConnectionAlive)
+            {
+                PlayerPrefs.SetString("pk", publicKey.ToString());
+            }
             return new Account(string.Empty, publicKey);
         }
 
@@ -110,6 +120,12 @@ namespace Solana.Unity.SDK
             }
             _authToken = reauthorization.AuthToken;
             return Transaction.Deserialize(res.SignedPayloads[0]);
+        }
+
+        public override void Logout()
+        {
+            base.Logout();
+            PlayerPrefs.DeleteKey("pk");
         }
 
         public override async Task<byte[]> SignMessage(byte[] message)
