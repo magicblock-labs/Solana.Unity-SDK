@@ -22,6 +22,7 @@ namespace Solana.Unity.SDK
     {
         private static SolanaWalletAdapterWebGLOptions _walletOptions;
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
+        private static TaskCompletionSource<string> _getWalletsTaskCompletionSource;
         private static TaskCompletionSource<bool> _loadedScriptTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
@@ -34,7 +35,7 @@ namespace Solana.Unity.SDK
         {
             public string name;
             public bool installed;
-
+            public string icon;
             public override string ToString()
             {
                 return $"{name}: installed? {installed}";
@@ -71,11 +72,14 @@ namespace Solana.Unity.SDK
                 InitWalletAdapter(OnScriptLoaded);
                 await _loadedScriptTaskCompletionSource.Task;
             }
-            var walletsData = ExternGetWallets();
+            _getWalletsTaskCompletionSource = new TaskCompletionSource<string>();
+            ExternGetWallets(OnWalletsLoaded);
+            var walletsData = await _getWalletsTaskCompletionSource.Task;
             # else
             var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Ledger Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true}]}\n";
             # endif
             Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
+           
         }
 
 
@@ -185,6 +189,15 @@ namespace Solana.Unity.SDK
         {
             _loadedScriptTaskCompletionSource.SetResult(success);
         }
+        
+        /// <summary>
+        /// Called from javascript when the wallets are loaded
+        /// </summary>
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        private static void OnWalletsLoaded(string walletsData)
+        {
+            _getWalletsTaskCompletionSource.SetResult(walletsData);
+        }
 
         #endregion
 
@@ -200,7 +213,7 @@ namespace Solana.Unity.SDK
                 private static extern void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback);
         
                 [DllImport("__Internal")]
-                private static extern string ExternGetWallets();
+                private static extern string  ExternGetWallets(Action<string> callback);
 
                 [DllImport("__Internal")]
                 private static extern void InitWalletAdapter(Action<bool> callback);
@@ -210,7 +223,7 @@ namespace Solana.Unity.SDK
                 private static void ExternConnectWallet(string walletName, Action<string> callback){}
                 private static void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback){}
                 private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
-                private static string ExternGetWallets(){}
+                private static string ExternGetWallets(Action<bool> callback){return null;}
                 private static void InitWalletAdapter(Action<bool> callback){}
                 
         #endif

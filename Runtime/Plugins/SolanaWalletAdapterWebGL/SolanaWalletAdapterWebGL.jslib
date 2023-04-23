@@ -13,13 +13,13 @@
         }
         console.log(window.walletAdapterLib);
     },
-     ExternGetWallets: function() {
+     ExternGetWallets: async function(callback) {
         try {
-            const wallets = window.walletAdapterLib.getWallets();
+            const wallets = await window.walletAdapterLib.getWallets();
             var bufferSize = lengthBytesUTF8(wallets) + 1;
             var walletsPtr = _malloc(bufferSize);
             stringToUTF8(wallets, walletsPtr, bufferSize);
-            return walletsPtr;
+            Module.dynCall_vi(callback, walletsPtr);
         } catch (err) {
             console.error(err.message);
         }
