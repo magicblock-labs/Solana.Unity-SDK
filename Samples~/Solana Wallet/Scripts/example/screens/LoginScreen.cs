@@ -20,7 +20,7 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private Button loginBtnTwitter;
         [SerializeField]
-        private Button loginBtnPhantom;
+        private Button loginBtnWalletAdapter;
         [SerializeField]
         private Button loginBtnSms;
         [SerializeField]
@@ -52,7 +52,7 @@ namespace Solana.Unity.SDK.Example
             loginBtn.onClick.AddListener(LoginChecker);
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
-            loginBtnPhantom.onClick.AddListener(LoginCheckerWalletAdapter);
+            loginBtnWalletAdapter.onClick.AddListener(LoginCheckerWalletAdapter);
             loginBtnSms.onClick.AddListener(LoginCheckerSms);
             loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
             
@@ -60,7 +60,7 @@ namespace Solana.Unity.SDK.Example
             
             if (Application.platform == RuntimePlatform.Android)
             {
-                loginBtnPhantom.gameObject.SetActive(false);
+                loginBtnWalletAdapter.gameObject.SetActive(false);
                 loginBtnSms.gameObject.SetActive(true);
             }
 

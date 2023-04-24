@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using AOT;
 using Solana.Unity.Rpc.Models;
@@ -66,10 +64,13 @@ namespace Solana.Unity.SDK
             : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             _walletOptions = solanaWalletOptions;
+            if (Application.platform != RuntimePlatform.WebGLPlayer)
+            {
+                throw new Exception("SolanaWalletAdapterWebGL can only be used on WebGL");
+            }
         }
         
         private static async Task InitWallets() {
-            # if UNITY_WEBGL && !UNITY_EDITOR
             if (Wallets == null){
                 _loadedScriptTaskCompletionSource = new TaskCompletionSource<bool>();
                 InitWalletAdapter(OnScriptLoaded);
@@ -78,9 +79,6 @@ namespace Solana.Unity.SDK
             _getWalletsTaskCompletionSource = new TaskCompletionSource<string>();
             ExternGetWallets(OnWalletsLoaded);
             var walletsData = await _getWalletsTaskCompletionSource.Task;
-            # else
-            var walletsData = "{\"wallets\":[{\"name\":\"Phantom\",\"installed\":true},{\"name\":\"Solflare\",\"installed\":true},{\"name\":\"Sollet\",\"installed\":true},{\"name\":\"Sollet.io\",\"installed\":true},{\"name\":\"Ledger Wallet\",\"installed\":true},{\"name\":\"Token Pocket\",\"installed\":true}]}\n";
-            # endif
             Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
            
         }
