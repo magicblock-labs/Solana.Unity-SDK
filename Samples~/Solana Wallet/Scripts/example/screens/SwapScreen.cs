@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Orca;
 using Solana.Unity.Dex;
+using Solana.Unity.Dex.Math;
 using Solana.Unity.Dex.Models;
 using Solana.Unity.Dex.Quotes;
 using Solana.Unity.Rpc.Types;
@@ -20,6 +20,7 @@ using Solana.Unity.SDK.Utility;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
@@ -37,10 +38,16 @@ public class SwapScreen : SimpleScreen
     private TMP_InputField inputAmountB;
     
     [SerializeField]
-    public RawImage logoA;
+    private TMP_Text errorTxt;
     
     [SerializeField]
-    public RawImage logoB;
+    private RawImage logoA;
+    
+    [SerializeField]
+    private RawImage logoB;
+    
+    [SerializeField]
+    private Button swapButton;
 
     private string _symbol = string.Empty;
     private string _prevSymbol = string.Empty;
@@ -67,9 +74,11 @@ public class SwapScreen : SimpleScreen
         _dropdowns = new[] {dropdownTokenA, dropdownTokenB};
         inputAmountA.onValueChanged.AddListener(delegate { GetSwapQuote(); });
         InitializeDropDowns().Forget();
+        swapButton.onClick.AddListener(StartSwap);
+        swapButton.interactable = false;
     }
 
-    public async void StartSwap()
+    private async void StartSwap()
     {
         Debug.Log("Start swap");
         await Swap();
@@ -79,12 +88,22 @@ public class SwapScreen : SimpleScreen
     {
         if(_whirlpool == null || _swapQuote == null) return;
         var tr = await _dex.SwapWithQuote(_whirlpool.Address, _swapQuote);
+        
         var result = await Web3.Instance.Wallet.SignAndSendTransaction(tr);
-        Debug.Log(result.Result);
-        await Web3.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
-        Debug.Log("Transaction confirmed");
-        await UniTask.SwitchToMainThread(); 
-        manager.ShowScreen(this,"wallet_screen");
+        Loading.StartLoading();
+        var confirmed = await Web3.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
+        if (confirmed)
+        {
+            Debug.Log("Transaction confirmed, see transaction at https://explorer.solana.com/tx/" + result.Result);
+            await UniTask.SwitchToMainThread(); 
+            manager.ShowScreen(this,"wallet_screen");
+        }
+        else
+        {
+            errorTxt.text = "Transaction failed";
+            errorTxt.enabled = true;
+        }
+        Loading.StopLoading();
     }
 
     private void GetSwapQuote()
@@ -92,7 +111,6 @@ public class SwapScreen : SimpleScreen
         _tokenSource?.Cancel();
         _tokenSource?.Dispose();
         _tokenSource = new CancellationTokenSource();
-        InputAmountAChanged().Forget();
         UniTask.Create(async () =>
         {
             await InputAmountAChanged();
@@ -104,23 +122,41 @@ public class SwapScreen : SimpleScreen
     /// </summary>
     private async UniTask InputAmountAChanged()
     {
-        if(_tokenA is null || _tokenB is null) return;
+        if(_tokenA is null || _tokenB is null || inputAmountA.text.IsNullOrEmpty()) return;
         try
         {
             var inputAAmount = float.Parse(inputAmountA.text);
             _whirlpool = await _dex.FindWhirlpoolAddress(_tokenA.MintAddress, _tokenB.MintAddress);
             _swapQuote = await _dex
                 .GetSwapQuoteFromWhirlpool(_whirlpool.Address, 
-                    (BigInteger)(inputAAmount * Math.Pow(10, _tokenA.Decimals)),
+                    DecimalUtil.ToUlong(inputAAmount, _tokenA.Decimals),
                     _tokenA.MintAddress);
-            var quote = (double)_swapQuote.EstimatedAmountOut/Math.Pow(10, _tokenB.Decimals);
+            var quote = DecimalUtil.FromBigInteger(_swapQuote.EstimatedAmountOut, _tokenB.Decimals);
             await MainThreadDispatcher.Instance().EnqueueAsync(() => { 
                 inputAmountB.text = quote.ToString(CultureInfo.InvariantCulture);
+                errorTxt.enabled = false;
             });
+            var tokenABalance = await Web3.Rpc.GetTokenBalanceByOwnerAsync(
+                Web3.Account.PublicKey, _tokenA.Mint);
+            if(tokenABalance.Result == null || tokenABalance.Result.Value.AmountUlong < _swapQuote.EstimatedAmountIn)
+            {
+                errorTxt.text = $"Not enough {_tokenA.Symbol} to perform this swap";
+                errorTxt.enabled = true;
+                swapButton.interactable = false;
+            }
+            else
+            {
+                swapButton.interactable = true; 
+            }
         }
         catch (Exception)
         {
-            // ignored
+            swapButton.interactable = false;
+            if (_whirlpool == null)
+            {
+                errorTxt.text = "Unable to find a pool for this swap";
+                errorTxt.enabled = true;   
+            }
         }
     }
     

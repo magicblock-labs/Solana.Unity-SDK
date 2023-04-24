@@ -63,6 +63,13 @@ namespace Solana.Unity.SDK.Example
                 loginBtnWalletAdapter.gameObject.SetActive(false);
                 loginBtnSms.gameObject.SetActive(true);
             }
+            
+            if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.WindowsEditor or RuntimePlatform.OSXEditor)
+            {
+                loginBtnPhantom.onClick.RemoveListener(LoginCheckerPhantom);
+                loginBtnPhantom.onClick.AddListener(() =>
+                    Debug.LogWarning("Phantom login is not yet supported in the editor"));
+            }
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
