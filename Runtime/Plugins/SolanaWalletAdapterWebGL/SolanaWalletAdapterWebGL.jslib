@@ -4,7 +4,7 @@
         if(window.walletAdapterLib == undefined){
             console.log("Adding WalletAdapterLib")
             var script = document.createElement("script");
-            script.src = "https://cdn.jsdelivr.net/gh/nicoeft/unity-wallet-adapter@main/dist/wallet-adapter-lib.js";
+            script.src = "https://cdn.jsdelivr.net/gh/magicblock-labs/unity-js-wallet-adapter@main/dist/wallet-adapter-lib.js";
             document.head.appendChild(script);
             script.onload = function() {
                 console.log("WalletAdapterLib loaded");
@@ -51,19 +51,40 @@
          }
     },
     ExternSignMessageWallet: async function (walletNamePtr, messagePtr, callback) {
-             try {
-                    const walletName = UTF8ToString(walletNamePtr)
-                    var base64Message = UTF8ToString(messagePtr)
-                    var signature = await window.walletAdapterLib.signMessage(walletName, base64Message);
-                    var signatureStr =  signature.toString('base64');
-                    var bufferSize = lengthBytesUTF8(signatureStr) + 1;
-                    var signaturePtr = _malloc(bufferSize);
-                    stringToUTF8(signatureStr, signaturePtr, bufferSize);
-                    Module.dynCall_vi(callback, signaturePtr);          
-             } catch (err) {
-                console.error(err.message);
-             }
-        },
+         try {
+                const walletName = UTF8ToString(walletNamePtr)
+                var base64Message = UTF8ToString(messagePtr)
+                var signature = await window.walletAdapterLib.signMessage(walletName, base64Message);
+                var signatureStr =  signature.toString('base64');
+                var bufferSize = lengthBytesUTF8(signatureStr) + 1;
+                var signaturePtr = _malloc(bufferSize);
+                stringToUTF8(signatureStr, signaturePtr, bufferSize);
+                Module.dynCall_vi(callback, signaturePtr);          
+         } catch (err) {
+            console.error(err.message);
+         }
+    },
+     ExternSignAllTransactionsWallet: async function (walletNamePtr, transactionsPtr, callback) {
+         try {
+                const walletName = UTF8ToString(walletNamePtr)
+                var base64transactionsStr = UTF8ToString(transactionsPtr)
+                var base64transactions = base64transactionsStr.split(',');
+                var signedTransactions = await window.walletAdapterLib.signAllTransactions(walletName, base64transactions);
+                var signatures = [];
+                for (var i = 0; i < signedTransactions.length; i++) {
+                    var signedTransaction = signedTransactions[i];
+                    var signature = signedTransaction.signature.toString('base64');
+                    signatures.push(signature);
+                }
+                var signaturesStr = signatures.join(',');
+                var bufferSize = lengthBytesUTF8(signaturesStr) + 1;
+                var signaturesPtr = _malloc(bufferSize);
+                stringToUTF8(signaturesStr, signaturesPtr, bufferSize);
+                Module.dynCall_vi(callback, signaturesPtr);
+        } catch (err) {
+            console.error(err.message);
+        }
+    },
 } );
 
 

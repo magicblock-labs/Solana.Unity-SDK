@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,8 +26,10 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<string> _getWalletsTaskCompletionSource;
         private static TaskCompletionSource<bool> _loadedScriptTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private static TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
         private static Transaction _currentTransaction;
+        private static Transaction[] _currentTransactions;
         private static Account _account;
         public static GameObject WalletAdapterUI { get; private set; }
 
@@ -138,12 +141,26 @@ namespace Solana.Unity.SDK
             ExternSignMessageWallet(_currentWallet.name,base64MessageStr, OnMessageSigned);
             return _signedMessageTaskCompletionSource.Task;
         }
-        
+
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
             throw new NotImplementedException();
         }
-        
+
+        protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
+        {
+            _signedAllTransactionsTaskCompletionSource = new TaskCompletionSource<Transaction[]>();
+            _currentTransactions = transactions;
+            string[] base64Transactions = new string[transactions.Length];
+            for (int i = 0; i < transactions.Length; i++)
+            {
+                base64Transactions[i] = Convert.ToBase64String(transactions[i].Serialize());
+            }
+            var base64TransactionsStr = string.Join(",", base64Transactions);
+            ExternSignAllTransactionsWallet(_currentWallet.name,base64TransactionsStr, OnAllTransactionsSigned);
+            return _signedAllTransactionsTaskCompletionSource.Task;
+        }
+
         #region WebGL Callbacks
         
         /// <summary>
@@ -173,6 +190,27 @@ namespace Solana.Unity.SDK
         }
         
         /// <summary>
+        /// Called from javascript when the wallet signed all transactions and return the signature
+        /// that we then need to put into the transaction before we send it out.
+        /// </summary>
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        public static void OnAllTransactionsSigned(string signatures)
+        {
+            string[] signaturesList = signatures.Split(',');
+            for (int i = 0; i < signaturesList.Length; i++)
+            {
+                _currentTransactions[i].Signatures.Add(new SignaturePubKeyPair()
+                {
+                    PublicKey = _account.PublicKey,
+                    Signature = Convert.FromBase64String(signaturesList[i])
+                });
+            }
+            _signedAllTransactionsTaskCompletionSource.SetResult(_currentTransactions);
+        }
+        
+        
+        
+        /// <summary>
         /// Called from javascript when the wallet adapter signed the message and return the signature.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<string>))]
@@ -180,7 +218,7 @@ namespace Solana.Unity.SDK
         {
             _signedMessageTaskCompletionSource.SetResult(Convert.FromBase64String(signature));
         }
-        
+
         /// <summary>
         /// Called from javascript when the wallet adapter script is loaded
         /// </summary>
@@ -210,8 +248,12 @@ namespace Solana.Unity.SDK
                 private static extern void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback);
                 
                 [DllImport("__Internal")]
+                private static extern void ExternSignAllTransactionsWallet(string walletName, string transactions, Action<string> callback);
+
+                [DllImport("__Internal")]
                 private static extern void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback);
         
+                
                 [DllImport("__Internal")]
                 private static extern string  ExternGetWallets(Action<string> callback);
 
@@ -222,6 +264,7 @@ namespace Solana.Unity.SDK
         #else
                 private static void ExternConnectWallet(string walletName, Action<string> callback){}
                 private static void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback){}
+                private static void ExternSignAllTransactionsWallet(string walletName, string transactions, Action<string> callback){}
                 private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
                 private static string ExternGetWallets(Action<bool> callback){return null;}
                 private static void InitWalletAdapter(Action<bool> callback){}

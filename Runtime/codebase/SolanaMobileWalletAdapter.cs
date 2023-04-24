@@ -112,6 +112,11 @@ namespace Solana.Unity.SDK
             return Transaction.Deserialize(res.SignedPayloads[0]);
         }
 
+        protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
+        {
+            throw new NotImplementedException();
+        }
+
         public override async Task<byte[]> SignMessage(byte[] message)
         {
             if (_authToken.IsNullOrEmpty())
