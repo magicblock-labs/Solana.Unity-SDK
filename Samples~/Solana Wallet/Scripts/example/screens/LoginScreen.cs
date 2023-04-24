@@ -14,7 +14,7 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private TextMeshProUGUI passwordText;
         [SerializeField]
-        private Button loginBtn;
+        private Button loginBtn; 
         [SerializeField]
         private Button loginBtnGoogle;
         [SerializeField]
@@ -66,9 +66,9 @@ namespace Solana.Unity.SDK.Example
             
             if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.WindowsEditor or RuntimePlatform.OSXEditor)
             {
-                loginBtnPhantom.onClick.RemoveListener(LoginCheckerPhantom);
-                loginBtnPhantom.onClick.AddListener(() =>
-                    Debug.LogWarning("Phantom login is not yet supported in the editor"));
+                loginBtnWalletAdapter.onClick.RemoveListener(LoginCheckerWalletAdapter);
+                loginBtnWalletAdapter.onClick.AddListener(() =>
+                    Debug.LogWarning("Wallet adapter login is not yet supported in the editor"));
             }
 
             if(messageTxt != null)
