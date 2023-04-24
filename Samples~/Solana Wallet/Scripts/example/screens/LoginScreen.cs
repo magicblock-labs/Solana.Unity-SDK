@@ -14,13 +14,13 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private TextMeshProUGUI passwordText;
         [SerializeField]
-        private Button loginBtn;
+        private Button loginBtn; 
         [SerializeField]
         private Button loginBtnGoogle;
         [SerializeField]
         private Button loginBtnTwitter;
         [SerializeField]
-        private Button loginBtnPhantom;
+        private Button loginBtnWalletAdapter;
         [SerializeField]
         private Button loginBtnSms;
         [SerializeField]
@@ -52,7 +52,7 @@ namespace Solana.Unity.SDK.Example
             loginBtn.onClick.AddListener(LoginChecker);
             loginBtnGoogle.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.GOOGLE);});
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
-            loginBtnPhantom.onClick.AddListener(LoginCheckerPhantom);
+            loginBtnWalletAdapter.onClick.AddListener(LoginCheckerWalletAdapter);
             loginBtnSms.onClick.AddListener(LoginCheckerSms);
             loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
             
@@ -60,21 +60,20 @@ namespace Solana.Unity.SDK.Example
             
             if (Application.platform == RuntimePlatform.Android)
             {
-                loginBtnPhantom.gameObject.SetActive(false);
+                loginBtnWalletAdapter.gameObject.SetActive(false);
                 loginBtnSms.gameObject.SetActive(true);
             }
             
             if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.WindowsEditor or RuntimePlatform.OSXEditor)
             {
-                loginBtnPhantom.onClick.RemoveListener(LoginCheckerPhantom);
-                loginBtnPhantom.onClick.AddListener(() =>
-                    Debug.LogWarning("Phantom login is not yet supported in the editor"));
+                loginBtnWalletAdapter.onClick.RemoveListener(LoginCheckerWalletAdapter);
+                loginBtnWalletAdapter.onClick.AddListener(() =>
+                    Debug.LogWarning("Wallet adapter login is not yet supported in the editor"));
             }
 
             if(messageTxt != null)
                 messageTxt.gameObject.SetActive(false);
         }
-
         private async void LoginChecker()
         {
             var password = passwordInputField.text;
@@ -109,6 +108,14 @@ namespace Solana.Unity.SDK.Example
         {
             if(Web3.Instance == null) return;
             var account = await Web3.Instance.LoginXNFT();
+            messageTxt.text = "";
+            CheckAccount(account);
+        }
+        
+        private async void LoginCheckerWalletAdapter()
+        {
+            if(Web3.Instance == null) return;
+            var account = await Web3.Instance.LoginWalletAdapter();
             messageTxt.text = "";
             CheckAccount(account);
         }

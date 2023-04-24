@@ -58,6 +58,11 @@ namespace Solana.Unity.SDK
             throw new NotImplementedException();
         }
 
+        protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Task<byte[]> SignMessage(byte[] message)
         {
             if (_internalWallet != null)

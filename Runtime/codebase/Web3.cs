@@ -25,6 +25,8 @@ namespace Solana.Unity.SDK
         
         public SolanaMobileWalletAdapterOptions solanaMobileWalletOptions;
         
+        public SolanaWalletAdapterWebGLOptions solanaWalletAdapterWebGLOptions;
+        
         #endregion
         
         public delegate void WalletChange();
@@ -142,6 +144,20 @@ namespace Solana.Unity.SDK
             var acc = await xnftWallet.Login();
             if (acc != null)
                 Wallet = xnftWallet;
+            return acc;
+        }
+        
+        public async Task<Account> LoginWalletAdapter()
+        {
+
+            if(solanaWalletAdapterWebGLOptions.walletAdapterUIPrefab == null)
+                solanaWalletAdapterWebGLOptions.walletAdapterUIPrefab = Resources.Load<GameObject>("SolanaUnitySDK/WalletAdapterUI");
+            if (solanaWalletAdapterWebGLOptions.walletAdapterButtonPrefab == null)
+                solanaWalletAdapterWebGLOptions.walletAdapterButtonPrefab = Resources.Load<GameObject>("SolanaUnitySDK/WalletAdapterButton");
+            var walletAdapter = new SolanaWalletAdapterWebGL(solanaWalletAdapterWebGLOptions, rpcCluster, customRpc, webSocketsRpc, false);
+            var acc = await walletAdapter.Login();
+            if (acc != null)
+                Wallet = walletAdapter;
             return acc;
         }
 

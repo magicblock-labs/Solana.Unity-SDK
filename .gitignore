@@ -30,6 +30,7 @@ test-results/
 
 /BUILD/
 *.DS_store
+*.idea
 
 CODE_OF_CONDUCT.md.meta
 CONTRIBUTING.md.meta

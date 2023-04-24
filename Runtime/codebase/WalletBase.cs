@@ -222,6 +222,34 @@ namespace Solana.Unity.SDK
             return tx;
         }
 
+
+        /// <summary>
+        /// Sign all transactions
+        /// </summary>
+        /// <param name="transactions"></param>
+        /// <returns></returns>
+        protected abstract Task<Transaction[]> _SignAllTransactions(Transaction[] transactions);
+        
+        /// <inheritdoc />
+        public virtual async Task<Transaction[]> SignAllTransactions(Transaction[] transactions)
+        {
+            foreach (var transaction in transactions)
+            {
+                transaction.Sign(Account);
+                transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
+            }
+            Transaction[] signedTxs = await _SignAllTransactions(transactions);
+            for (int i = 0; i < signedTxs.Length; i++)
+            {
+                var tx = signedTxs[i];
+                var signatures = transactions[i].Signatures;
+                signatures.AddRange(tx.Signatures);
+                tx.Signatures = signatures;
+                tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
+            }
+            return signedTxs;
+        }
+
         /// <inheritdoc />
         public virtual async Task<RequestResult<string>> SignAndSendTransaction
         (

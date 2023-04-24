@@ -122,6 +122,12 @@ namespace Solana.Unity.SDK
             return Transaction.Deserialize(res.SignedPayloads[0]);
         }
 
+
+        protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void Logout()
         {
             base.Logout();
