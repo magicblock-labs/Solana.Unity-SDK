@@ -56,7 +56,7 @@ namespace Solana.Unity.SDK
             if (_walletOptions.keepConnectionAlive)
             {
                 string pk = PlayerPrefs.GetString("pk", null);
-                if (pk != null) return new Account(string.Empty, new PublicKey(pk));
+                if (!pk.IsNullOrEmpty()) return new Account(string.Empty, new PublicKey(pk));
             }
             AuthorizationResult authorization = null;
             var localAssociationScenario = new LocalAssociationScenario();

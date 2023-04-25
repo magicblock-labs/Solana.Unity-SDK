@@ -264,7 +264,7 @@ namespace Solana.Unity.SDK
                 private static void ExternSignTransactionWallet(string walletName, string transaction, Action<string> callback){}
                 private static void ExternSignAllTransactionsWallet(string walletName, string transactions, Action<string> callback){}
                 private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
-                private static string ExternGetWallets(Action<bool> callback){return null;}
+                private static string ExternGetWallets(Action<string> callback){return null;}
                 private static void InitWalletAdapter(Action<bool> callback){}
                 
         #endif
