@@ -6,14 +6,20 @@ using System.Linq;
 using UnityEngine;
 using System.Net;
 using System.Collections;
+using Newtonsoft.Json.Converters;
 using Org.BouncyCastle.Math;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Utilities;
+using UnityEngine.Scripting;
 
 public class Web3Auth: MonoBehaviour
 {
+    [Preserve]
+    [Serializable]
     public enum Network
     {
         MAINNET, TESTNET, CYAN
+        
     }
 
     private Web3AuthOptions web3AuthOptions;
@@ -34,9 +40,16 @@ public class Web3Auth: MonoBehaviour
     private Web3Auth.Network network;
 
     private static readonly Queue<Action> _executionQueue = new Queue<Action>();
+    private string _login;
 
     public void Awake()
     {
+        AotHelper.EnsureDictionary<string, LoginParams>();
+        AotHelper.EnsureDictionary<string, WhiteLabelData>();
+        AotHelper.EnsureType<Web3AuthResponse>();;
+        AotHelper.EnsureType<StringEnumConverter>();;
+        AotHelper.EnsureType<UserInfo>();
+
         this.initParams = new Dictionary<string, object>();
 
         this.initParams["clientId"] = clientId;
@@ -206,6 +219,7 @@ public class Web3Auth: MonoBehaviour
 
     private void request(string  path, LoginParams loginParams = null, Dictionary<string, object> extraParams = null)
     {
+
 #if UNITY_STANDALONE || UNITY_EDITOR
         this.initParams["redirectUrl"] = StartLocalWebserver();
 #elif UNITY_WEBGL
@@ -221,17 +235,34 @@ public class Web3Auth: MonoBehaviour
                 (paramMap["params"] as Dictionary<string, object>) [item.Key] = item.Value;
             }
 
-        string hash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(paramMap, Newtonsoft.Json.Formatting.None,
-                            new JsonSerializerSettings
-                            {
-                                NullValueHandling = NullValueHandling.Ignore
-                            })));
+        var serParams = JsonConvert.SerializeObject(paramMap, Formatting.None,
+            new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
+        Debug.Log(serParams);
+
+        string hash = Convert.ToBase64String(Encoding.UTF8.GetBytes(serParams));
 
         UriBuilder uriBuilder = new UriBuilder(this.web3AuthOptions.sdkUrl);
         uriBuilder.Path = path;
         uriBuilder.Fragment = hash;
+        
+        _login = loginParams?.loginProvider.ToString();
+        _login += loginParams?.curve.ToString();
+        _login += loginParams?.mfaLevel.ToString();
+        _login += loginParams?.sessionTime.ToString();
 
-        Utils.LaunchUrl(uriBuilder.ToString(), this.initParams["redirectUrl"].ToString(), gameObject.name);
+        var wData = JsonConvert.DeserializeObject<WhiteLabelData>(initParams["whiteLabel"].ToString());
+        _login += wData.name;
+        _login += wData.logoDark;
+        _login += wData.logoLight;
+        _login += wData.defaultLanguage;
+        _login += wData.dark;
+        _login += wData.theme;
+        Debug.Log(_login);
+        
+        Utils.LaunchUrl(uriBuilder.ToString(), initParams["redirectUrl"].ToString(), gameObject.name);
     }
 
     public void setResultUrl(Uri uri)
@@ -250,8 +281,9 @@ public class Web3Auth: MonoBehaviour
 
         if (queryParameters.Keys.Contains("error"))
             throw new UnKnownException(queryParameters["error"]);
-
+        
         this.web3AuthResponse = JsonConvert.DeserializeObject<Web3AuthResponse>(Encoding.UTF8.GetString(Utils.DecodeBase64(hash)));
+        
         if (!string.IsNullOrEmpty(this.web3AuthResponse.error))
             throw new UnKnownException(web3AuthResponse.error);
 
@@ -334,7 +366,7 @@ public class Web3Auth: MonoBehaviour
                 var tempJson = JsonConvert.DeserializeObject<JObject>(share);
                 tempJson.Add("userInfo", tempJson["store"]);
                 tempJson.Remove("store");
-                
+
                 this.web3AuthResponse = JsonConvert.DeserializeObject<Web3AuthResponse>(tempJson.ToString());
 
                 if (web3AuthResponse == null) return;
