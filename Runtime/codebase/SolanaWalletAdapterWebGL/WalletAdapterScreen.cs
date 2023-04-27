@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine.UI;
 
 // ReSharper disable once CheckNamespace
@@ -27,7 +28,7 @@ namespace Solana.Unity.SDK
             var walletButton = g.GetComponent<WalletAdapterButton>();
             walletButton.WalletNameLabel.text = wallet.name;
             walletButton.Name = wallet.name;
-            walletButton.DetectedLabel.SetActive(wallet.installed);
+            walletButton.DetectedLabel.GetComponent<TextMeshProUGUI>().enabled = wallet.installed;
             walletButton.OnSelectedAction = walletName =>
             { 
                 OnSelectedAction?.Invoke(walletName);
@@ -55,8 +56,6 @@ namespace Solana.Unity.SDK
          {
              transform.parent.gameObject.SetActive(false);
          }
-         
-         
-        
+
     }
 }
