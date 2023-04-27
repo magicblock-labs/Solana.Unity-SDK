@@ -10,8 +10,8 @@ The SDK supports a veriety of wallets, including
 | :---        |    :----:   |          ---: |
 | In-game (new or restore)      | ✅       | In-app   |
 | In-game (Web3auth)      | ✅       | In-app   |
-| Phantom      | ✅       | External   |
-| SMS      | ✅       | External  |
+| Wallet Adapter        | ✅       | External   |
+| Mobile Wallet Adapter      | ✅       | External  |
 | Seed Vault      | 🏗       | In-app   |
 
 
@@ -19,18 +19,27 @@ The SDK supports a veriety of wallets, including
 `IWalletBase` defines the common [interface](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/IWalletBase.cs) 
 
 The WalletBase abstract class implements `IWalletBase` interface and provides convenient methods shared by all wallet adapters. A few examples are:
+
 * Connection to Mainnet/Devnet/Testnet or custom RPC
 * Login/logout
 * Account creation
 * Get balance
 * Get token accounts
-* Sign/partially sign a transaction
-* Send transaction
+* Sign/partially sign transactions
+* Send transactions
 
 
-{% callout title="Additional methods" %} The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs) {% /callout %}
+{% callout title="Additional methods" %} The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs) {% /callout %} 
 
 ---
+## Wallet Adapter
+To configure a wallet following the [Wallet Adapter](https://solana-mobile.github.io/mobile-wallet-adapter/spec/spec.html) standard use the [SolanaWalletAdapterWebGL](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaWalletAdapterWebGL.cs) wallet implementation.
+
+```csharp
+WalletBase wallet = new SolanaWalletAdapterWebGL(walletAdapterOptions, RpcCluster.DevNet, ...);
+``` 
+
+
 ## SMS
 
 Solana Mobile Stack is a set of libraries for wallets and apps, allowing developers to create rich mobile experiences for the Solana network.
