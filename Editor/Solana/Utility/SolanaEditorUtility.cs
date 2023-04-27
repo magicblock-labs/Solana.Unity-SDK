@@ -32,7 +32,8 @@ namespace Solana.Unity.SDK.Editor
             fontStyle = FontStyle.Bold,
             fontSize = headingFontSize,
             padding = standardPadding,
-            margin = standardMargin
+            margin = standardMargin,
+            wordWrap = true
         };
 
         public static readonly GUIStyle answerFieldStyle = new(GUI.skin.textField) {

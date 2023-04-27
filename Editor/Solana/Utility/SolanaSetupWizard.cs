@@ -1,26 +1,29 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor
 {
-    public abstract class SolanaSetupWizard : EditorWindow
+    public abstract class SolanaSetupWizard<KeyType> : EditorWindow where KeyType : Enum
     {
 
         #region Types
 
-        private protected class WizardQuestion
+        private protected class WizardQuestion<Key> where Key: Enum
         {
             #region Properties
 
-            private readonly string question;
-            private string answer;
+            internal Key key;
+            internal object answer;
+            internal readonly string question;
 
             #endregion
 
             #region Constructors
 
-            internal WizardQuestion(string question, string answer)
+            internal WizardQuestion(Key key, string question, object answer)
             {
+                this.key = key;
                 this.question = question;
                 this.answer = answer;
             }
@@ -29,14 +32,9 @@ namespace Solana.Unity.SDK.Editor
 
             #region Internal
 
-            internal void Render()
+            internal protected object Answer()
             {
-                SolanaEditorUtility.Heading(question, TextAnchor.UpperCenter);
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                answer = EditorGUILayout.TextField(answer, SolanaEditorUtility.answerFieldStyle);
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.EndHorizontal();
+                return answer;
             }
 
             #endregion
@@ -46,8 +44,8 @@ namespace Solana.Unity.SDK.Editor
 
         #region Properties
 
-        private int currentQuestion = 0;
-        private protected abstract WizardQuestion[] Questions { get; }
+        private int questionIndex = 0;
+        private protected WizardQuestion<KeyType>[] questions;
 
         #endregion
 
@@ -55,21 +53,23 @@ namespace Solana.Unity.SDK.Editor
 
         protected void OnGUI()
         {
-            Questions[currentQuestion].Render();
+            RenderQuestion(questions[questionIndex]);
             EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                EditorGUI.BeginDisabledGroup(currentQuestion == 0);
+                EditorGUI.BeginDisabledGroup(questionIndex == 0);
                     if (GUILayout.Button("Back")) {
-                        currentQuestion--;
-                        currentQuestion = Mathf.Max(0, currentQuestion);
+                        questionIndex--;
+                        questionIndex = Mathf.Max(0, questionIndex);
                     }
                 EditorGUI.EndDisabledGroup();
-                if (currentQuestion < Questions.Length - 1) {
+                if (questionIndex < questions.Length - 1) {
                     if (GUILayout.Button("Next")) {
-                        currentQuestion++;
+                        OnQuestionAnswered(questions[questionIndex]);
+                        questionIndex++;
                     }
                 } else {
                     if (GUILayout.Button("Finish")) {
+                        OnQuestionAnswered(questions[questionIndex]);
                         OnWizardFinished();
                     }
                 }
@@ -81,7 +81,9 @@ namespace Solana.Unity.SDK.Editor
 
         #region Protected
 
+        private protected abstract void RenderQuestion(WizardQuestion<KeyType> question);
         private protected abstract void OnWizardFinished();
+        private protected abstract void OnQuestionAnswered(WizardQuestion<KeyType> prevQuestion);
 
         #endregion
     }
