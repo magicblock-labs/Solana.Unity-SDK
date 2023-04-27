@@ -13,7 +13,7 @@ namespace Solana.Unity.SDK.Editor
         {
             #region Properties
 
-            internal Key key;
+            internal readonly Key key;
             internal object answer;
             internal readonly string question;
 
@@ -26,15 +26,6 @@ namespace Solana.Unity.SDK.Editor
                 this.key = key;
                 this.question = question;
                 this.answer = answer;
-            }
-
-            #endregion
-
-            #region Internal
-
-            internal protected object Answer()
-            {
-                return answer;
             }
 
             #endregion
@@ -53,7 +44,7 @@ namespace Solana.Unity.SDK.Editor
 
         protected void OnGUI()
         {
-            RenderQuestion(questions[questionIndex]);
+            questions[questionIndex].answer = RenderQuestion(questions[questionIndex]);
             EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 EditorGUI.BeginDisabledGroup(questionIndex == 0);
@@ -64,12 +55,10 @@ namespace Solana.Unity.SDK.Editor
                 EditorGUI.EndDisabledGroup();
                 if (questionIndex < questions.Length - 1) {
                     if (GUILayout.Button("Next")) {
-                        OnQuestionAnswered(questions[questionIndex]);
                         questionIndex++;
                     }
                 } else {
                     if (GUILayout.Button("Finish")) {
-                        OnQuestionAnswered(questions[questionIndex]);
                         OnWizardFinished();
                     }
                 }
@@ -81,9 +70,8 @@ namespace Solana.Unity.SDK.Editor
 
         #region Protected
 
-        private protected abstract void RenderQuestion(WizardQuestion<KeyType> question);
+        private protected abstract object RenderQuestion(WizardQuestion<KeyType> question);
         private protected abstract void OnWizardFinished();
-        private protected abstract void OnQuestionAnswered(WizardQuestion<KeyType> prevQuestion);
 
         #endregion
     }

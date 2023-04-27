@@ -28,36 +28,22 @@ namespace Solana.Unity.SDK.Editor
 
         #region SolanaSetupWizard
 
-        private protected override void OnQuestionAnswered(WizardQuestion<CandyMachinePropertyKey> question)
-        {
-            var answer = question.Answer();
-            var s = "";
-            var settings = new EndSettings();
-            switch (question.key) {
-                case CandyMachinePropertyKey.String:
-                    s = (string)answer;
-                    break;
-                case CandyMachinePropertyKey.EndSettings:
-                    settings = (EndSettings)answer;
-                    break;
-            }
-        }
-
         private protected override void OnWizardFinished()
         {
             // Create config file
         }
 
-        private protected override void RenderQuestion(WizardQuestion<CandyMachinePropertyKey> question)
+        private protected override object RenderQuestion(WizardQuestion<CandyMachinePropertyKey> question)
         {
             switch (question.key) {
                 case CandyMachinePropertyKey.EndSettings:
-                    EndSettings(question);
-                    break;
+                    return EndSettings(question);
                 case CandyMachinePropertyKey.String:
-                    StringQuestion(question);
+                    return StringQuestion(question);
+                default:
                     break;
             }
+            return null;
         }
 
         #endregion
