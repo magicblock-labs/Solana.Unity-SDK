@@ -16,6 +16,7 @@ namespace Solana.Unity.SDK
         
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
         private static Transaction _currentTransaction;
         private static Account _account;
 
@@ -56,7 +57,9 @@ namespace Solana.Unity.SDK
 
         public override Task<byte[]> SignMessage(byte[] message)
         {
-            throw new NotImplementedException();
+            _signedMessageTaskCompletionSource = new TaskCompletionSource<byte[]>();
+            ExternSignMessageXNFT(Convert.ToBase64String(message), OnMessageSigned);
+            return _signedMessageTaskCompletionSource.Task;
         }
         
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
@@ -78,7 +81,7 @@ namespace Solana.Unity.SDK
         }
 
         /// <summary>
-        /// Called from java script when the phantom wallet signed the transaction and return the signature
+        /// Called from java script when the xnft wallet signed the transaction and return the signature
         /// that we then need to put into the transaction before we send it out.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<string>))]
@@ -91,6 +94,17 @@ namespace Solana.Unity.SDK
             });
             _signedTransactionTaskCompletionSource.SetResult(_currentTransaction);
         }
+        
+        /// <summary>
+        /// Called from java script when the xnft wallet signed the message and return the signature.
+        /// </summary>
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        public static void OnMessageSigned(string signature)
+        {
+            var signatureArray = JsonUtility.FromJson<byte[]>(signature);
+            Debug.Log("SignatureArray: " + signatureArray);
+            _signedMessageTaskCompletionSource.SetResult(signatureArray);
+        }
 
         #endregion
 
@@ -102,9 +116,13 @@ namespace Solana.Unity.SDK
         [DllImport("__Internal")]
         private static extern void ExternSignTransactionXNFT(string transaction, Action<string> callback);
         
+        [DllImport("__Internal")]
+        private static extern void ExternSignMessageXNFT(string message, Action<string> callback);
+        
         #else
         private static void ExternConnectXNFT(Action<string> callback){}
         private static void ExternSignTransactionXNFT(string transaction, Action<string> callback){}
+        private static void ExternSignMessageXNFT(string message, Action<string> callback){}
         #endif
     }
 }
