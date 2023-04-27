@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace Solana.Unity.SDK.Editor
         public static readonly RectOffset standardPadding = new(10, 10, 2, 2);
         public static readonly RectOffset scrollViewPadding = new(15, 15, 2, 2);
 
+        public static readonly int headingFontSize = 16;
+
         #endregion
         
         #region GUIStyles
@@ -22,6 +25,21 @@ namespace Solana.Unity.SDK.Editor
             fontStyle = FontStyle.Bold,
             padding = standardPadding,
             margin = standardMargin
+        };
+
+        public static readonly GUIStyle headingLabelStyle = new(GUI.skin.label) {
+            stretchWidth = true,
+            fontStyle = FontStyle.Bold,
+            fontSize = headingFontSize,
+            padding = standardPadding,
+            margin = standardMargin
+        };
+
+        public static readonly GUIStyle answerFieldStyle = new(GUI.skin.textField) {
+            alignment = TextAnchor.MiddleCenter,
+            fontStyle = FontStyle.Bold,
+            padding = standardPadding,
+            margin = new (5, 5, 10, 10)
         };
 
         public static readonly GUIStyle selectButtonStyle = new(GUI.skin.button) {
@@ -56,13 +74,11 @@ namespace Solana.Unity.SDK.Editor
         #region Controls
 
         public static string RPCField(string currentRPC) {
-            // Layout:
-            string rpc = null;
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label("RPC URL", propLabelStyle);
-            EditorGUILayout.TextField(currentRPC, textFieldStyle);
+            var newRPC = EditorGUILayout.TextField(currentRPC, textFieldStyle);
             EditorGUILayout.EndHorizontal();
-            return rpc ?? currentRPC;
+            return newRPC;
         }
 
         public static string FileSelectField(
@@ -73,25 +89,39 @@ namespace Solana.Unity.SDK.Editor
         ) {
             // Layout:
             string newPath = null;
-            EditorGUILayout.BeginHorizontal();
-            StaticTextProperty(labelText, currentPath);
-            if (GUILayout.Button("Select", selectButtonStyle)) {
+            StaticTextProperty(labelText, currentPath, "Select", delegate {
                 if (extension == null) {
                     newPath = EditorUtility.OpenFolderPanel(explorerTitle, "", "");
                 }
                 else {
                     newPath = EditorUtility.OpenFilePanel(explorerTitle, "", extension);
                 }
-            }
-            EditorGUILayout.EndHorizontal();
+            });
             return newPath ?? currentPath;
         }
 
-        public static void StaticTextProperty(string label, string value) {
+        public static void StaticTextProperty(
+            string label, 
+            string value,
+            string buttonText = null,
+            Action buttonAction = null
+        ) {
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label(label, propLabelStyle);
+            if (buttonText != null && buttonAction != null) {
+                if (GUILayout.Button(buttonText, selectButtonStyle)) {
+                    buttonAction?.Invoke();
+                }
+            }
             GUILayout.Box(value, fileSelectPathStyle);
             EditorGUILayout.EndHorizontal();
+        }
+
+        public static void Heading(string text, TextAnchor alignment)
+        {
+            var style = headingLabelStyle;
+            style.alignment = alignment;
+            GUILayout.Label(text, style);
         }
 
         #endregion

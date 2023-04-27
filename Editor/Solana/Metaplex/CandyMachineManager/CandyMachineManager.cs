@@ -19,7 +19,7 @@ namespace Solana.Unity.SDK.Editor
 
         [MenuItem("Solana/Metaplex/Candy Machine")]
         public static void ShowWindow() {
-            GetWindow(typeof(CandyMachineManager));
+            GetWindow(typeof(CandyMachineManager), false, "Candy Machine Manager");
         }
 
         #endregion
@@ -27,7 +27,6 @@ namespace Solana.Unity.SDK.Editor
         #region Unity Messages
 
         private void OnGUI() {
-            // Layout:
             SolanaEditorUtility.FileSelectField(
                 "Keypair",
                 "",
@@ -41,8 +40,12 @@ namespace Solana.Unity.SDK.Editor
             );
             rpc = SolanaEditorUtility.RPCField(rpc);
             CandyMachineScrollView();
-            if (GUILayout.Button("Add New Candy Machine")) {
-                Debug.Log("Add New Candy Machine.");
+            if (GUILayout.Button("Create new Candy Machine")) {
+                GetWindow(typeof(CandyMachineCreator), false, "Candy Machine Creator");
+            }
+            if (GUILayout.Button("Import Candy Machine")) {
+                Debug.Log("Launch finder and copy config.");
+                Close();
             }
         }
 
