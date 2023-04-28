@@ -35,4 +35,24 @@ mergeInto(LibraryManager.library, {
       console.error("Not running in Backpack wallet");
     }
   },
+  
+  ExternSignMessageXNFT: async function (message, callback) {
+      if ('xnft' in window && window.xnft != undefined && window.xnft.solana != undefined) {
+        try {
+          const messageBase64String = UTF8ToString(message);
+          const messageBytes = Uint8Array.from(atob(messageBase64String), (c) => c.charCodeAt(0));
+          const signedMessage = await window.xnft.solana.signMessage(messageBytes);
+          console.log(signedMessage);
+          var sign = JSON.stringify(Array.from(signedMessage));
+          var lenSign = lengthBytesUTF8(sign) + 1;
+          var strPtr = _malloc(lenSign);
+          stringToUTF8(sign, strPtr, lenSign);
+          Module.dynCall_vi(callback, strPtr);
+        } catch (err) {
+          console.error(err.message);
+        }
+      } else {
+        console.error("Not running in Backpack wallet");
+      }
+    },
 });
