@@ -2,7 +2,7 @@ using Solana.Unity.Wallet;
 
 namespace Solana.Unity.SDK.Metaplex 
 {
-    public struct CandyMachineConfig 
+    public struct CandyMachineDetails 
     {
 
         #region Properties
@@ -14,7 +14,7 @@ namespace Solana.Unity.SDK.Metaplex
 
         #region Constructors
 
-        public CandyMachineConfig(Account keypair, string rpcUrl) {
+        public CandyMachineDetails(Account keypair, string rpcUrl) {
             Keypair = keypair;
             RpcUrl = rpcUrl;
         }

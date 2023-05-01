@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -34,13 +35,6 @@ namespace Solana.Unity.SDK.Editor
             padding = standardPadding,
             margin = standardMargin,
             wordWrap = true
-        };
-
-        public static readonly GUIStyle answerFieldStyle = new(GUI.skin.textField) {
-            alignment = TextAnchor.MiddleCenter,
-            fontStyle = FontStyle.Bold,
-            padding = standardPadding,
-            margin = new (5, 5, 10, 10)
         };
 
         public static readonly GUIStyle selectButtonStyle = new(GUI.skin.button) {
@@ -85,20 +79,33 @@ namespace Solana.Unity.SDK.Editor
         public static string FileSelectField(
             string labelText,
             string currentPath,
+            bool inProject,
             string explorerTitle = null,
             string extension = null
         ) {
             // Layout:
+            var basePath = Path.GetDirectoryName(Application.dataPath);
             string newPath = null;
             StaticTextProperty(labelText, currentPath, "Select", delegate {
-                if (extension == null) {
-                    newPath = EditorUtility.OpenFolderPanel(explorerTitle, "", "");
+                if (extension == null) 
+                {
+                    newPath = EditorUtility.OpenFolderPanel(explorerTitle, basePath, "");
                 }
-                else {
-                    newPath = EditorUtility.OpenFilePanel(explorerTitle, "", extension);
+                else 
+                {
+                    newPath = EditorUtility.OpenFilePanel(explorerTitle, basePath, extension);
                 }
             });
-            return newPath ?? currentPath;
+            if (newPath == null)
+            {
+                return currentPath;
+            } 
+            else if (inProject && Path.GetRelativePath(basePath, newPath) == newPath) 
+            {
+                Debug.LogError("Path must be inside the project folder.");
+                return currentPath;
+            }
+            return inProject ? Path.GetRelativePath(basePath, newPath) : newPath;
         }
 
         public static void StaticTextProperty(

@@ -18,7 +18,7 @@ namespace Solana.Unity.SDK.Metaplex
         public abstract Task Prepare();
 
         public virtual async Task Upload(
-            CandyMachineConfig config,
+            CandyMachineDetails config,
             CandyMachineCache cache,
             LocalMetaplexAsset.AssetType assetType,
             Stack<LocalMetaplexAsset> assets

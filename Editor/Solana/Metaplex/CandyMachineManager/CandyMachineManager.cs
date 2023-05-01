@@ -30,18 +30,20 @@ namespace Solana.Unity.SDK.Editor
             SolanaEditorUtility.FileSelectField(
                 "Keypair",
                 "",
+                false,
                 "Select a valid Keypair",
                 "json"
             );
             configLocationPath = SolanaEditorUtility.FileSelectField(
                 "Config Location",
                 configLocationPath,
+                true,
                 "Select a config folder"
             );
             rpc = SolanaEditorUtility.RPCField(rpc);
             CandyMachineScrollView();
             if (GUILayout.Button("Create new Candy Machine")) {
-                GetWindow(typeof(CandyMachineCreator), false, "Candy Machine Creator");
+                CandyMachineCreator.OpenNew(configLocationPath);
             }
             if (GUILayout.Button("Import Candy Machine")) {
                 Debug.Log("Launch finder and copy config.");

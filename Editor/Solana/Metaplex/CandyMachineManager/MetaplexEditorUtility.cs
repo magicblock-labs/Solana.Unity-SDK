@@ -11,6 +11,8 @@ namespace Solana.Unity.SDK.Editor
         private static readonly RectOffset candyMachineFieldPadding = new(10, 10, 5, 5);
         private static readonly RectOffset candyMachineFieldMargin = new(0, 0, 10, 10);
 
+        private static readonly RectOffset wizardQuestionMargin = new(5, 5, 10, 10);
+
         #endregion
 
         #region GUIStyles
@@ -29,6 +31,12 @@ namespace Solana.Unity.SDK.Editor
             margin = candyMachineFieldMargin
         };
 
+        public static readonly GUIStyle answerFieldStyle = new() {
+            alignment = TextAnchor.MiddleCenter,
+            padding = SolanaEditorUtility.standardPadding,
+            margin = wizardQuestionMargin
+        };
+
         #endregion
 
         public static void CandyMachineField(string json) {
@@ -44,8 +52,6 @@ namespace Solana.Unity.SDK.Editor
 
         private static void CollectionImage(int height) {
             Texture2D defaultIcon = (Texture2D)Resources.Load("DefaultCollectionIcon");
-            // defaultIcon.Reinitialize(height, height);
-            // defaultIcon.Apply();
             if (GUILayout.Button(defaultIcon, collectionButtonStyle)) {
                 Debug.Log("Collection Clicked");
             }
@@ -91,9 +97,11 @@ namespace Solana.Unity.SDK.Editor
 
         private static void CandyMachineInfo() {
             EditorGUILayout.BeginVertical();
-            SolanaEditorUtility.StaticTextProperty("Address", "Some Candy Machine Address");
-            SolanaEditorUtility.StaticTextProperty("Cluster", "mainnet-beta");
-            SolanaEditorUtility.StaticTextProperty("Authority", "Some Solana Address");
+            {
+                SolanaEditorUtility.StaticTextProperty("Address", "Some Candy Machine Address");
+                SolanaEditorUtility.StaticTextProperty("Cluster", "mainnet-beta");
+                SolanaEditorUtility.StaticTextProperty("Authority", "Some Solana Address");
+            }
             EditorGUILayout.EndVertical();
         }
     }
