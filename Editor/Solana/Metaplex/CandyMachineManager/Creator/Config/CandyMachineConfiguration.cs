@@ -1,5 +1,7 @@
 using Newtonsoft.Json;
+using Solana.Unity.Metaplex.Candymachine.Types;
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor
@@ -18,6 +20,14 @@ namespace Solana.Unity.SDK.Editor
 
             [SerializeField]
             internal byte share;
+
+            internal Unity.Metaplex.Candymachine.Types.Creator ToCandyMachineCreator()
+            {
+                return new() {
+                    Address = new(publicKey),
+                    Share = share
+                };
+            }
         }
 
         #endregion
@@ -47,6 +57,32 @@ namespace Solana.Unity.SDK.Editor
         [JsonProperty, SerializeField]
         [SetupQuestion("Do you want your NFTs to remain mutable? We HIGHLY recommend you choose yes.")]
         private bool isMutable;
+
+        #endregion
+
+        #region Public
+
+        public CandyMachineData ToCandyMachineData()
+        {
+            return new() {
+                Uuid = null,
+                Price = 0,
+                Symbol = symbol,
+                SellerFeeBasisPoints = (ushort)sellerFeeBasisPoints,
+                MaxSupply = (ulong)amount,
+                IsMutable = isMutable,
+                RetainAuthority = true,
+                GoLiveDate = null,
+                EndSettings = null,
+                Creators = creators.Select(creator => {
+                    return creator.ToCandyMachineCreator();
+                }).ToArray(),
+                HiddenSettings = null,
+                WhitelistMintSettings = null,
+                ItemsAvailable = (ulong)amount,
+                Gatekeeper = null
+            };
+        }
 
         #endregion
     }

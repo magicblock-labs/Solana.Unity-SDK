@@ -1,5 +1,9 @@
+using Solana.Unity.Metaplex.Candymachine;
+using Solana.Unity.Wallet;
 using System.IO;
 using UnityEditor;
+
+using CandyMachineAccounts = Solana.Unity.Metaplex.Candymachine.InitializeCandyMachineAccounts;
 
 namespace Solana.Unity.SDK.Editor
 {
@@ -38,7 +42,18 @@ namespace Solana.Unity.SDK.Editor
         {
             var assetPath = Path.Combine(configDirectory, "config.asset");
             AssetDatabase.CreateAsset(target.targetObject, assetPath);
+            var config = (CandyMachineConfiguration)target.targetObject;
             AssetDatabase.SaveAssets();
+            CandyMachineAccounts accounts = new() {
+                CandyMachine = new Account(),
+                Wallet = null,
+                Authority = null,
+                Payer = null,
+                Rent = null,
+                SystemProgram = null
+            };
+            var candyMachineData = config.ToCandyMachineData();
+            CandyMachineProgram.InitializeCandyMachine(accounts, candyMachineData, CandyMachineUtils.CandyMachineProgramId);
             Close();
         }
 
