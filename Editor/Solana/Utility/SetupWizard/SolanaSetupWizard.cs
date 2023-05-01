@@ -52,6 +52,8 @@ namespace Solana.Unity.SDK.Editor
         /// </summary>
         private readonly List<SetupQuestion> questions = new();
 
+        private Vector2 scrollPosition;
+
         #endregion
 
         #region Unity Messages
@@ -111,13 +113,20 @@ namespace Solana.Unity.SDK.Editor
         /// </summary>
         private protected virtual void RenderCurrentQuestion()
         {
-            var question = questions[questionIndex];
-            SolanaEditorUtility.Heading(question.question, TextAnchor.UpperCenter);
-            foreach (var prop in question.properties) 
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             {
-                var serializedProperty = target.FindProperty(prop);
-                EditorGUILayout.PropertyField(serializedProperty);
+                var question = questions[questionIndex];
+                SolanaEditorUtility.Heading(question.question, TextAnchor.UpperCenter);
+                EditorGUILayout.BeginVertical(MetaplexEditorUtility.answerFieldStyle);
+                {
+                    foreach (var prop in question.properties) {
+                        var serializedProperty = target.FindProperty(prop);
+                        EditorGUILayout.PropertyField(serializedProperty);
+                    }
+                }
+                EditorGUILayout.EndVertical();
             }
+            EditorGUILayout.EndScrollView();
         }
 
         /// <summary>
