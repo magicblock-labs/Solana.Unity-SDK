@@ -1,6 +1,7 @@
 ﻿mergeInto(LibraryManager.library, {
     InitWalletAdapter: async function (callback) {
         // Add UnityWalletAdapter from CDN
+        const isXnft = Boolean("xnft" in window && window.xnft != undefined && window.xnft.solana != undefined && window.xnft.solana.publicKey != undefined);
         if(window.walletAdapterLib == undefined){
             console.log("Adding WalletAdapterLib")
             var script = document.createElement("script");
@@ -8,10 +9,10 @@
             document.head.appendChild(script);
             script.onload = function() {
                 console.log("WalletAdapterLib loaded");
-                const isXnft = Boolean("xnft" in window && window.xnft != undefined && window.xnft.solana != undefined && window.xnft.solana.publicKey != undefined);
-                console.log("isXnft: " + isXnft);
                 Module.dynCall_vi(callback, isXnft);
             };
+        }else{
+            Module.dynCall_vi(callback, isXnft);
         }
     },
      ExternGetWallets: async function(callback) {
@@ -28,10 +29,11 @@
     ExternConnectWallet: async function (walletNamePtr, callback) {
          try {
                 const walletName = UTF8ToString(walletNamePtr)
+                var pubKey;
                 if(walletName === 'XNFT'){
-                    var pubKey = window.xnft.solana.publicKey.toString();
+                    pubKey = window.xnft.solana.publicKey.toString();
                 } else {
-                    var pubKey = await window.walletAdapterLib.connectWallet(walletName);
+                    pubKey = await window.walletAdapterLib.connectWallet(walletName);
                 }
                 var bufferSize = lengthBytesUTF8(pubKey) + 1;
                 var pubKeyPtr = _malloc(bufferSize);
@@ -45,13 +47,19 @@
          try {
                 const walletName = UTF8ToString(walletNamePtr)
                 var base64transaction = UTF8ToString(transactionPtr)
+                let signedTransaction;
                 if(walletName === 'XNFT'){
+                    console.log("XNFT Sign Transaction")
                     const transaction = window.walletAdapterLib.getTransactionFromStr(base64transaction);
-                    const signedTransaction = await window.xnft.solana.signTransaction(transaction);
+                    signedTransaction = await window.xnft.solana.signTransaction(transaction);
+                    console.log(signedTransaction)
                 } else {
-                    const signedTransaction = await window.walletAdapterLib.signTransaction(walletName, base64transaction);
+                    console.log("Sign Transaction")
+                    signedTransaction = await window.walletAdapterLib.signTransaction(walletName, base64transaction);
+                    console.log(signedTransaction)
                 }
-                var signature = signedTransaction.signature.toString('base64');
+                let signature = signedTransaction.signature.toString('base64');
+                console.log(signature)
                 var bufferSize = lengthBytesUTF8(signature) + 1;
                 var signaturePtr = _malloc(bufferSize);
                 stringToUTF8(signature, signaturePtr, bufferSize);
@@ -64,13 +72,14 @@
          try {
                 const walletName = UTF8ToString(walletNamePtr)
                 var base64Message = UTF8ToString(messagePtr)
+                var signatureStr;
                  if(walletName === 'XNFT'){  
                   const messageBytes = Uint8Array.from(atob(base64Message), (c) => c.charCodeAt(0));
                   const signedMessage = await window.xnft.solana.signMessage(messageBytes);
-                  var signatureStr = JSON.stringify(Array.from(signedMessage));
+                  signatureStr = JSON.stringify(Array.from(signedMessage));
                 } else {
                     var signature = await window.walletAdapterLib.signMessage(walletName, base64Message);
-                    var signatureStr =  signature.toString('base64');
+                    signatureStr =  signature.toString('base64');
                 }
                 var bufferSize = lengthBytesUTF8(signatureStr) + 1;
                 var signaturePtr = _malloc(bufferSize);

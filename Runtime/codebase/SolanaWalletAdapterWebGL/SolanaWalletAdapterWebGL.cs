@@ -194,6 +194,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnTransactionSigned(string signature)
         {
+            Debug.Log($"Transaction signed: {signature}");
             _currentTransaction.Signatures.Add(new SignaturePubKeyPair()
             {
                 PublicKey = _account.PublicKey,
