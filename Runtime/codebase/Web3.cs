@@ -137,16 +137,6 @@ namespace Solana.Unity.SDK
                 Wallet = solanaWallet;
             return acc;
         }
-
-        public async Task<Account> LoginXNFT()
-        {
-            var xnftWallet = new XNFTWallet(rpcCluster, customRpc, webSocketsRpc, false);
-            var acc = await xnftWallet.Login();
-            if (acc != null)
-                Wallet = xnftWallet;
-            return acc;
-        }
-        
         public async Task<Account> LoginWalletAdapter()
         {
 

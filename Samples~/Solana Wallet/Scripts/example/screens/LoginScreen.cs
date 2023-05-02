@@ -54,7 +54,7 @@ namespace Solana.Unity.SDK.Example
             loginBtnTwitter.onClick.AddListener(delegate{LoginCheckerWeb3Auth(Provider.TWITTER);});
             loginBtnWalletAdapter.onClick.AddListener(LoginCheckerWalletAdapter);
             loginBtnSms.onClick.AddListener(LoginCheckerSms);
-            loginBtnXNFT.onClick.AddListener(LoginCheckerXnft);
+            loginBtnXNFT.onClick.AddListener(LoginCheckerWalletAdapter);
             
             loginBtnXNFT.gameObject.SetActive(false);
             
@@ -99,19 +99,6 @@ namespace Solana.Unity.SDK.Example
             CheckAccount(account);
         }
 
-        public void TryLoginBackPack()
-        {
-            LoginCheckerXnft();
-        }
-
-        private async void LoginCheckerXnft()
-        {
-            if(Web3.Instance == null) return;
-            var account = await Web3.Instance.LoginXNFT();
-            messageTxt.text = "";
-            CheckAccount(account);
-        }
-        
         private async void LoginCheckerWalletAdapter()
         {
             if(Web3.Instance == null) return;

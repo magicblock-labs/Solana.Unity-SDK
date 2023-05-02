@@ -22,7 +22,7 @@ namespace Solana.Unity.SDK
         private static SolanaWalletAdapterWebGLOptions _walletOptions;
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<string> _getWalletsTaskCompletionSource;
-        private static TaskCompletionSource<bool> _loadedScriptTaskCompletionSource;
+        private static TaskCompletionSource<bool> _walletsInitializedTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
@@ -71,22 +71,30 @@ namespace Solana.Unity.SDK
         }
         
         private static async Task InitWallets() {
-            if (Wallets == null){
-                _loadedScriptTaskCompletionSource = new TaskCompletionSource<bool>();
-                InitWalletAdapter(OnScriptLoaded);
-                await _loadedScriptTaskCompletionSource.Task;
+            _currentWallet = null;
+            _walletsInitializedTaskCompletionSource = new TaskCompletionSource<bool>();
+            InitWalletAdapter(OnWalletsInitialized);
+            bool isXnft = await _walletsInitializedTaskCompletionSource.Task;
+            if (isXnft){
+               _currentWallet = new WalletSpecs()
+               {
+                   name = "XNFT",
+                   icon = "",
+                   installed = true
+               };
+            } else{
+                _getWalletsTaskCompletionSource = new TaskCompletionSource<string>();
+                ExternGetWallets(OnWalletsLoaded);
+                var walletsData = await _getWalletsTaskCompletionSource.Task;
+                Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
             }
-            _getWalletsTaskCompletionSource = new TaskCompletionSource<string>();
-            ExternGetWallets(OnWalletsLoaded);
-            var walletsData = await _getWalletsTaskCompletionSource.Task;
-            Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
-           
         }
 
 
 
         protected override async Task<Account> _Login(string password = null)
         {
+            Debug.Log("WalletAdapter _Login");
             await SetCurrentWallet();
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             try
@@ -98,29 +106,36 @@ namespace Solana.Unity.SDK
                 Debug.LogError("WalletAdapter _Login -> Exception: " + e);
                 _loginTaskCompletionSource.SetResult(null);
             }
-            WalletAdapterUI.SetActive(false);
+            if (WalletAdapterUI != null ){
+                WalletAdapterUI.SetActive(false);
+            }
             return await _loginTaskCompletionSource.Task;
         }
         
         private static async Task SetCurrentWallet()
         {
             await InitWallets();
-            if (WalletAdapterUI == null)
+            if (_currentWallet == null)
             {
-                WalletAdapterUI = GameObject.Instantiate(_walletOptions.walletAdapterUIPrefab);
+                if (WalletAdapterUI == null)
+                {
+                    WalletAdapterUI = GameObject.Instantiate(_walletOptions.walletAdapterUIPrefab);
+                }
+
+                var waitForWalletSelectionTask = new TaskCompletionSource<string>();
+                var walletAdapterScreen =
+                    WalletAdapterUI.transform.GetChild(0).gameObject.GetComponent<WalletAdapterScreen>();
+                walletAdapterScreen.viewPortContent = WalletAdapterUI.transform.GetChild(0).Find("Scroll View")
+                    .Find("Viewport").Find("Content").GetComponent<RectTransform>();
+                walletAdapterScreen.buttonPrefab = _walletOptions.walletAdapterButtonPrefab;
+                walletAdapterScreen.OnSelectedAction = walletName =>
+                {
+                    waitForWalletSelectionTask.SetResult(walletName);
+                };
+                WalletAdapterUI.SetActive(true);
+                var walletName = await waitForWalletSelectionTask.Task;
+                _currentWallet = Array.Find(Wallets, wallet => wallet.name == walletName);
             }
-           
-            var waitForWalletSelectionTask = new TaskCompletionSource<string>();
-            var walletAdapterScreen = WalletAdapterUI.transform.GetChild(0).gameObject.GetComponent<WalletAdapterScreen>();
-            walletAdapterScreen.viewPortContent = WalletAdapterUI.transform.GetChild(0).Find("Scroll View").Find("Viewport").Find("Content").GetComponent<RectTransform>();
-            walletAdapterScreen.buttonPrefab = _walletOptions.walletAdapterButtonPrefab;
-            walletAdapterScreen.OnSelectedAction = walletName =>
-            {
-                waitForWalletSelectionTask.SetResult(walletName);
-            };
-            WalletAdapterUI.SetActive(true);
-            var walletName = await waitForWalletSelectionTask.Task;
-            _currentWallet = Array.Find(Wallets, wallet => wallet.name == walletName);
         }
 
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
@@ -218,12 +233,12 @@ namespace Solana.Unity.SDK
         }
 
         /// <summary>
-        /// Called from javascript when the wallet adapter script is loaded
+        /// Called from javascript when the wallet adapter script is loaded. Returns whether it's an XNFT or not.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<bool>))]
-        private static void OnScriptLoaded(bool success)
+        private static void OnWalletsInitialized(bool isXnft)
         {
-            _loadedScriptTaskCompletionSource.SetResult(success);
+            _walletsInitializedTaskCompletionSource.SetResult(isXnft);
         }
         
         /// <summary>
