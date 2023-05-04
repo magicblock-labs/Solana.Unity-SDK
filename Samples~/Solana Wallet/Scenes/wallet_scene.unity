@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 530594625}
   - component: {fileID: 530594624}
+  - component: {fileID: 530594626}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -196,8 +197,20 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &530594626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 530594622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa7cdf6c32c0341b8bc2188c431cbe43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1061421851
 GameObject:
   m_ObjectHideFlags: 0
@@ -297,7 +310,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1156727036
 MonoBehaviour:
@@ -316,7 +329,7 @@ MonoBehaviour:
   autoConnectOnStartup: 1
   webSocketsRpc: 
   web3AuthWalletOptions:
-    appName: Web3Auth Sample App
+    appName: Solana Unity SDK
     logoLight: 
     logoDark: 
     defaultLanguage: en
@@ -324,8 +337,8 @@ MonoBehaviour:
     themeName: primary
     themeColor: '#123456'
     redirectUrl: torusapp://com.torus.Web3AuthUnity/auth
-    clientId: BAwFgL-r7wzQKmtcdiz2uHJKNZdK7gzEf2q-m55xfzSZOw8jLOyIi4AVvvzaEQO5nv2dFLEmf9LBkF8kaq3aErg
-    network: 1
+    clientId: BO4zGEzyV6DT1vHU46b6GEngOcg2jl5Pmd9Boi8dLdBpBZnS351ulHDz2k7XJ1dEm-DcvyyARivGCZDXrbZng-0
+    network: 0
   phantomWalletOptions:
     phantomApiVersion: v1
     appMetaDataUrl: https://github.com/garbles-labs/Solana.Unity-SDK
@@ -334,6 +347,10 @@ MonoBehaviour:
     identityUri: https://solana.unity-sdk.gg/
     iconUri: /favicon.ico
     name: Solana.Unity-SDK
+    keepConnectionAlive: 1
+  solanaWalletAdapterWebGLOptions:
+    walletAdapterButtonPrefab: {fileID: 0}
+    walletAdapterUIPrefab: {fileID: 0}
 --- !u!1001 &3999435917375567341
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -341,6 +358,62 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 205038305312183793, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.99975586
+      objectReference: {fileID: 0}
+    - target: {fileID: 293380956160209626, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.00177
+      objectReference: {fileID: 0}
+    - target: {fileID: 660223369642851283, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1.4996338
+      objectReference: {fileID: 0}
+    - target: {fileID: 1628658402173808139, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
+    - target: {fileID: 1699793339178853926, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.002014
+      objectReference: {fileID: 0}
+    - target: {fileID: 1878527042890049777, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014628686356771665, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.00177
+      objectReference: {fileID: 0}
+    - target: {fileID: 2321446559954777767, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.001526
+      objectReference: {fileID: 0}
+    - target: {fileID: 2613784953017871369, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -4.499756
+      objectReference: {fileID: 0}
+    - target: {fileID: 2800639178173218322, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.00055
+      objectReference: {fileID: 0}
+    - target: {fileID: 2997508474510714650, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3281267949743124340, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
+    - target: {fileID: 3657993472244711459, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 2.0010986
+      objectReference: {fileID: 0}
+    - target: {fileID: 3803262930727119195, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
     - target: {fileID: 3999435916251214284, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -433,8 +506,67 @@ PrefabInstance:
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1156727036}
+    - target: {fileID: 4277063084869113066, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.00177
+      objectReference: {fileID: 0}
+    - target: {fileID: 4578748283873822676, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
+    - target: {fileID: 5963198302229914658, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1.7247314
+      objectReference: {fileID: 0}
+    - target: {fileID: 6361015306869847388, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
+    - target: {fileID: 6558749683223280037, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
+    - target: {fileID: 6671014057051868138, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1.5001221
+      objectReference: {fileID: 0}
+    - target: {fileID: 6761591690394889706, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 26.00177
+      objectReference: {fileID: 0}
+    - target: {fileID: 6917513602505781786, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -21.389801
+      objectReference: {fileID: 0}
+    - target: {fileID: 7129587963487936359, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.99975586
+      objectReference: {fileID: 0}
+    - target: {fileID: 8650658248039068895, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 3999435917375567342}
+    - target: {fileID: 8650658248039068895, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: RpcNodeDropdownSelected
+      objectReference: {fileID: 0}
+    - target: {fileID: 8650658248039068895, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DropdownClusterSelector, Assembly-CSharp
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+--- !u!114 &3999435917375567342 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7556017276088318952, guid: 51b19f34b566aa04ea3325e5810f314c, type: 3}
+  m_PrefabInstance: {fileID: 3999435917375567341}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 156421b74dd82442fb12c8185e82c8ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &5871494921186054784
 MonoBehaviour:
   m_ObjectHideFlags: 0

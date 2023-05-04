@@ -3,7 +3,9 @@
     "rootNamespace": "",
     "references": [
         "GUID:11b8985f735c7ea47bf017c34f3fcc41",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:1eaf7438b68a141a39da26d98b990fe7"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

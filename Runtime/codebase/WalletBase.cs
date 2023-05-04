@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
@@ -50,6 +51,7 @@ namespace Solana.Unity.SDK
         public IRpcClient ActiveRpcClient => StartConnection();
 
         private IStreamingRpcClient _activeStreamingRpcClient;
+        private TaskCompletionSource<object> _webSocketConnection;
         public IStreamingRpcClient ActiveStreamingRpcClient => StartStreamingConnection();
         public Account Account { get;protected set; }
         public Mnemonic Mnemonic { get;protected set; }
@@ -109,7 +111,7 @@ namespace Solana.Unity.SDK
         public async Task<double> GetBalance(PublicKey publicKey, Commitment commitment = Commitment.Finalized)
         {
             var balance= await ActiveRpcClient.GetBalanceAsync(publicKey, commitment);
-            return (double)balance.Result.Value / SolLamports;
+            return (double)(balance.Result?.Value ?? 0) / SolLamports;
         }
         
         /// <inheritdoc />
@@ -287,11 +289,11 @@ namespace Solana.Unity.SDK
             {
                 if (_activeRpcClient == null && CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster], logger: true);
                 }
                 if (_activeRpcClient == null && !CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri);
+                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri, logger: true);
                 }
 
                 return _activeRpcClient;
@@ -317,9 +319,17 @@ namespace Solana.Unity.SDK
                 if (_activeStreamingRpcClient != null) return _activeStreamingRpcClient;
                 if (CustomStreamingRpcUri != null)
                 {
+                    _webSocketConnection = new TaskCompletionSource<object>();
                     _activeStreamingRpcClient = ClientFactory.GetStreamingClient(CustomStreamingRpcUri, true);
-                    _activeStreamingRpcClient.ConnectAsync()
-                        .ContinueWith( _ => Debug.Log("WebSockets connection: " + _activeStreamingRpcClient.State));
+                    _activeStreamingRpcClient
+                        .ConnectAsync()
+                        .AsUniTask()
+                        .ContinueWith(() =>
+                        {
+                            _webSocketConnection.TrySetResult(null);
+                            Debug.Log("WebSockets connection: " + _activeStreamingRpcClient.State);
+                        })
+                        .Forget();
                     return _activeStreamingRpcClient;
                 }
 
@@ -330,8 +340,15 @@ namespace Solana.Unity.SDK
                 return null;
             }
         }
-        
-        
+
+        public Task AwaitWsRpcConnection()
+        {
+            var wsConnection = ActiveStreamingRpcClient;
+            if(wsConnection?.State.Equals(WebSocketState.Open) ?? false) return Task.CompletedTask;
+            return _webSocketConnection.Task;
+        }
+
+
         /// <summary>
         /// Deduplicate transaction signatures, remove empty signatures if allowEmptySignatures is false
         /// </summary>

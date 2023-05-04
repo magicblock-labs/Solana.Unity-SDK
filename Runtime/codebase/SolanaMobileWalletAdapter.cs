@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
-using SolanaMobileStack;
-using SolanaMobileStack.Interfaces;
-using SolanaMobileStack.JsonRpcClient.Responses;
 using UnityEngine;
 using WebSocketSharp;
 
@@ -89,20 +85,29 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Transaction> _SignTransaction(Transaction transaction)
         {
-            if (_authToken.IsNullOrEmpty())
-                throw new Exception("Authentication required");
+            var cluster = RPCNameMap[(int)RpcCluster];
             SignedResult res = null;
             var localAssociationScenario = new LocalAssociationScenario();
-            AuthorizationResult reauthorization = null;
+            AuthorizationResult authorization = null;
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
                 {
                     async client =>
                     {
-                        reauthorization = await client.Reauthorize(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
-                            _walletOptions.name, _authToken);
+                        if (_authToken.IsNullOrEmpty())
+                        {
+                            authorization = await client.Authorize(
+                                new Uri(_walletOptions.identityUri),
+                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _walletOptions.name, cluster);
+                        }
+                        else
+                        {
+                            authorization = await client.Reauthorize(
+                                new Uri(_walletOptions.identityUri),
+                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _walletOptions.name, _authToken);   
+                        }
                     },
                     async client =>
                     {
@@ -118,7 +123,7 @@ namespace Solana.Unity.SDK
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
             }
-            _authToken = reauthorization.AuthToken;
+            _authToken = authorization.AuthToken;
             return Transaction.Deserialize(res.SignedPayloads[0]);
         }
 
@@ -136,20 +141,29 @@ namespace Solana.Unity.SDK
 
         public override async Task<byte[]> SignMessage(byte[] message)
         {
-            if (_authToken.IsNullOrEmpty())
-                throw new Exception("Authentication required");
             SignedResult signedMessages = null;
             var localAssociationScenario = new LocalAssociationScenario();
-            AuthorizationResult reauthorization = null;
+            AuthorizationResult authorization = null;
+            var cluster = RPCNameMap[(int)RpcCluster];
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
                 {
                     async client =>
                     {
-                        reauthorization = await client.Reauthorize(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
-                            _walletOptions.name, _authToken);
+                        if (_authToken.IsNullOrEmpty())
+                        {
+                            authorization = await client.Authorize(
+                                new Uri(_walletOptions.identityUri),
+                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _walletOptions.name, cluster);
+                        }
+                        else
+                        {
+                            authorization = await client.Reauthorize(
+                                new Uri(_walletOptions.identityUri),
+                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _walletOptions.name, _authToken);   
+                        }
                     },
                     async client =>
                     {
@@ -165,7 +179,7 @@ namespace Solana.Unity.SDK
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
             }
-            _authToken = reauthorization.AuthToken;
+            _authToken = authorization.AuthToken;
             return signedMessages.SignedPayloadsBytes[0];
         }
 
