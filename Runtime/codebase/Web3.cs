@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Solana.Unity.Rpc;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using UnityEngine;
 
@@ -11,8 +15,7 @@ namespace Solana.Unity.SDK
     [RequireComponent(typeof(MainThreadDispatcher))]
     public class Web3 : MonoBehaviour
     {
-        [SerializeField]
-        private RpcCluster rpcCluster = RpcCluster.DevNet;
+        public RpcCluster rpcCluster = RpcCluster.DevNet;
         public string customRpc = string.Empty;
         public bool autoConnectOnStartup;
         public string webSocketsRpc;
@@ -28,7 +31,9 @@ namespace Solana.Unity.SDK
         public SolanaWalletAdapterWebGLOptions solanaWalletAdapterWebGLOptions;
         
         #endregion
-        
+
+        public delegate void WalletInstance();
+        public static event WalletInstance OnWalletInstance;
         public delegate void WalletChange();
         private static event WalletChange OnWalletChangeStateInternal;
         public static event WalletChange OnWalletChangeState
@@ -40,6 +45,34 @@ namespace Solana.Unity.SDK
             }
             remove => OnWalletChangeStateInternal -= value;
         }
+        
+        private static double _solAmount = 0;
+        public delegate void BalanceChange(double sol);
+        private static event BalanceChange OnBalanceChangeInternal;
+        public static event BalanceChange OnBalanceChange
+        {
+            add
+            {
+                OnBalanceChangeInternal += value;
+                OnBalanceChangeInternal?.Invoke(_solAmount);
+                UpdateBalance().Forget();
+            }
+            remove => OnBalanceChangeInternal -= value;
+        }
+        
+        private static List<Nft.Nft> _nfts = new();
+        public delegate void NFTsUpdate(List<Nft.Nft> nft);
+        private static event NFTsUpdate OnNFTsUpdateInternal;
+        public static event NFTsUpdate OnNFTsUpdate
+        {
+            add
+            {
+                OnNFTsUpdateInternal += value;
+                OnNFTsUpdateInternal?.Invoke(_nfts);
+                UpdateNFTs().Forget();
+            }
+            remove => OnNFTsUpdateInternal -= value;
+        }
 
         private static WalletBase _wallet;
         public WalletBase Wallet {
@@ -48,6 +81,7 @@ namespace Solana.Unity.SDK
             private set { 
                 _wallet = value;
                 OnWalletChangeStateInternal?.Invoke();
+                SubscribeToWalletEvents().Forget();
             }
         }
 
@@ -69,6 +103,7 @@ namespace Solana.Unity.SDK
             if (Instance == null)
             {
                 Instance = this;
+                OnWalletInstance?.Invoke();
             }
             else
             {
@@ -80,7 +115,6 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                RpcNodeDropdownSelected(PlayerPrefs.GetInt("rpcCluster", 0));
                 _web3AuthWallet ??= new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc);
                 _web3AuthWallet.OnLoginNotify += (w) =>
                 { 
@@ -161,24 +195,103 @@ namespace Solana.Unity.SDK
             return acc;
         }
 
-        public void RpcNodeDropdownSelected(int value)
-        {
-            PlayerPrefs.SetInt("rpcCluster", value);
-            PlayerPrefs.Save();
-            rpcCluster = (RpcCluster) value;
-            customRpc = value switch
-            {
-                (int) RpcCluster.MainNet => "https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/",
-                (int) RpcCluster.TestNet => "https://api.testnet.solana.com",
-                _ => "https://api.devnet.solana.com"
-            };
-        }
+
         
         public void Logout()
         {
             Wallet?.Logout();
             Wallet = null;
+            _solAmount = 0;
+            _nfts.Clear();
         }
+        
+        #region Helpers
+        
+        
+        /// <summary>
+        /// Update the solana balance of the current wallet
+        /// Notify all registered listeners
+        /// </summary>
+        /// <param name="commitment"></param>
+        public static async UniTask UpdateBalance(Commitment commitment = Commitment.Confirmed)
+        {
+            if (Instance == null || Instance.Wallet == null)
+                return;
+            var balance = await Instance.Wallet.GetBalance(commitment);
+            _solAmount = balance;
+            OnBalanceChangeInternal?.Invoke(balance);
+        }
+        
+        /// <summary>
+        /// Update the list of NFTs owned by the current wallet
+        /// Notify all registered listeners
+        /// </summary>
+        /// <param name="commitment"></param>
+        public static async UniTask UpdateNFTs(Commitment commitment = Commitment.Confirmed)
+        {
+            if(Base == null) return;
+            var tokens = (await Base.GetTokenAccounts(commitment))?
+                .ToList()
+                .FindAll(m => m.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1);
+            if(tokens == null) return;
+            
+            // Remove tokens not owned anymore
+            var tkToRemove = new List<Nft.Nft>();
+            _nfts.ForEach(tk =>
+            {
+                var match = tokens.Where(t =>
+                    t?.Account?.Data?.Parsed?.Info?.Mint == tk?.metaplexData?.data?.mint).ToArray();
+                if (match.Length == 0 || match.Any(m => m.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 0))
+                {
+                    tkToRemove.Add(tk);
+                }
+            });
+            tkToRemove.ForEach(tk => _nfts.Remove(tk));
+            
+            // Remove duplicated nfts
+            _nfts = _nfts
+                .GroupBy(x => x.metaplexData.data.mint)
+                .Select(x => x.First())
+                .ToList()
+                .FindAll(x => x.metaplexData.data.offchainData != null);
+
+            // Fetch nfts
+            if (tokens is {Count: > 0})
+            {
+                var toFetch = tokens
+                    .Where(item => item.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1)
+                    .Where(item => _nfts
+                        .All(t => t.metaplexData.data.mint!= item.Account.Data.Parsed.Info.Mint));
+                foreach (var item in toFetch)
+                {
+                    Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, Rpc).AsUniTask()
+                        .ContinueWith(nft =>
+                        {
+                            _nfts.Add(nft);
+                            OnNFTsUpdateInternal?.Invoke(_nfts);
+                        }).Forget();
+                }
+            }
+        }
+        
+        private static async UniTask SubscribeToWalletEvents(Commitment commitment = Commitment.Confirmed)
+        {
+            if(WsRpc == null) return;
+            await Base.AwaitWsRpcConnection();
+            await WsRpc.SubscribeAccountInfoAsync(
+                Account.PublicKey,
+                (_, accountInfo) =>
+                {
+                    Debug.Log("Account changed!, updated lamport: " + accountInfo.Value.Lamports);
+                    _solAmount = accountInfo.Value.Lamports / 1000000000d;
+                    OnBalanceChangeInternal?.Invoke(_solAmount);
+                    UpdateNFTs(commitment).Forget();
+                },
+                commitment
+            );
+        }
+        
+        #endregion
 
         #region Data Functions
 

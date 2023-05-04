@@ -1,7 +1,6 @@
-namespace SolanaMobileStack.Interfaces
+// ReSharper disable once CheckNamespace
+
+public interface IMessageReceiver
 {
-    public interface IMessageReceiver
-    {
-        void Receive(string message);
-    }
+    void Receive(string message);
 }

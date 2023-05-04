@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -75,16 +74,7 @@ namespace Solana.Unity.SDK.Example
             saveMnemonicsBtn.onClick.AddListener(SaveMnemonicsOnClick);
 
             _stopTask = new CancellationTokenSource();
-
-            Web3.WsRpc.SubscribeAccountInfo(
-                Web3.Instance.Wallet.Account.PublicKey,
-                (_, accountInfo) =>
-                {
-                    Debug.Log("Account changed!, updated lamport: " + accountInfo.Value.Lamports);
-                    RefreshWallet();
-                },
-                Commitment.Confirmed
-            );
+            
             Web3.OnWalletChangeState += OnWalletChangeState;
         }
 
@@ -100,7 +90,7 @@ namespace Solana.Unity.SDK.Example
 
         private void RefreshWallet()
         {
-            UpdateWalletBalanceDisplay().AsUniTask().Forget();
+            Web3.UpdateBalance().Forget();
             GetOwnedTokenAccounts().AsAsyncUnitUniTask().Forget();
         }
 
@@ -111,6 +101,20 @@ namespace Solana.Unity.SDK.Example
             savePrivateKeyBtn.gameObject.SetActive(hasPrivateKey);
             var hasMnemonics = !string.IsNullOrEmpty(Web3.Instance.Wallet?.Mnemonic?.ToString());
             saveMnemonicsBtn.gameObject.SetActive(hasMnemonics);
+            Web3.OnBalanceChange += OnBalanceChange;
+        }
+
+        private void OnBalanceChange(double sol)
+        {
+            MainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                lamports.text = $"{sol}";
+            });
+        }
+
+        private void OnDisable()
+        {
+            Web3.OnBalanceChange -= OnBalanceChange;
         }
 
         private void SavePrivateKeyOnClick()
@@ -134,19 +138,10 @@ namespace Solana.Unity.SDK.Example
             manager.ShowScreen(this, "transfer_screen", data);
         }
 
-        private async Task UpdateWalletBalanceDisplay()
-        {
-            if (Web3.Instance.Wallet.Account is null) return;
-            var sol = await Web3.Base.GetBalance(Commitment.Confirmed);
-            MainThreadDispatcher.Instance().Enqueue(() =>
-            {
-                lamports.text = $"{sol}";
-            });
-        }
-
         private async UniTask GetOwnedTokenAccounts()
         {
             var tokens = await Web3.Base.GetTokenAccounts(Commitment.Confirmed);
+            if(tokens == null) return;
             // Remove tokens not owned anymore and update amounts
             var tkToRemove = new List<TokenItem>();
             _instantiatedTokens.ForEach(tk =>
@@ -163,12 +158,7 @@ namespace Solana.Unity.SDK.Example
                     tk.UpdateAmount(newAmount);
                 }
             });
-            // Remove duplicated tokens
-            _instantiatedTokens = _instantiatedTokens
-                .GroupBy(x => x.TokenAccount.Account.Data.Parsed.Info.Mint)
-                .Select(x => x.First())
-                .ToList();
-            
+
             tkToRemove.ForEach(tk =>
             {
                 _instantiatedTokens.Remove(tk);
@@ -215,7 +205,6 @@ namespace Solana.Unity.SDK.Example
         {
             base.ShowScreen();
             gameObject.SetActive(true);
-            UpdateWalletBalanceDisplay().AsUniTask().Forget();
             GetOwnedTokenAccounts().Forget();
         }
 
