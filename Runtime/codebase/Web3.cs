@@ -82,6 +82,7 @@ namespace Solana.Unity.SDK
                 _wallet = value;
                 OnWalletChangeStateInternal?.Invoke();
                 SubscribeToWalletEvents().Forget();
+                UpdateBalance().Forget();
             }
         }
 
