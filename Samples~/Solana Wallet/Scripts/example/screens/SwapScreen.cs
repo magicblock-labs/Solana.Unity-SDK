@@ -89,9 +89,9 @@ public class SwapScreen : SimpleScreen
         if(_whirlpool == null || _swapQuote == null) return;
         var tr = await _dex.SwapWithQuote(_whirlpool.Address, _swapQuote);
         
-        var result = await Web3.Instance.Wallet.SignAndSendTransaction(tr);
+        var result = await Web3.Instance.WalletBase.SignAndSendTransaction(tr);
         Loading.StartLoading();
-        var confirmed = await Web3.Instance.Wallet.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
+        var confirmed = await Web3.Instance.WalletBase.ActiveRpcClient.ConfirmTransaction(result.Result, Commitment.Confirmed);
         if (confirmed)
         {
             Debug.Log("Transaction confirmed, see transaction at https://explorer.solana.com/tx/" + result.Result);

@@ -75,7 +75,7 @@ namespace Solana.Unity.SDK
         }
 
         private static WalletBase _wallet;
-        public WalletBase Wallet {
+        public WalletBase WalletBase {
         
             get => _wallet;
             private set { 
@@ -89,10 +89,13 @@ namespace Solana.Unity.SDK
         public static Web3 Instance;
 
         #region Convenience shortnames for accessing commonly used wallet methods
-        public static IRpcClient Rpc => Instance != null ? Instance.Wallet?.ActiveRpcClient : null;
-        public static IStreamingRpcClient WsRpc => Instance != null ? Instance.Wallet?.ActiveStreamingRpcClient : null;
-        public static Account Account => Instance != null ? Instance.Wallet?.Account : null;
-        public static WalletBase Base => Instance != null ? Instance.Wallet : null;
+        public static IRpcClient Rpc => Instance != null ? Instance.WalletBase?.ActiveRpcClient : null;
+        public static IStreamingRpcClient WsRpc => Instance != null ? Instance.WalletBase?.ActiveStreamingRpcClient : null;
+        public static Account Account => Instance != null ? Instance.WalletBase?.Account : null;
+        public static WalletBase Wallet => Instance != null ? Instance.WalletBase : null;
+        
+        [Obsolete("Deprecated, use Wallet instead", false)]
+        public static WalletBase Base => Instance != null ? Instance.WalletBase : null;
         
         #endregion
         
@@ -120,8 +123,8 @@ namespace Solana.Unity.SDK
                 _web3AuthWallet.OnLoginNotify += (w) =>
                 { 
                     if(w == null) return;
-                    Wallet = _web3AuthWallet;
-                    Debug.Log("Wallet set to Web3Auth, " + Wallet.GetType().FullName);
+                    WalletBase = _web3AuthWallet;
+                    Debug.Log("Wallet set to Web3Auth, " + WalletBase.GetType().FullName);
                 };
             }
             catch (Exception e)
@@ -135,14 +138,14 @@ namespace Solana.Unity.SDK
             var inGameWallet = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
             var acc = await inGameWallet.Login(password);
             if (acc != null)
-                Wallet = inGameWallet;
+                WalletBase = inGameWallet;
             return acc;
         }
         
         public async Task<Account> CreateAccount(string mnemonic, string password)
         {
-            Wallet = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
-            return await Wallet.CreateAccount( mnemonic, password);
+            WalletBase = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            return await WalletBase.CreateAccount( mnemonic, password);
         }
         
         public async Task<Account> LoginInWeb3Auth(Provider provider)
@@ -151,7 +154,7 @@ namespace Solana.Unity.SDK
                 new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
             var acc = await _web3AuthWallet.LoginWithProvider(provider);
             if (acc != null)
-                Wallet = _web3AuthWallet;
+                WalletBase = _web3AuthWallet;
             return acc;
         }
 
@@ -160,7 +163,7 @@ namespace Solana.Unity.SDK
             var phantomWallet = new PhantomWallet(phantomWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
             var acc = await phantomWallet.Login();
             if (acc != null)
-                Wallet = phantomWallet;
+                WalletBase = phantomWallet;
             return acc;
         }
         
@@ -169,7 +172,7 @@ namespace Solana.Unity.SDK
             var solanaWallet = new SolanaMobileWalletAdapter(solanaMobileWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
             var acc = await solanaWallet.Login();
             if (acc != null)
-                Wallet = solanaWallet;
+                WalletBase = solanaWallet;
             return acc;
         }
 
@@ -178,7 +181,7 @@ namespace Solana.Unity.SDK
             var xnftWallet = new XNFTWallet(rpcCluster, customRpc, webSocketsRpc, false);
             var acc = await xnftWallet.Login();
             if (acc != null)
-                Wallet = xnftWallet;
+                WalletBase = xnftWallet;
             return acc;
         }
         
@@ -192,7 +195,7 @@ namespace Solana.Unity.SDK
             var walletAdapter = new SolanaWalletAdapterWebGL(solanaWalletAdapterWebGLOptions, rpcCluster, customRpc, webSocketsRpc, false);
             var acc = await walletAdapter.Login();
             if (acc != null)
-                Wallet = walletAdapter;
+                WalletBase = walletAdapter;
             return acc;
         }
 
@@ -200,13 +203,28 @@ namespace Solana.Unity.SDK
         
         public void Logout()
         {
-            Wallet?.Logout();
-            Wallet = null;
+            WalletBase?.Logout();
+            WalletBase = null;
             _solAmount = 0;
             _nfts.Clear();
         }
         
         #region Helpers
+
+        /// <summary>
+        /// Get the blockhash
+        /// </summary>
+        /// <param name="commitment"></param>
+        /// <param name="useCache"></param>
+        /// <param name="maxSeconds">A given blockhash can only be used by transactions for about 60 to 90 seconds
+        /// https://docs.solana.com/developing/transaction_confirmation#how-does-transaction-expiration-work</param>
+        /// <returns></returns>
+        public static Task<string> BlockHash(
+            Commitment commitment = Commitment.Finalized,
+            bool useCache = true,
+            int maxSeconds = 15) =>
+            Instance != null ? Instance.WalletBase.GetBlockHash(commitment, useCache, maxSeconds) : null;
+
         
         
         /// <summary>
@@ -216,9 +234,9 @@ namespace Solana.Unity.SDK
         /// <param name="commitment"></param>
         public static async UniTask UpdateBalance(Commitment commitment = Commitment.Confirmed)
         {
-            if (Instance == null || Instance.Wallet == null)
+            if (Instance == null || Instance.WalletBase == null)
                 return;
-            var balance = await Instance.Wallet.GetBalance(commitment);
+            var balance = await Instance.WalletBase.GetBalance(commitment);
             _solAmount = balance;
             OnBalanceChangeInternal?.Invoke(balance);
         }
@@ -230,8 +248,8 @@ namespace Solana.Unity.SDK
         /// <param name="commitment"></param>
         public static async UniTask UpdateNFTs(Commitment commitment = Commitment.Confirmed)
         {
-            if(Base == null) return;
-            var tokens = (await Base.GetTokenAccounts(commitment))?
+            if(Wallet == null) return;
+            var tokens = (await Wallet.GetTokenAccounts(commitment))?
                 .ToList()
                 .FindAll(m => m.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1);
             if(tokens == null) return;
@@ -278,7 +296,7 @@ namespace Solana.Unity.SDK
         private static async UniTask SubscribeToWalletEvents(Commitment commitment = Commitment.Confirmed)
         {
             if(WsRpc == null) return;
-            await Base.AwaitWsRpcConnection();
+            await Wallet.AwaitWsRpcConnection();
             await WsRpc.SubscribeAccountInfoAsync(
                 Account.PublicKey,
                 (_, accountInfo) =>
@@ -321,7 +339,7 @@ namespace Solana.Unity.SDK
     /// <summary>
     /// Keeps SimpleWallet for compatibility with older versions of the SDK
     /// </summary>
-    [Obsolete("Deprecated, use Web3 instead", true)]
+    [Obsolete("Deprecated, use Web3 instead", false)]
     public static class SimpleWallet
     {
         public static Web3 Instance => Web3.Instance;

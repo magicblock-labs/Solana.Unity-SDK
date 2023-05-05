@@ -132,10 +132,9 @@ namespace Solana.Unity.SDK
                 tokenMint);
             var ata = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
             var tokenAccounts = await ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint, null);
-            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
             var transaction = new Transaction
             {
-                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                RecentBlockHash = await GetBlockHash(),
                 FeePayer = Account.PublicKey,
                 Instructions = new List<TransactionInstruction>(),
                 Signatures = new List<SignaturePubKeyPair>()
@@ -162,10 +161,9 @@ namespace Solana.Unity.SDK
         public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, 
             Commitment commitment = Commitment.Finalized)
         {
-            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
             var transaction = new Transaction
             {
-                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                RecentBlockHash = await GetBlockHash(),
                 FeePayer = Account.PublicKey,
                 Instructions = new List<TransactionInstruction>
                 { 
@@ -278,6 +276,44 @@ namespace Solana.Unity.SDK
         {
             return await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount, commitment); ;
         }
+
+        #region helpers
+
+        private readonly IDictionary<string, (DateTime, string)> _commitmentCache = new Dictionary<string, (DateTime, string)>();
+
+        /// <summary>
+        /// Get the Recent blockhash
+        /// </summary>
+        /// <param name="commitment"></param>
+        /// <param name="useCache"></param>
+        /// <param name="maxSeconds"></param>
+        /// <returns></returns>
+        public async Task<string> GetBlockHash(
+            Commitment commitment = Commitment.Finalized,
+            bool useCache = true,
+            int maxSeconds = 15)
+        {
+            if(ActiveRpcClient == null) return null;
+            if (useCache)
+            {
+                var exists = _commitmentCache.TryGetValue(commitment.ToString(), out var cacheEntry);
+                switch (exists)
+                {
+                    case true when (DateTime.Now - cacheEntry.Item1).TotalSeconds < maxSeconds:
+                        return cacheEntry.Item2;
+                    case true:
+                        _commitmentCache.Remove(commitment.ToString());
+                        break;
+                }
+            }
+            var blockhash = (await ActiveRpcClient.GetRecentBlockHashAsync()).Result?.Value?.Blockhash;
+            if(blockhash != null)_commitmentCache.Add(commitment.ToString(), (DateTime.Now, blockhash));
+            return blockhash;
+        }
+
+        #endregion
+        
+
         
         /// <summary>
         /// Start RPC connection and return new RPC Client 

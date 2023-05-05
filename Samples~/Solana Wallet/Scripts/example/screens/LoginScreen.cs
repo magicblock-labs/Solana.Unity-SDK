@@ -35,7 +35,7 @@ namespace Solana.Unity.SDK.Example
             dropdownRpcCluster.interactable = true;
             passwordInputField.text = string.Empty;
 
-            if (Web3.Base != null)
+            if (Web3.Wallet != null)
             {
                 dropdownRpcCluster.interactable = false;
                 manager.ShowScreen(this, "wallet_screen");

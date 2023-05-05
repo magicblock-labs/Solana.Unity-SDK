@@ -80,11 +80,11 @@ namespace Solana.Unity.SDK.Example
 
         private void OnWalletChangeState()
         {
-            if(Web3.Base == null) return;
-            swapBtn.transition = Web3.Base.RpcCluster == RpcCluster.MainNet ?
+            if(Web3.Wallet == null) return;
+            swapBtn.transition = Web3.Wallet.RpcCluster == RpcCluster.MainNet ?
                 Selectable.Transition.Animation
                 : Selectable.Transition.ColorTint;
-            swapBtn.interactable = Web3.Base.RpcCluster == RpcCluster.MainNet;
+            swapBtn.interactable = Web3.Wallet.RpcCluster == RpcCluster.MainNet;
 
         }
 
@@ -97,9 +97,9 @@ namespace Solana.Unity.SDK.Example
         private void OnEnable()
         {
             Loading.StopLoading();
-            var hasPrivateKey = !string.IsNullOrEmpty(Web3.Instance.Wallet?.Account.PrivateKey);
+            var hasPrivateKey = !string.IsNullOrEmpty(Web3.Instance.WalletBase?.Account.PrivateKey);
             savePrivateKeyBtn.gameObject.SetActive(hasPrivateKey);
-            var hasMnemonics = !string.IsNullOrEmpty(Web3.Instance.Wallet?.Mnemonic?.ToString());
+            var hasMnemonics = !string.IsNullOrEmpty(Web3.Instance.WalletBase?.Mnemonic?.ToString());
             saveMnemonicsBtn.gameObject.SetActive(hasMnemonics);
             Web3.OnBalanceChange += OnBalanceChange;
         }
@@ -120,16 +120,16 @@ namespace Solana.Unity.SDK.Example
         private void SavePrivateKeyOnClick()
         {
             if (!gameObject.activeSelf) return;
-            if (string.IsNullOrEmpty(Web3.Instance.Wallet.Account.PrivateKey?.ToString())) return;
-            Clipboard.Copy(Web3.Instance.Wallet.Account.PrivateKey.ToString());
+            if (string.IsNullOrEmpty(Web3.Instance.WalletBase.Account.PrivateKey?.ToString())) return;
+            Clipboard.Copy(Web3.Instance.WalletBase.Account.PrivateKey.ToString());
             gameObject.GetComponent<Toast>()?.ShowToast("Private Key copied to clipboard", 3);
         }
         
         private void SaveMnemonicsOnClick()
         {
             if (!gameObject.activeSelf) return;
-            if (string.IsNullOrEmpty(Web3.Instance.Wallet.Mnemonic?.ToString())) return;
-            Clipboard.Copy(Web3.Instance.Wallet.Mnemonic.ToString());
+            if (string.IsNullOrEmpty(Web3.Instance.WalletBase.Mnemonic?.ToString())) return;
+            Clipboard.Copy(Web3.Instance.WalletBase.Mnemonic.ToString());
             gameObject.GetComponent<Toast>()?.ShowToast("Mnemonics copied to clipboard", 3);
         }
 
@@ -140,7 +140,7 @@ namespace Solana.Unity.SDK.Example
 
         private async UniTask GetOwnedTokenAccounts()
         {
-            var tokens = await Web3.Base.GetTokenAccounts(Commitment.Confirmed);
+            var tokens = await Web3.Wallet.GetTokenAccounts(Commitment.Confirmed);
             if(tokens == null) return;
             // Remove tokens not owned anymore and update amounts
             var tkToRemove = new List<TokenItem>();
@@ -178,7 +178,7 @@ namespace Solana.Unity.SDK.Example
                         tk.transform.localScale = Vector3.one;
 
                         Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
-                            Web3.Instance.Wallet.ActiveRpcClient).AsUniTask().ContinueWith(nft =>
+                            Web3.Instance.WalletBase.ActiveRpcClient).AsUniTask().ContinueWith(nft =>
                         {
                             TokenItem tkInstance = tk.GetComponent<TokenItem>();
                             _instantiatedTokens.Add(tkInstance);
