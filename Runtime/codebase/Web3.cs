@@ -78,7 +78,7 @@ namespace Solana.Unity.SDK
         public WalletBase WalletBase {
         
             get => _wallet;
-            private set { 
+            set { 
                 _wallet = value;
                 OnWalletChangeStateInternal?.Invoke();
                 SubscribeToWalletEvents().Forget();
