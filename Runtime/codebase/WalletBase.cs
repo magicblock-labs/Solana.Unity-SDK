@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
@@ -50,6 +51,7 @@ namespace Solana.Unity.SDK
         public IRpcClient ActiveRpcClient => StartConnection();
 
         private IStreamingRpcClient _activeStreamingRpcClient;
+        private TaskCompletionSource<object> _webSocketConnection;
         public IStreamingRpcClient ActiveStreamingRpcClient => StartStreamingConnection();
         public Account Account { get;protected set; }
         public Mnemonic Mnemonic { get;protected set; }
@@ -109,7 +111,7 @@ namespace Solana.Unity.SDK
         public async Task<double> GetBalance(PublicKey publicKey, Commitment commitment = Commitment.Finalized)
         {
             var balance= await ActiveRpcClient.GetBalanceAsync(publicKey, commitment);
-            return (double)balance.Result.Value / SolLamports;
+            return (double)(balance.Result?.Value ?? 0) / SolLamports;
         }
         
         /// <inheritdoc />
@@ -130,10 +132,9 @@ namespace Solana.Unity.SDK
                 tokenMint);
             var ata = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
             var tokenAccounts = await ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint, null);
-            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
             var transaction = new Transaction
             {
-                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                RecentBlockHash = await GetBlockHash(),
                 FeePayer = Account.PublicKey,
                 Instructions = new List<TransactionInstruction>(),
                 Signatures = new List<SignaturePubKeyPair>()
@@ -160,10 +161,9 @@ namespace Solana.Unity.SDK
         public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, 
             Commitment commitment = Commitment.Finalized)
         {
-            var blockHash = await ActiveRpcClient.GetRecentBlockHashAsync();
             var transaction = new Transaction
             {
-                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                RecentBlockHash = await GetBlockHash(),
                 FeePayer = Account.PublicKey,
                 Instructions = new List<TransactionInstruction>
                 { 
@@ -212,7 +212,7 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public virtual async Task<Transaction> SignTransaction(Transaction transaction)
         {
-            var signatures = transaction.Signatures;
+            var signatures = transaction.Signatures ?? new List<SignaturePubKeyPair>();
             transaction.Sign(Account);
             transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
             var tx = await _SignTransaction(transaction);
@@ -276,6 +276,44 @@ namespace Solana.Unity.SDK
         {
             return await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount, commitment); ;
         }
+
+        #region helpers
+
+        private readonly IDictionary<string, (DateTime, string)> _commitmentCache = new Dictionary<string, (DateTime, string)>();
+
+        /// <summary>
+        /// Get the Recent blockhash
+        /// </summary>
+        /// <param name="commitment"></param>
+        /// <param name="useCache"></param>
+        /// <param name="maxSeconds"></param>
+        /// <returns></returns>
+        public async Task<string> GetBlockHash(
+            Commitment commitment = Commitment.Finalized,
+            bool useCache = true,
+            int maxSeconds = 15)
+        {
+            if(ActiveRpcClient == null) return null;
+            if (useCache)
+            {
+                var exists = _commitmentCache.TryGetValue(commitment.ToString(), out var cacheEntry);
+                switch (exists)
+                {
+                    case true when (DateTime.Now - cacheEntry.Item1).TotalSeconds < maxSeconds:
+                        return cacheEntry.Item2;
+                    case true:
+                        _commitmentCache.Remove(commitment.ToString());
+                        break;
+                }
+            }
+            var blockhash = (await ActiveRpcClient.GetRecentBlockHashAsync()).Result?.Value?.Blockhash;
+            if(blockhash != null)_commitmentCache.Add(commitment.ToString(), (DateTime.Now, blockhash));
+            return blockhash;
+        }
+
+        #endregion
+        
+
         
         /// <summary>
         /// Start RPC connection and return new RPC Client 
@@ -287,11 +325,11 @@ namespace Solana.Unity.SDK
             {
                 if (_activeRpcClient == null && CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster], logger: true);
                 }
                 if (_activeRpcClient == null && !CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri);
+                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri, logger: true);
                 }
 
                 return _activeRpcClient;
@@ -317,9 +355,17 @@ namespace Solana.Unity.SDK
                 if (_activeStreamingRpcClient != null) return _activeStreamingRpcClient;
                 if (CustomStreamingRpcUri != null)
                 {
+                    _webSocketConnection = new TaskCompletionSource<object>();
                     _activeStreamingRpcClient = ClientFactory.GetStreamingClient(CustomStreamingRpcUri, true);
-                    _activeStreamingRpcClient.ConnectAsync()
-                        .ContinueWith( _ => Debug.Log("WebSockets connection: " + _activeStreamingRpcClient.State));
+                    _activeStreamingRpcClient
+                        .ConnectAsync()
+                        .AsUniTask()
+                        .ContinueWith(() =>
+                        {
+                            _webSocketConnection.TrySetResult(null);
+                            Debug.Log("WebSockets connection: " + _activeStreamingRpcClient.State);
+                        })
+                        .Forget();
                     return _activeStreamingRpcClient;
                 }
 
@@ -330,8 +376,15 @@ namespace Solana.Unity.SDK
                 return null;
             }
         }
-        
-        
+
+        public Task AwaitWsRpcConnection()
+        {
+            var wsConnection = ActiveStreamingRpcClient;
+            if(wsConnection?.State.Equals(WebSocketState.Open) ?? false) return Task.CompletedTask;
+            return _webSocketConnection.Task;
+        }
+
+
         /// <summary>
         /// Deduplicate transaction signatures, remove empty signatures if allowEmptySignatures is false
         /// </summary>

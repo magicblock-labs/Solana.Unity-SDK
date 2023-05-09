@@ -1,16 +1,18 @@
 using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using SolanaMobileStack.Interfaces;
-using SolanaMobileStack.JsonRpcClient;
-using SolanaMobileStack.JsonRpcClient.Responses;
+using UnityEngine.Scripting;
 
-namespace SolanaMobileStack
+// ReSharper disable once CheckNamespace
+
+namespace Solana.Unity.SDK
 {
 
+    [Preserve]
     public class JsonRpc20Client
     {
         private delegate void MessageHandler(string message);
+
         private event MessageHandler MessageEvent;
 
         private readonly IMessageSender _messageSender;
@@ -34,7 +36,7 @@ namespace SolanaMobileStack
 
         public void Receive(string message)
         {
-            
+
             MessageEvent?.Invoke(message);
         }
 
@@ -47,10 +49,7 @@ namespace SolanaMobileStack
         {
             var listener = new Action<string>(msg => Receiver(task, msg));
             MessageEvent += listener.Invoke;
-            task.Task.ContinueWith(_ =>
-            {
-                MessageEvent -= listener.Invoke;
-            });
+            task.Task.ContinueWith(_ => { MessageEvent -= listener.Invoke; });
         }
 
         /// <summary>
@@ -72,11 +71,12 @@ namespace SolanaMobileStack
                 {
                     task.SetResult(authorizationResult.Result);
                 }
-            }catch(JsonException e)
+            }
+            catch (JsonException e)
             {
                 task.SetException(e);
             }
-           
+
         }
     }
 }

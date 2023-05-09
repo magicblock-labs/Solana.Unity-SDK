@@ -57,7 +57,7 @@ namespace Solana.Unity.SDK.Example
 
         private async void TransferSol()
         {
-            RequestResult<string> result = await Web3.Instance.Wallet.Transfer(
+            RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
                 new PublicKey(toPublicTxt.text),
                 Convert.ToUInt64(float.Parse(amountTxt.text)*SolLamports));
             HandleResponse(result);
@@ -65,7 +65,7 @@ namespace Solana.Unity.SDK.Example
 
         private async void TransferNft()
         {
-            RequestResult<string> result = await Web3.Instance.Wallet.Transfer(
+            RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
                 new PublicKey(toPublicTxt.text),
                 new PublicKey(_nft.metaplexData.data.mint),
                 1);
@@ -108,7 +108,7 @@ namespace Solana.Unity.SDK.Example
 
         private async void TransferToken()
         {
-            RequestResult<string> result = await Web3.Instance.Wallet.Transfer(
+            RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
                 new PublicKey(toPublicTxt.text),
                 new PublicKey(_transferTokenAccount.Account.Data.Parsed.Info.Mint),
                 ulong.Parse(amountTxt.text));
@@ -167,7 +167,7 @@ namespace Solana.Unity.SDK.Example
             }
             else
             {
-                _ownedSolAmount = await Web3.Instance.Wallet.GetBalance();
+                _ownedSolAmount = await Web3.Instance.WalletBase.GetBalance();
                 ownedAmountTxt.text = $"{_ownedSolAmount}";
             }
         }

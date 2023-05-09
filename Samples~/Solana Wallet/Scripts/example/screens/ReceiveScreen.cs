@@ -42,25 +42,25 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQr();
-        publicKey_txt.text = Web3.Instance.Wallet.Account.PublicKey;
+        publicKey_txt.text = Web3.Instance.WalletBase.Account.PublicKey;
     }
 
     private void CheckAndToggleAirdrop()
     {
-        if(Web3.Base == null) return;
-        airdrop_btn.gameObject.SetActive(Web3.Base.RpcCluster == RpcCluster.DevNet);
+        if(Web3.Wallet == null) return;
+        airdrop_btn.gameObject.SetActive(Web3.Wallet.RpcCluster == RpcCluster.DevNet);
     }
 
     private void GenerateQr()
     {
-        Texture2D tex = QRGenerator.GenerateQRTexture(Web3.Instance.Wallet.Account.PublicKey, 256, 256);
+        Texture2D tex = QRGenerator.GenerateQRTexture(Web3.Instance.WalletBase.Account.PublicKey, 256, 256);
         qrCode_img.texture = tex;
     }
 
     private async void RequestAirdrop()
     {
         Loading.StartLoading();
-        var result = await Web3.Base.RequestAirdrop();
+        var result = await Web3.Wallet.RequestAirdrop();
         if (result?.Result == null)
         {
             Debug.LogError("Airdrop failed, you may have reach the limit, try later or use a public faucet");
@@ -81,7 +81,7 @@ public class ReceiveScreen : SimpleScreen
 
     public void CopyPublicKeyToClipboard()
     {
-        Clipboard.Copy(Web3.Instance.Wallet.Account.PublicKey.ToString());
+        Clipboard.Copy(Web3.Instance.WalletBase.Account.PublicKey.ToString());
         gameObject.GetComponent<Toast>()?.ShowToast("Public Key copied to clipboard", 3);
     }
 
