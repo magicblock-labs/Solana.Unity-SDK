@@ -141,8 +141,6 @@ namespace Solana.Unity.SDK
                     if(w == null) return;
                     WalletBase = _web3AuthWallet;
                 };
-                // Try to login if running as an XNFT
-                LoginXNFT().AsUniTask().Forget();
             }
             catch (Exception e)
             {
@@ -190,22 +188,7 @@ namespace Solana.Unity.SDK
                 WalletBase = _web3AuthWallet;
             return acc;
         }
-        
-        /// <summary>
-        /// Login to backpack, if running as an xnft
-        /// </summary>
-        /// <returns></returns>
 
-        public async Task<Account> LoginXNFT()
-        {
-            var xnftWallet = new XNFTWallet(rpcCluster, customRpc, webSocketsRpc, false);
-            var acc = await xnftWallet.Login();
-            if (acc != null)
-                WalletBase = xnftWallet;
-            return acc;
-        }
-        
-        
         /// <summary>
         /// Login using the solana wallet adapter
         /// </summary>
