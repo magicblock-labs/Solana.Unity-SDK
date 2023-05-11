@@ -21,6 +21,7 @@ namespace Solana.Unity.SDK
     }
     
     
+    [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
     public class SolanaMobileWalletAdapter : WalletBase
     {
         private readonly SolanaMobileWalletAdapterOptions _walletOptions;

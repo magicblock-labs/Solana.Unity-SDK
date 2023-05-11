@@ -57,13 +57,7 @@ namespace Solana.Unity.SDK.Example
             loginBtnXNFT.onClick.AddListener(LoginCheckerWalletAdapter);
             
             loginBtnXNFT.gameObject.SetActive(false);
-            
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                loginBtnWalletAdapter.gameObject.SetActive(false);
-                loginBtnSms.gameObject.SetActive(true);
-            }
-            
+
             if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.WindowsEditor or RuntimePlatform.OSXEditor)
             {
                 loginBtnWalletAdapter.onClick.RemoveListener(LoginCheckerWalletAdapter);
@@ -80,16 +74,10 @@ namespace Solana.Unity.SDK.Example
             var account = await Web3.Instance.LoginInGameWallet(password);
             CheckAccount(account);
         }
-        
-        private async void LoginCheckerPhantom()
-        {
-            var account = await Web3.Instance.LoginPhantom();
-            CheckAccount(account);
-        }
-        
+
         private async void LoginCheckerSms()
         {
-            var account = await Web3.Instance.LoginSolanaMobileStack();
+            var account = await Web3.Instance.LoginWalletAdapter();
             CheckAccount(account);
         }
         
@@ -131,4 +119,3 @@ namespace Solana.Unity.SDK.Example
         }
     }
 }
-

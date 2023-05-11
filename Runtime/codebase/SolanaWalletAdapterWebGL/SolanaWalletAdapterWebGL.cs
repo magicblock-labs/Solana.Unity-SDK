@@ -55,6 +55,7 @@ namespace Solana.Unity.SDK
         private static WalletSpecs _currentWallet;
             
 
+        [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
         public SolanaWalletAdapterWebGL(
             SolanaWalletAdapterWebGLOptions solanaWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet,
