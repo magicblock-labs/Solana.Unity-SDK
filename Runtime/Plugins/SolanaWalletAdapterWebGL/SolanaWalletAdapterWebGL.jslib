@@ -1,7 +1,8 @@
 ﻿mergeInto(LibraryManager.library, {
     InitWalletAdapter: async function (callback) {
-        // Add UnityWalletAdapter from CDN
+        
         const isXnft = Boolean("xnft" in window && window.xnft != undefined && window.xnft.solana != undefined && window.xnft.solana.publicKey != undefined);
+        // Add UnityWalletAdapter from CDN
         if(window.walletAdapterLib == undefined){
             console.log("Adding WalletAdapterLib")
             var script = document.createElement("script");
@@ -49,17 +50,12 @@
                 var base64transaction = UTF8ToString(transactionPtr)
                 let signedTransaction;
                 if(walletName === 'XNFT'){
-                    console.log("XNFT Sign Transaction")
                     const transaction = window.walletAdapterLib.getTransactionFromStr(base64transaction);
                     signedTransaction = await window.xnft.solana.signTransaction(transaction);
-                    console.log(signedTransaction)
                 } else {
-                    console.log("Sign Transaction")
                     signedTransaction = await window.walletAdapterLib.signTransaction(walletName, base64transaction);
-                    console.log(signedTransaction)
                 }
                 let signature = signedTransaction.signature.toString('base64');
-                console.log(signature)
                 var bufferSize = lengthBytesUTF8(signature) + 1;
                 var signaturePtr = _malloc(bufferSize);
                 stringToUTF8(signature, signaturePtr, bufferSize);
@@ -72,7 +68,7 @@
          try {
                 const walletName = UTF8ToString(walletNamePtr)
                 var base64Message = UTF8ToString(messagePtr)
-                var signatureStr;
+                let signatureStr;
                  if(walletName === 'XNFT'){  
                   const messageBytes = Uint8Array.from(atob(base64Message), (c) => c.charCodeAt(0));
                   const signedMessage = await window.xnft.solana.signMessage(messageBytes);
@@ -94,7 +90,17 @@
                 const walletName = UTF8ToString(walletNamePtr)
                 var base64transactionsStr = UTF8ToString(transactionsPtr)
                 var base64transactions = base64transactionsStr.split(',');
-                var signedTransactions = await window.walletAdapterLib.signAllTransactions(walletName, base64transactions);
+                let signedTransactions;
+                if(walletName === 'XNFT'){
+                    let transactions = [];
+                    for(var i = 0; i < base64transactions.length; i++){
+                        const transaction = window.walletAdapterLib.getTransactionFromStr(base64transactions[i]);
+                        transactions.push(transaction);
+                    }
+                    signedTransactions = await window.xnft.solana.signAllTransactions(transactions);
+                } else {
+                    signedTransactions = await window.walletAdapterLib.signAllTransactions(walletName, base64transactions);
+                }
                 var signatures = [];
                 for (var i = 0; i < signedTransactions.length; i++) {
                     var signedTransaction = signedTransactions[i];

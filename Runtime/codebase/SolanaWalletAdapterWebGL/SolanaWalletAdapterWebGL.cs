@@ -94,7 +94,6 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Account> _Login(string password = null)
         {
-            Debug.Log("WalletAdapter _Login");
             await SetCurrentWallet();
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             try
@@ -194,7 +193,6 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnTransactionSigned(string signature)
         {
-            Debug.Log($"Transaction signed: {signature}");
             _currentTransaction.Signatures.Add(new SignaturePubKeyPair()
             {
                 PublicKey = _account.PublicKey,
