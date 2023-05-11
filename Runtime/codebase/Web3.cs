@@ -23,10 +23,13 @@ namespace Solana.Unity.SDK
         #region Variables
         
         public static Web3 Instance;
+        
+        [Header("Rpc Settings")]
+
         public RpcCluster rpcCluster = RpcCluster.DevNet;
         public string customRpc = string.Empty;
-        public bool autoConnectOnStartup;
         public string webSocketsRpc;
+        public bool autoConnectOnStartup;
         public WalletBase WalletBase {
         
             get => _wallet;
@@ -47,10 +50,9 @@ namespace Solana.Unity.SDK
 
         #region Wallet Options
 
-        public Web3AuthWalletOptions web3AuthWalletOptions;
+        [Header("Wallets Options")]
         
-        public PhantomWalletOptions phantomWalletOptions;
-
+        public Web3AuthWalletOptions web3AuthWalletOptions;
         public SolanaWalletAdapterOptions solanaWalletAdapterOptions;
         
         #endregion

@@ -58,10 +58,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rpcCluster: 0
-  customRpc: https://red-boldest-uranium.solana-mainnet.quiknode.pro/190d71a30ba3170f66df5e49c8c88870737cd5ce/
+  customRpc: 
   autoConnectOnStartup: 1
-  webSocketsRpc: 
-  web3AuthWalletOptions:
+  webSocketsRpc:
+  web3AuthWalletOptions: 
     appName: Solana Unity SDK
     logoLight: 
     logoDark: 
