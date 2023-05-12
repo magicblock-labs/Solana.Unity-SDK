@@ -235,17 +235,13 @@ namespace Solana.Unity.SDK
         {
             foreach (var transaction in transactions)
             {
-                transaction.Sign(Account);
+                transaction.PartialSign(Account);
                 transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
             }
             Transaction[] signedTxs = await _SignAllTransactions(transactions);
             for (int i = 0; i < signedTxs.Length; i++)
             {
-                var tx = signedTxs[i];
-                var signatures = transactions[i].Signatures;
-                signatures.AddRange(tx.Signatures);
-                tx.Signatures = signatures;
-                tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
+                signedTxs[i].Signatures = DeduplicateTransactionSignatures(signedTxs[i].Signatures);
             }
             return signedTxs;
         }
