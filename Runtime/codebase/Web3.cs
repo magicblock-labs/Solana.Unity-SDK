@@ -84,6 +84,7 @@ namespace Solana.Unity.SDK
             add
             {
                 OnBalanceChangeInternal += value;
+                if(Wallet == null) return;
                 OnBalanceChangeInternal?.Invoke(_solAmount);
                 UpdateBalance().Forget();
             }
@@ -181,7 +182,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="provider"></param>
         /// <returns></returns>
-        public async Task<Account> LoginInWeb3Auth(Provider provider)
+        public async Task<Account> LoginWeb3Auth(Provider provider)
         {
             _web3AuthWallet ??=
                 new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
@@ -223,6 +224,24 @@ namespace Solana.Unity.SDK
                 WalletBase = walletAdapter;
             return acc;
         }
+
+        #region Clickable Methods
+
+        public void LoginWithWalletAdapter()
+        {
+            LoginWalletAdapter().AsUniTask().Forget();
+        }
+
+        public void LoginWithWeb3Auth(string provider)
+        {
+            var parsed = Enum.TryParse<Provider>(provider, out var providerEnum);
+            if(!parsed)
+                throw new Exception($"Invalid provider, {provider}");
+            LoginWeb3Auth(providerEnum).AsUniTask().Forget();
+        }
+
+
+        #endregion
 
         
         /// <summary>

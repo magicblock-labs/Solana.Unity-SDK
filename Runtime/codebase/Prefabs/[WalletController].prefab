@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &5903901361556689692
+--- !u!1 &5823238213880287928
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5903901361556689694}
-  - component: {fileID: 42048107343790436}
-  - component: {fileID: 5903901361556689688}
+  - component: {fileID: 5823238213880287930}
+  - component: {fileID: 120455658732306624}
+  - component: {fileID: 5823238213880287932}
   m_Layer: 0
   m_Name: '[WalletController]'
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5903901361556689694
+--- !u!4 &5823238213880287930
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5903901361556689692}
+  m_GameObject: {fileID: 5823238213880287928}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 523.5468, y: 236.58032, z: -101.23384}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -33,25 +33,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &42048107343790436
+--- !u!114 &120455658732306624
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5903901361556689692}
+  m_GameObject: {fileID: 5823238213880287928}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbd7daddfbeaa44729a122a269ac8fb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5903901361556689688
+--- !u!114 &5823238213880287932
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5903901361556689692}
+  m_GameObject: {fileID: 5823238213880287928}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b75a4e92c14884ea6bf3e46d07a33eb0, type: 3}
@@ -59,9 +59,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rpcCluster: 0
   customRpc: 
+  webSocketsRpc: 
   autoConnectOnStartup: 1
-  webSocketsRpc:
-  web3AuthWalletOptions: 
+  web3AuthWalletOptions:
     appName: Solana Unity SDK
     logoLight: 
     logoDark: 
@@ -72,10 +72,6 @@ MonoBehaviour:
     redirectUrl: torusapp://com.torus.Web3AuthUnity/auth
     clientId: BO4zGEzyV6DT1vHU46b6GEngOcg2jl5Pmd9Boi8dLdBpBZnS351ulHDz2k7XJ1dEm-DcvyyARivGCZDXrbZng-0
     network: 0
-  phantomWalletOptions:
-    phantomApiVersion: v1
-    appMetaDataUrl: https://github.com/garbles-labs/Solana.Unity-SDK
-    deeplinkUrlScheme: unitydl
   solanaWalletAdapterOptions:
     solanaMobileWalletAdapterOptions:
       identityUri: https://solana.unity-sdk.gg/
