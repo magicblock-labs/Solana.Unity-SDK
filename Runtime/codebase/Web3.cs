@@ -146,6 +146,12 @@ namespace Solana.Unity.SDK
             {
                 Debug.Log("We3Auth session not detected, " +  e.Message);
             }
+            
+            #if UNITY_WEBGL
+            LoginXNFT().AsUniTask().Forget();
+            #endif
+
+            
         }
 
         /// <summary>
@@ -187,6 +193,18 @@ namespace Solana.Unity.SDK
             if (acc != null)
                 WalletBase = _web3AuthWallet;
             return acc;
+        }
+        
+        public async Task<Account> LoginXNFT()
+        {
+            var isXnft = await SolanaWalletAdapterWebGL.IsXnft();
+            if (isXnft)
+            {
+                Debug.Log("xNFT detected");
+                return await LoginWalletAdapter();
+            }
+            Debug.Log("xNFT not detected");
+            return null;
         }
 
         /// <summary>

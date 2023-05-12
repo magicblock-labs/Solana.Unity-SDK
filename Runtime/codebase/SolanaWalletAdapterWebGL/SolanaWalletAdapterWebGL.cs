@@ -90,8 +90,16 @@ namespace Solana.Unity.SDK
                 Wallets = JsonUtility.FromJson<WalletSpecsObject>(walletsData).wallets;
             }
         }
-
-
+        
+        
+        /// <summary>
+        /// Check whether it's an XNFT or not
+        /// </summary>
+        /// <returns> true if it's an XNFT, false otherwise</returns>
+        public static async Task<bool> IsXnft(){
+            await InitWallets();
+            return _currentWallet != null && _currentWallet.name == "XNFT";
+        }
 
         protected override async Task<Account> _Login(string password = null)
         {

@@ -1,6 +1,7 @@
 using Solana.Unity.SDK;
 using TMPro;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
 
@@ -32,5 +33,6 @@ public class DropdownClusterSelector : MonoBehaviour
         };
         PlayerPrefs.SetInt("rpcCluster", value);
         PlayerPrefs.Save();
+        Web3.Instance.LoginXNFT().AsUniTask().Forget();
     }
 }
