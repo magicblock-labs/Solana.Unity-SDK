@@ -212,23 +212,9 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public virtual async Task<Transaction> SignTransaction(Transaction transaction)
         {
-            //var signatures = transaction.Signatures ?? new List<SignaturePubKeyPair>();
             transaction.Sign(Account);
             transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
-            foreach (var sng in transaction.Signatures)
-            {
-                Debug.Log(string.Join(",", sng.Signature));
-            }
-            Debug.Log("Num Instructions before: " + transaction.Instructions.Count);
             var tx = await _SignTransaction(transaction);
-            Debug.Log("Num Instructions after: " + tx.Instructions.Count);
-            Debug.Log("After sign");
-            foreach (var sng in tx.Signatures)
-            {
-                Debug.Log(string.Join(",", sng.Signature));
-            }
-            //signatures.AddRange(tx.Signatures);
-            //tx.Signatures = signatures;
             tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
             return tx;
         }

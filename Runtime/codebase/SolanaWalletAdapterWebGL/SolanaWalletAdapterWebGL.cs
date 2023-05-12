@@ -202,11 +202,6 @@ namespace Solana.Unity.SDK
         public static void OnTransactionSigned(string transaction)
         {
             var tx = Transaction.Deserialize(Convert.FromBase64String(transaction));
-            Debug.Log("Signatures: " + tx.Signatures.Count);
-            foreach (var sng in tx.Signatures)
-            {
-                Debug.Log(string.Join(",", sng.Signature));
-            }
             _signedTransactionTaskCompletionSource.SetResult(tx);
         }
         
