@@ -83,7 +83,7 @@ namespace Solana.Unity.SDK.Example
         
         private async void LoginCheckerWeb3Auth(Provider provider)
         {
-            var account = await Web3.Instance.LoginInWeb3Auth(provider);
+            var account = await Web3.Instance.LoginWeb3Auth(provider);
             CheckAccount(account);
         }
 
