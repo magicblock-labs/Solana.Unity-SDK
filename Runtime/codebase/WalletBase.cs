@@ -260,7 +260,7 @@ namespace Solana.Unity.SDK
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
                 Convert.ToBase64String(signedTransaction.Serialize()),
-                skipPreflight: true, preFlightCommitment: commitment);
+                skipPreflight: false, preFlightCommitment: commitment);
         }
 
         /// <inheritdoc />
