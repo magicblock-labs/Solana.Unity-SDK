@@ -95,9 +95,7 @@ var res = await Web3.Wallet.SignAndSendTransaction(tx);
 Debug.Log(res.Result);
 ```
 
-The console will print the transaction signature, which should looks something like:
-
-[https://explorer.solana.com/tx/TPSviDzpzTFEyfJkYwmQzqaPJTTsGMZTuPuG9q1LiKrhZnwg5WWHH7ARR8eYAdoB8rt8qcjKwqbcZj43b84Ls5C?cluster=devnet](https://explorer.solana.com/tx/TPSviDzpzTFEyfJkYwmQzqaPJTTsGMZTuPuG9q1LiKrhZnwg5WWHH7ARR8eYAdoB8rt8qcjKwqbcZj43b84Ls5C?cluster=devnet),
+The console will print the transaction signature, which you can investigate in the inspector and should looks similar to this [transaction](https://explorer.solana.com/tx/TPSviDzpzTFEyfJkYwmQzqaPJTTsGMZTuPuG9q1LiKrhZnwg5WWHH7ARR8eYAdoB8rt8qcjKwqbcZj43b84Ls5C?cluster=devnet),
 
 You can lookup the mint address in the explorer, which should be similar to this [NFT](https://explorer.solana.com/address/4X199VtLKVJUeLMXzwXzSsFgapVQcrYx9vnqxNDkH2Xa?cluster=devnet)
 
