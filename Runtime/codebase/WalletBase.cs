@@ -212,12 +212,9 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public virtual async Task<Transaction> SignTransaction(Transaction transaction)
         {
-            var signatures = transaction.Signatures ?? new List<SignaturePubKeyPair>();
             transaction.Sign(Account);
             transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
             var tx = await _SignTransaction(transaction);
-            signatures.AddRange(tx.Signatures);
-            tx.Signatures = signatures;
             tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
             return tx;
         }
@@ -235,17 +232,13 @@ namespace Solana.Unity.SDK
         {
             foreach (var transaction in transactions)
             {
-                transaction.Sign(Account);
+                transaction.PartialSign(Account);
                 transaction.Signatures = DeduplicateTransactionSignatures(transaction.Signatures, allowEmptySignatures: true);
             }
             Transaction[] signedTxs = await _SignAllTransactions(transactions);
             for (int i = 0; i < signedTxs.Length; i++)
             {
-                var tx = signedTxs[i];
-                var signatures = transactions[i].Signatures;
-                signatures.AddRange(tx.Signatures);
-                tx.Signatures = signatures;
-                tx.Signatures = DeduplicateTransactionSignatures(tx.Signatures);
+                signedTxs[i].Signatures = DeduplicateTransactionSignatures(signedTxs[i].Signatures);
             }
             return signedTxs;
         }
@@ -254,13 +247,13 @@ namespace Solana.Unity.SDK
         public virtual async Task<RequestResult<string>> SignAndSendTransaction
         (
             Transaction transaction, 
-            bool skipPreflight = true,
+            bool skipPreflight = false,
             Commitment commitment = Commitment.Finalized)
         {
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
                 Convert.ToBase64String(signedTransaction.Serialize()),
-                skipPreflight: true, preFlightCommitment: commitment);
+                skipPreflight: skipPreflight, preFlightCommitment: commitment);
         }
 
         /// <inheritdoc />

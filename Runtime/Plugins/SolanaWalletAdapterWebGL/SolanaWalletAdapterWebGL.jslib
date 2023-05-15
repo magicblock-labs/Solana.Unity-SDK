@@ -1,6 +1,5 @@
-﻿mergeInto(LibraryManager.library, {
+mergeInto(LibraryManager.library, {
     InitWalletAdapter: async function (callback) {
-        
         const isXnft = Boolean("xnft" in window && window.xnft != undefined && window.xnft.solana != undefined && window.xnft.solana.publicKey != undefined);
         // Add UnityWalletAdapter from CDN
         if(window.walletAdapterLib == undefined){
@@ -55,11 +54,11 @@
                 } else {
                     signedTransaction = await window.walletAdapterLib.signTransaction(walletName, base64transaction);
                 }
-                let signature = signedTransaction.signature.toString('base64');
-                var bufferSize = lengthBytesUTF8(signature) + 1;
-                var signaturePtr = _malloc(bufferSize);
-                stringToUTF8(signature, signaturePtr, bufferSize);
-                Module.dynCall_vi(callback, signaturePtr);          
+                let txStr = signedTransaction.serialize().toString('base64')
+                var bufferSize = lengthBytesUTF8(txStr) + 1;
+                var txPtr = _malloc(bufferSize);
+                stringToUTF8(txStr, txPtr, bufferSize);
+                Module.dynCall_vi(callback, txPtr);          
          } catch (err) {
             console.error(err.message);
          }
@@ -101,17 +100,17 @@
                 } else {
                     signedTransactions = await window.walletAdapterLib.signAllTransactions(walletName, base64transactions);
                 }
-                var signatures = [];
+                var serializedSignedTransactions = [];
                 for (var i = 0; i < signedTransactions.length; i++) {
                     var signedTransaction = signedTransactions[i];
-                    var signature = signedTransaction.signature.toString('base64');
-                    signatures.push(signature);
+                    var txStr = signedTransaction.serialize().toString('base64');
+                    serializedSignedTransactions.push(txStr);
                 }
-                var signaturesStr = signatures.join(',');
-                var bufferSize = lengthBytesUTF8(signaturesStr) + 1;
-                var signaturesPtr = _malloc(bufferSize);
-                stringToUTF8(signaturesStr, signaturesPtr, bufferSize);
-                Module.dynCall_vi(callback, signaturesPtr);
+                var txsStr = serializedSignedTransactions.join(',');
+                var bufferSize = lengthBytesUTF8(txsStr) + 1;
+                var txsPtr = _malloc(bufferSize);
+                stringToUTF8(txsStr, txsPtr, bufferSize);
+                Module.dynCall_vi(callback, txsPtr);
         } catch (err) {
             console.error(err.message);
         }

@@ -26,7 +26,6 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
-        private static Transaction _currentTransaction;
         private static Transaction[] _currentTransactions;
         private static Account _account;
         public static GameObject WalletAdapterUI { get; private set; }
@@ -97,6 +96,9 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <returns> true if it's an XNFT, false otherwise</returns>
         public static async Task<bool> IsXnft(){
+            if(RuntimePlatform.WebGLPlayer != Application.platform){
+                return false;
+            }
             await InitWallets();
             return _currentWallet != null && _currentWallet.name == "XNFT";
         }
@@ -149,7 +151,6 @@ namespace Solana.Unity.SDK
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
-            _currentTransaction = transaction;
             var base64TransactionStr = Convert.ToBase64String(transaction.Serialize()) ;
             ExternSignTransactionWallet(_currentWallet.name,base64TransactionStr, OnTransactionSigned);
             return _signedTransactionTaskCompletionSource.Task;
@@ -200,14 +201,10 @@ namespace Solana.Unity.SDK
         /// that we then need to put into the transaction before we send it out.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<string>))]
-        public static void OnTransactionSigned(string signature)
+        public static void OnTransactionSigned(string transaction)
         {
-            _currentTransaction.Signatures.Add(new SignaturePubKeyPair()
-            {
-                PublicKey = _account.PublicKey,
-                Signature = Convert.FromBase64String(signature)
-            });
-            _signedTransactionTaskCompletionSource.SetResult(_currentTransaction);
+            var tx = Transaction.Deserialize(Convert.FromBase64String(transaction));
+            _signedTransactionTaskCompletionSource.SetResult(tx);
         }
         
         /// <summary>
