@@ -35,6 +35,7 @@ const navigation = [
     links: [
       { title: 'Associated token account', href: '/docs/associated-token-account' },
       { title: 'Transfer token', href: '/docs/transfer-token' },
+      { title: 'Mint an NFT', href: '/docs/mint-an-nft' },
       { title: 'Transaction builder', href: '/docs/transaction-builder' },
       { title: 'Staking', href: '/docs/staking' },
       { title: 'Add signature', href: '/docs/add-signature' },
