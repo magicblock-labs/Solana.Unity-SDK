@@ -96,6 +96,9 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <returns> true if it's an XNFT, false otherwise</returns>
         public static async Task<bool> IsXnft(){
+            if(RuntimePlatform.WebGLPlayer != Application.platform){
+                return false;
+            }
             await InitWallets();
             return _currentWallet != null && _currentWallet.name == "XNFT";
         }

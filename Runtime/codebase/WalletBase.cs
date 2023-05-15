@@ -247,13 +247,13 @@ namespace Solana.Unity.SDK
         public virtual async Task<RequestResult<string>> SignAndSendTransaction
         (
             Transaction transaction, 
-            bool skipPreflight = true,
+            bool skipPreflight = false,
             Commitment commitment = Commitment.Finalized)
         {
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
                 Convert.ToBase64String(signedTransaction.Serialize()),
-                skipPreflight: false, preFlightCommitment: commitment);
+                skipPreflight: skipPreflight, preFlightCommitment: commitment);
         }
 
         /// <inheritdoc />

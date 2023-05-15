@@ -34,7 +34,7 @@ namespace Solana.Unity.SDK
         
             get => _wallet;
             set { 
-                if(_wallet == null && value != null) OnLogin?.Invoke(value.Account);
+                if(_wallet == null && value?.Account != null) OnLogin?.Invoke(value.Account);
                 if(_wallet != null && value == null) OnLogout?.Invoke();
                 _wallet = value;
                 OnWalletChangeStateInternal?.Invoke();
@@ -177,8 +177,10 @@ namespace Solana.Unity.SDK
         /// <returns></returns>
         public async Task<Account> CreateAccount(string mnemonic, string password)
         {
-            WalletBase = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
-            return await WalletBase.CreateAccount( mnemonic, password);
+            var wallet = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            var account = await wallet.CreateAccount( mnemonic, password);
+            WalletBase = wallet;
+            return account;
         }
         
         /// <summary>
@@ -199,13 +201,9 @@ namespace Solana.Unity.SDK
         public async Task<Account> LoginXNFT()
         {
             var isXnft = await SolanaWalletAdapterWebGL.IsXnft();
-            if (isXnft)
-            {
-                Debug.Log("xNFT detected");
-                return await LoginWalletAdapter();
-            }
-            Debug.Log("xNFT not detected");
-            return null;
+            if (!isXnft) return null;
+            Debug.Log("xNFT detected");
+            return await LoginWalletAdapter();
         }
 
         /// <summary>
