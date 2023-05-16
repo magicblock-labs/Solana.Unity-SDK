@@ -41,6 +41,10 @@ Github will provide a url for the live deployment: [garbles-labs.github.io/Solan
 Learn how to setup a [custom domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site) on Github pages
 {% /callout %}
 
+{% callout title="Publish your game as xNFT" %}
+Follow [this guide](/docs/xnft#deploy-your-game-as-an-x-nft) to publish your game as an xNFT in less than 2 minutes.
+{% /callout %}
+
 
 ---
 
