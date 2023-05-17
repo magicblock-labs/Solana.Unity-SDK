@@ -6,7 +6,7 @@
   "description": "Open-Source Unity-Solana SDK with Full RPC coverage, NFT support and more",
   "samples": [
     {
-      "displayName": "Simple Wallet",
+      "displayName": "Sample Wallet",
       "description": "Contains simple implementation of Unity Solana Wallet",
       "path": "Samples~"
     }
