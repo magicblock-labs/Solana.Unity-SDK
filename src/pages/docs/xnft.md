@@ -50,4 +50,13 @@ Connect your Backpack wallet and then follow the instructions:
 
   ![Drop manifest](/xnft/drop_manifest.png)
 
-Congrats! You're done publishing your game as an xNFT!
+  Congrats! You're done publishing your game as an xNFT!
+
+## Video Demo
+Here's a quick demo on how you can build your game and test it in the browser and as an xNFT app inside Backpack.
+
+[![Xnft Demo](/xnft/XnftTutorial.gif)](/xnft/XnftTutorial.mp4)
+
+
+
+
