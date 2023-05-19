@@ -1,5 +1,6 @@
 import { Callout } from '@/components/Callout'
 import { LinkGrid } from '@/components/LinkGrid'
+import { Video } from '@/components/Video'
 
 const tags = {
   callout: {
@@ -41,6 +42,13 @@ const tags = {
       icon: { type: String },
       href: { type: String },
     },
+  },
+  video: {
+    selfClosing: true,
+    attributes: {
+      src: { type: String },
+    },
+    render: Video,
   },
 }
 

@@ -55,8 +55,7 @@ Connect your Backpack wallet and then follow the instructions:
 ## Video Demo
 Here's a quick demo on how you can build your game and test it in the browser and as an xNFT app inside Backpack.
 
-[![Xnft Demo](/xnft/XnftTutorial.gif)](/xnft/XnftTutorial.mp4)
-
+{% video src="https://www.youtube.com/embed/J4W3vzal5_I" /%}
 
 
 
