@@ -18,7 +18,9 @@ The SDK supports a veriety of wallets, including
 ## Interface
 `IWalletBase` defines the common [interface](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/IWalletBase.cs) 
 
-The WalletBase abstract class implements `IWalletBase` interface and provides convenient methods shared by all wallet adapters. A few examples are:
+The WalletBase abstract class implements `IWalletBase` interface and provides convenient methods shared by all wallet adapters. 
+
+A few examples are:
 
 * Connection to Mainnet/Devnet/Testnet or custom RPC
 * Login/logout
@@ -28,8 +30,14 @@ The WalletBase abstract class implements `IWalletBase` interface and provides co
 * Sign/partially sign transactions
 * Send transactions
 
+## Login example
+You can attach the [Web3.cs](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/Web3.cs) script 
+(../Runtime/Codebase/Web3.cs) to any game object on the scene, then call Web3.Instance.LoginWalletAdapter();
+
+![Package manager](/Web3.png)
 
 {% callout title="Additional methods" %} The complete list of methods is available [here](https://github.com/garbles-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/WalletBase.cs) {% /callout %} 
+
 
 ---
 ## Wallet Adapter
