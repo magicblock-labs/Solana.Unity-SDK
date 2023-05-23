@@ -5,9 +5,13 @@ using UnityEngine;
 
 public class HyperlinkXnft : MonoBehaviour
 {
-
+    #if UNITY_WEBGL
     [DllImport("__Internal")]
     private static extern void HyperlinkXNFT(string linkUrl);
+    #else
+    private static void HyperlinkXNFT(string linkUrl){};
+    #endif
+
 
     public void OpenLink(string link)
     {
