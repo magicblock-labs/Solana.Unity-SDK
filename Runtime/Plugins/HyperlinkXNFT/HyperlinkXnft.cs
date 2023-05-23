@@ -5,20 +5,22 @@ using UnityEngine;
 
 public class HyperlinkXnft : MonoBehaviour
 {
-
-    [DllImport("__Internal")]
-    private static extern void HyperlinkXNFT(string linkUrl);
+   
 
     public void OpenLink(string link)
     {
-        //xnft link has to start with https:// and not have "www" after it. Very important!
-    #if UNITY_EDITOR
         Application.OpenURL(link);
-    #else
-        Application.OpenURL(link);
-        HyperlinkXNFT(link);
-    #endif
+        #if UNITY_WEBGL && !UNITY_EDITOR
+            //xnft link has to start with https:// and not have "www" after it. Very important!
+            HyperlinkXNFT(link);
+        #endif
     }
-
+    
+    #if UNITY_WEBGL
+            [DllImport("__Internal")]
+            private static extern void HyperlinkXNFT(string linkUrl);
+    #else
+        private static void HyperlinkXNFT(string linkUrl){}
+    #endif
 
 }
