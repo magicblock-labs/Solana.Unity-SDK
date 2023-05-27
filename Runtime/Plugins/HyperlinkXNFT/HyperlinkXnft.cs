@@ -9,7 +9,7 @@ public class HyperlinkXnft : MonoBehaviour
     [DllImport("__Internal")]
     private static extern void HyperlinkXNFT(string linkUrl);
     #else
-    private static void HyperlinkXNFT(string linkUrl){};
+    private static void HyperlinkXNFT(string linkUrl){}
     #endif
 
 
