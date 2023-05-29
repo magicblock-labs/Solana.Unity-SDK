@@ -33,13 +33,19 @@ namespace Solana.Unity.SDK
         public WalletBase WalletBase {
         
             get => _wallet;
-            set { 
-                if(_wallet == null && value?.Account != null) OnLogin?.Invoke(value.Account);
-                if(_wallet != null && value == null) OnLogout?.Invoke();
+            set {
+                var currentWallet = _wallet;
                 _wallet = value;
+                if (currentWallet == null && value?.Account != null)
+                {
+                    OnLogin?.Invoke(value.Account);
+                    UpdateBalance().Forget();
+                    if(OnNFTsUpdateInternal != null) UpdateNFTs().Forget();
+                    SubscribeToWalletEvents().Forget();
+                }
+                if(currentWallet != null && value == null) OnLogout?.Invoke();
                 OnWalletChangeStateInternal?.Invoke();
-                SubscribeToWalletEvents().Forget();
-                UpdateBalance().Forget();
+
             }
         }
         
@@ -92,14 +98,15 @@ namespace Solana.Unity.SDK
         }
         
         private static List<Nft.Nft> _nfts = new();
-        public delegate void NFTsUpdate(List<Nft.Nft> nft);
+        public delegate void NFTsUpdate(List<Nft.Nft> nfts, int total);
         private static event NFTsUpdate OnNFTsUpdateInternal;
         public static event NFTsUpdate OnNFTsUpdate
         {
             add
             {
                 OnNFTsUpdateInternal += value;
-                OnNFTsUpdateInternal?.Invoke(_nfts);
+                if(Wallet == null) return;
+                OnNFTsUpdateInternal?.Invoke(_nfts, _nfts.Count);
                 UpdateNFTs().Forget();
             }
             remove => OnNFTsUpdateInternal -= value;
@@ -332,7 +339,7 @@ namespace Solana.Unity.SDK
                         .ContinueWith(nft =>
                         {
                             _nfts.Add(nft);
-                            OnNFTsUpdateInternal?.Invoke(_nfts);
+                            OnNFTsUpdateInternal?.Invoke(_nfts, _nfts.Count + toFetch.Count());
                         }).Forget();
                 }
             }
