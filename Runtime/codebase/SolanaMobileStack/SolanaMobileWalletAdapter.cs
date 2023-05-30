@@ -138,6 +138,7 @@ namespace Solana.Unity.SDK
         {
             base.Logout();
             PlayerPrefs.DeleteKey("pk");
+            PlayerPrefs.Save();
         }
 
         public override async Task<byte[]> SignMessage(byte[] message)
