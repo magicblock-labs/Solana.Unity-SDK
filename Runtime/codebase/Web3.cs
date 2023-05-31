@@ -338,6 +338,7 @@ namespace Solana.Unity.SDK
                     Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, Rpc).AsUniTask()
                         .ContinueWith(nft =>
                         {
+                            if(nft == null) return;
                             _nfts.Add(nft);
                             OnNFTsUpdateInternal?.Invoke(_nfts, _nfts.Count + toFetch.Count());
                         }).Forget();
