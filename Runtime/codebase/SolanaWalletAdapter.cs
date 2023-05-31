@@ -67,5 +67,11 @@ namespace Solana.Unity.SDK
         {
             throw new NotImplementedException();
         }
+
+        public override void Logout()
+        {
+            base.Logout();
+            _internalWallet?.Logout();
+        }
     }
 }
