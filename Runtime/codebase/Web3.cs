@@ -255,7 +255,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         public void Logout()
         {
-            WalletBase?.Logout();
+            Wallet?.Logout();
             WalletBase = null;
             _solAmount = 0;
             _nfts.Clear();

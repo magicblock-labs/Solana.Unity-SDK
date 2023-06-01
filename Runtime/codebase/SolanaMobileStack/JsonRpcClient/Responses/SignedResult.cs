@@ -15,5 +15,5 @@ public class SignedResult
      
     [RequiredMember]
     public List<byte[]> SignedPayloadsBytes => SignedPayloads is { Count: > 0 } ?
-        SignedPayloads.Select(Convert.FromBase64String) as List<byte[]> : null;
+        SignedPayloads.Select(Convert.FromBase64String).ToList() : null;
 }
