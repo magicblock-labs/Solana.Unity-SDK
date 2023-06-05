@@ -40,7 +40,7 @@ namespace Solana.Unity.SDK
                 {
                     OnLogin?.Invoke(value.Account);
                     UpdateBalance().Forget();
-                    if(OnNFTsUpdateInternal != null) UpdateNFTs().Forget();
+                    if(OnNFTsUpdateInternal != null && AutoLoadNfts) UpdateNFTs().Forget();
                     SubscribeToWalletEvents().Forget();
                 }
                 if(currentWallet != null && value == null) OnLogout?.Invoke();
@@ -109,10 +109,12 @@ namespace Solana.Unity.SDK
                 OnNFTsUpdateInternal += value;
                 if(Wallet == null) return;
                 OnNFTsUpdateInternal?.Invoke(_nfts, _nfts.Count);
-                UpdateNFTs().Forget();
+                if(AutoLoadNfts) UpdateNFTs().Forget();
             }
             remove => OnNFTsUpdateInternal -= value;
         }
+        public static bool? LoadNftsTextureByDefault = null;
+        public static bool AutoLoadNfts = true;
 
         #endregion
 
@@ -317,9 +319,10 @@ namespace Solana.Unity.SDK
         /// <param name="commitment"></param>
         public static async UniTask<List<Nft.Nft>> LoadNFTs(
             bool loadTexture = true, 
-            bool notifyRegisteredListeners = false,
+            bool notifyRegisteredListeners = true,
             Commitment commitment = Commitment.Confirmed)
         {
+            loadTexture = LoadNftsTextureByDefault ?? loadTexture;
             if(Wallet == null) return null;
             var tokens = (await Wallet.GetTokenAccounts(commitment))?
                 .ToList()
