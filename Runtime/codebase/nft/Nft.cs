@@ -19,8 +19,6 @@ namespace Solana.Unity.SDK.Nft
         public string extension { get; set; }
         public string externalUrl { get; set; }
         public Texture2D file { get; set; }
-
-        public int heightAndWidth = 75;
     }
 
     [Serializable]
@@ -40,43 +38,35 @@ namespace Solana.Unity.SDK.Nft
         /// </summary>
         /// <param name="mint"></param>
         /// <param name="connection">Rpc client</param>
+        ///         /// <param name="loadTexture"></param>
+
+        /// <param name="imageHeightAndWidth"></param>
         /// <param name="tryUseLocalContent">If use local content for image</param>
         /// <param name="commitment"></param>
         /// <returns></returns>
         public static async Task<Nft> TryGetNftData(
             string mint,
             IRpcClient connection, 
+            bool loadTexture = true,
+            int imageHeightAndWidth = 256,
             bool tryUseLocalContent = true,
             Commitment commitment = Commitment.Confirmed)
         {
             if (tryUseLocalContent)
             { 
                 var nft = TryLoadNftFromLocal(mint);
-                if (nft != null)
-                {
-                    return nft;
-                }
+                if(nft != null && loadTexture) await nft.LoadTexture();
+                if (nft != null) return nft;
             }
             var newData = await MetadataAccount.GetAccount( connection, new PublicKey(mint), commitment);
             
             if (newData?.metadata == null || newData?.offchainData == null) return null;
-            var met = new Metaplex(newData);
 
-            var nftImage = new NftImage();
-            if (newData.offchainData != null)
-            {
-                var texture = await FileLoader.LoadFile<Texture2D>(newData.offchainData.default_image);
-                var compressedTexture = FileLoader.Resize(texture, 256, 256);
-                FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
-                if (compressedTexture)
-                {
-                    nftImage.externalUrl = newData.offchainData.default_image;
-                    //nftImage.file = Resize(texture, nftImage.heightAndWidth, nftImage.heightAndWidth);
-                    nftImage.file = compressedTexture;
-                    met.nftImage = nftImage;
-                }
-            }
+            var met = new Metaplex(newData);
             var newNft = new Nft(met);
+            
+            if (loadTexture) await newNft.LoadTexture(imageHeightAndWidth);
+            
             FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft.metaplexData.data);
             return newNft;
         }
@@ -105,6 +95,27 @@ namespace Solana.Unity.SDK.Nft
             }
 
             return local;
+        }
+        
+        /// <summary>
+        /// Load the texture of the NFT
+        /// </summary>
+        /// <param name="nft"></param>
+        /// <param name="imageHeightAndWidth"></param>
+        public async Task LoadTexture(int imageHeightAndWidth = 256)
+        {
+            if (metaplexData.data.offchainData == null) return;
+            if (metaplexData.nftImage != null) return;
+            var nftImage = new NftImage();
+            var texture = await FileLoader.LoadFile<Texture2D>(metaplexData.data.offchainData.default_image);
+            var compressedTexture = FileLoader.Resize(texture, imageHeightAndWidth, imageHeightAndWidth);
+            if (compressedTexture)
+            {
+                nftImage.externalUrl = metaplexData.data.offchainData.default_image;
+                nftImage.file = compressedTexture;
+                metaplexData.nftImage = nftImage;
+            }
+            FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{metaplexData.data.mint}.png"), compressedTexture);
         }
     }
 }
