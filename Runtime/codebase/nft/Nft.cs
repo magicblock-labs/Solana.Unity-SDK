@@ -55,6 +55,7 @@ namespace Solana.Unity.SDK.Nft
             if (tryUseLocalContent)
             { 
                 var nft = TryLoadNftFromLocal(mint);
+                if(nft != null && loadTexture) await nft.LoadTexture();
                 if (nft != null) return nft;
             }
             var newData = await MetadataAccount.GetAccount( connection, new PublicKey(mint), commitment);
