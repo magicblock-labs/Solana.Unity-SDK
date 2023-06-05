@@ -267,14 +267,8 @@ public class Web3Auth: MonoBehaviour
 
     public void setResultUrl(Uri uri)
     {
-        string hash = uri.Fragment;
-#if !UNITY_EDITOR && UNITY_WEBGL
-        if (hash == null || hash.Length == 0)
-            return;
-#else
-        if (hash == null)
-            throw new UserCancelledException();
-#endif
+        string hash = uri?.Fragment;
+        if (string.IsNullOrEmpty(hash)) return;
         hash = hash.Remove(0, 1);
 
         Dictionary<string, string> queryParameters = Utils.ParseQuery(uri.Query);
