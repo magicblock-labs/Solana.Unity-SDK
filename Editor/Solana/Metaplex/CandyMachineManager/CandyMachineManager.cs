@@ -43,7 +43,7 @@ namespace Solana.Unity.SDK.Editor
             rpc = SolanaEditorUtility.RPCField(rpc);
             CandyMachineScrollView();
             if (GUILayout.Button("Create new Candy Machine")) {
-                CandyMachineCreator.OpenNew(configLocationPath);
+                CandyMachineSetupWizard.OpenNew(configLocationPath);
             }
             if (GUILayout.Button("Import Candy Machine")) {
                 Debug.Log("Launch finder and copy config.");

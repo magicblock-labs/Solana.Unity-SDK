@@ -1,16 +1,12 @@
-using Solana.Unity.Metaplex.Candymachine;
-using Solana.Unity.Wallet;
 using System.IO;
 using UnityEditor;
-
-using CandyMachineAccounts = Solana.Unity.Metaplex.Candymachine.InitializeCandyMachineAccounts;
 
 namespace Solana.Unity.SDK.Editor
 {
     /// <summary>
     /// A setup wizard used to create <see cref="CandyMachineConfiguration"/>s.
     /// </summary>
-    internal class CandyMachineCreator : SolanaSetupWizard<CandyMachineConfiguration>
+    internal class CandyMachineSetupWizard : SolanaSetupWizard<CandyMachineConfiguration>
     {
 
         #region Properties
@@ -29,8 +25,8 @@ namespace Solana.Unity.SDK.Editor
         /// </param>
         internal static void OpenNew(string configDirectory)
         {
-            GetWindow(typeof(CandyMachineCreator), false, "Candy Machine Creator");
-            CandyMachineCreator.configDirectory = configDirectory;
+            GetWindow(typeof(CandyMachineSetupWizard), false, "Candy Machine Setup Wizard");
+            CandyMachineSetupWizard.configDirectory = configDirectory;
         }
 
         #endregion
@@ -44,16 +40,8 @@ namespace Solana.Unity.SDK.Editor
             AssetDatabase.CreateAsset(target.targetObject, assetPath);
             var config = (CandyMachineConfiguration)target.targetObject;
             AssetDatabase.SaveAssets();
-            CandyMachineAccounts accounts = new() {
-                CandyMachine = new Account(),
-                Wallet = null,
-                Authority = null,
-                Payer = null,
-                Rent = null,
-                SystemProgram = null
-            };
             var candyMachineData = config.ToCandyMachineData();
-            CandyMachineProgram.InitializeCandyMachine(accounts, candyMachineData, CandyMachineUtils.CandyMachineProgramId);
+            // TODO: Init candy machine
             Close();
         }
 
