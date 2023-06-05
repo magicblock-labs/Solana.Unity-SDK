@@ -358,6 +358,7 @@ namespace Solana.Unity.SDK
                     .Where(item => item.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1)
                     .Where(item => nfts
                         .All(t => t.metaplexData.data.mint!= item.Account.Data.Parsed.Info.Mint)).ToArray();
+                var total = nfts.Count + toFetch.Length;
                 foreach (var item in toFetch)
                 {
                     var tNft = Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, Rpc, loadTexture: loadTexture).AsUniTask();
@@ -367,7 +368,7 @@ namespace Solana.Unity.SDK
                             if(nft == null) return;
                             nfts.Add(nft);
                             if(notifyRegisteredListeners) 
-                                OnNFTsUpdateInternal?.Invoke(nfts, nfts.Count + toFetch.Length);
+                                OnNFTsUpdateInternal?.Invoke(nfts, total);
                         }).Forget();
                 }
             }
