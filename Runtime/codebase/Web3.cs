@@ -319,7 +319,7 @@ namespace Solana.Unity.SDK
         /// <param name="commitment"></param>
         public static async UniTask<List<Nft.Nft>> LoadNFTs(
             bool loadTexture = true, 
-            bool notifyRegisteredListeners = false,
+            bool notifyRegisteredListeners = true,
             Commitment commitment = Commitment.Confirmed)
         {
             loadTexture = LoadNftsTextureByDefault ?? loadTexture;
