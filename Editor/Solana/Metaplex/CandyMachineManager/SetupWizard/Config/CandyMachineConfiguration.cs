@@ -14,7 +14,7 @@ namespace Solana.Unity.SDK.Editor
 
         [JsonProperty, SerializeField]
         [SetupQuestion("How many NFTs will be in your CandyMachine?"), Tooltip("The number of NFTs in your CandyMachine.")]
-        private int amount;
+        private int number;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("What is the symbol of your collection? Leave empty for no symbol."), Tooltip("The symbol of this collection.")]
@@ -26,7 +26,11 @@ namespace Solana.Unity.SDK.Editor
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Do you want to use a sequential mint index generation? We recommend you choose no."), Tooltip("Whether tokens should mint sequentially.")]
-        private bool sequential;
+        private bool isSequential;
+
+        [JsonProperty, SerializeField]
+        [SetupQuestion("Enter your hidden settings, leave disabled if you don't wish to use hidden settings."), Tooltip("The hidden settings for this collection.")]
+        private CandyMachineHiddenSettings hiddenSettings;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Enter the list of Creators below, total royalty share must add to 100."), Tooltip("The creators of this collection, and their seller fee basis points share in %.")]
@@ -37,6 +41,7 @@ namespace Solana.Unity.SDK.Editor
         private bool isMutable;
 
         [JsonProperty, SerializeField]
+        [SetupQuestion("Add your default guards and guard groups below, leave empty for no guards."), Tooltip("The guard groups for this CandyMachine.")]
         private CandyMachineGuards guards;
 
         #endregion
@@ -49,15 +54,17 @@ namespace Solana.Unity.SDK.Editor
                 Uuid = null,
                 Symbol = symbol,
                 SellerFeeBasisPoints = (ushort)sellerFeeBasisPoints,
-                MaxSupply = (ulong)amount,
+                MaxSupply = (ulong)number,
                 IsMutable = isMutable,
                 Creators = creators.Select(creator => {
                     return creator.ToCandyMachineCreator();
                 }).ToArray(),
                 HiddenSettings = null,
-                ItemsAvailable = (ulong)amount
+                ItemsAvailable = (ulong)number
             };
         }
+
+        public bool ShouldSerializehiddenSettings() => hiddenSettings.useHiddenSettings;
 
         #endregion
     }

@@ -12,10 +12,10 @@ namespace Solana.Unity.SDK.Editor
         #region Properties
 
         [SerializeField, JsonProperty]
-        internal string label;
+        private string label;
 
         [SerializeField, JsonProperty]
-        internal CandyMachineGuardSet guards;
+        private CandyMachineGuardSet guards;
 
         #endregion
 
@@ -27,52 +27,52 @@ namespace Solana.Unity.SDK.Editor
         #region Properties
 
         [SerializeField, JsonProperty]
-        internal MintLimitGuard mintLimit;
+        private MintLimitGuard mintLimit;
 
         [SerializeField, JsonProperty]
-        internal AddressGateGuard addressGate;
+        private AddressGateGuard addressGate;
 
         [SerializeField, JsonProperty]
-        internal AllowListGuard allowList;
+        private AllowListGuard allowList;
 
         [SerializeField, JsonProperty]
-        internal BotTaxGuard botTax;
+        private BotTaxGuard botTax;
 
         [SerializeField, JsonProperty]
-        internal StartDateGuard startDate;
+        private StartDateGuard startDate;
 
         [SerializeField, JsonProperty]
-        internal EndDateGuard endDate;
+        private EndDateGuard endDate;
 
         [SerializeField, JsonProperty]
-        internal GateKeeperGuard gatekeeper;
+        private GateKeeperGuard gatekeeper;
 
         [SerializeField, JsonProperty]
-        internal NFTBurnGuard nftBurn;
+        private NFTBurnGuard nftBurn;
 
         [SerializeField, JsonProperty]
-        internal NFTGateGuard nftGate;
+        private NFTGateGuard nftGate;
 
         [SerializeField, JsonProperty]
-        internal NFTPaymentGuard nftPayment;
+        private NFTPaymentGuard nftPayment;
 
         [SerializeField, JsonProperty]
-        internal RedeemedAmountGuard redeemedAmount;
+        private RedeemedAmountGuard redeemedAmount;
 
         [SerializeField, JsonProperty]
-        internal SolPaymentGuard solPayment;
+        private SolPaymentGuard solPayment;
 
         [SerializeField, JsonProperty]
-        internal ThirdPartySignerGuard thirdPartySigner;
+        private ThirdPartySignerGuard thirdPartySigner;
 
         [SerializeField, JsonProperty]
-        internal TokenBurnGuard tokenBurn;
+        private TokenBurnGuard tokenBurn;
 
         [SerializeField, JsonProperty]
-        internal TokenGateGuard tokenGate;
+        private TokenGateGuard tokenGate;
 
         [SerializeField, JsonProperty]
-        internal TokenPaymentGuard tokenPayment;
+        private TokenPaymentGuard tokenPayment;
 
         #endregion
 

@@ -4,15 +4,20 @@ using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor
 {
-
+    /// <summary>
+    /// A serializable representation of the Creator struct for a CandyMachine 
+    /// configuration.
+    /// 
+    /// Used for creating configurations with a setup wizard.
+    /// </summary>
     [Serializable]
     internal class CandyMachineCreator
     {
         [SerializeField, JsonProperty]
-        internal string publicKey;
+        private string publicKey;
 
         [SerializeField, JsonProperty]
-        internal byte share;
+        private byte share;
 
         internal Unity.Metaplex.Candymachine.Types.Creator ToCandyMachineCreator()
         {
