@@ -11,7 +11,7 @@ namespace Solana.Unity.SDK.Editor
 
         #region Properties
 
-        private static string configDirectory;
+        private static string configPath;
 
         #endregion
 
@@ -20,13 +20,13 @@ namespace Solana.Unity.SDK.Editor
         /// <summary>
         /// Opens a new copy of this window ready to create a new config.
         /// </summary>
-        /// <param name="configDirectory">
-        /// The directory in which to save the new config asset.
+        /// <param name="configPath">
+        /// The path to which to save the new config asset.
         /// </param>
-        internal static void OpenNew(string configDirectory)
+        internal static void OpenNew(string configPath)
         {
             GetWindow(typeof(CandyMachineSetupWizard), false, "Candy Machine Setup Wizard");
-            CandyMachineSetupWizard.configDirectory = configDirectory;
+            CandyMachineSetupWizard.configPath = configPath;
         }
 
         #endregion
@@ -36,8 +36,7 @@ namespace Solana.Unity.SDK.Editor
         /// <inheritdoc/>
         private protected override void OnWizardFinished()
         {
-            var assetPath = Path.Combine(configDirectory, "config.asset");
-            AssetDatabase.CreateAsset(target.targetObject, assetPath);
+            AssetDatabase.CreateAsset(target.targetObject, configPath);
             var config = (CandyMachineConfiguration)target.targetObject;
             AssetDatabase.SaveAssets();
             var candyMachineData = config.ToCandyMachineData();

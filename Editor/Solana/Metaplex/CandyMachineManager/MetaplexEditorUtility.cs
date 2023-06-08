@@ -39,7 +39,7 @@ namespace Solana.Unity.SDK.Editor
 
         #endregion
 
-        public static void CandyMachineField(string json) {
+        public static void CandyMachineField(CandyMachineConfiguration config) {
             EditorGUILayout.BeginHorizontal(candyMachineFieldStyle);
             CollectionImage(124);
             EditorGUILayout.BeginVertical();

@@ -12,6 +12,7 @@ namespace Solana.Unity.SDK.Editor
         string rpc;
         Vector2 scrollViewPosition = Vector2.zero;
         bool showCandyMachines = false;
+        CandyMachineConfiguration[] candyMachines;
 
         #endregion
 
@@ -26,7 +27,8 @@ namespace Solana.Unity.SDK.Editor
 
         #region Unity Messages
 
-        private void OnGUI() {
+        private void OnGUI() 
+        {
             SolanaEditorUtility.FileSelectField(
                 "Keypair",
                 "",
@@ -42,12 +44,19 @@ namespace Solana.Unity.SDK.Editor
             );
             rpc = SolanaEditorUtility.RPCField(rpc);
             CandyMachineScrollView();
-            if (GUILayout.Button("Create new Candy Machine")) {
+            if (GUILayout.Button("Create new Candy Machine")) 
+            {
                 CandyMachineSetupWizard.OpenNew(configLocationPath);
             }
-            if (GUILayout.Button("Import Candy Machine")) {
+            if (GUILayout.Button("Import Candy Machine")) 
+            {
                 Debug.Log("Launch finder and copy config.");
                 Close();
+            }
+            if (GUILayout.Button("Refresh Candy Machines")) 
+            {
+                Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocationPath));
+                // candyMachines = Resources.LoadAll(configLocationPath) as CandyMachineConfiguration[];
             }
         }
 
@@ -55,14 +64,17 @@ namespace Solana.Unity.SDK.Editor
 
         #region Private
 
-        private void CandyMachineScrollView() {
+        private void FetchCandyMachines()
+        {
+
+        }
+
+        private void CandyMachineScrollView() 
+        {
             showCandyMachines = EditorGUILayout.BeginFoldoutHeaderGroup(showCandyMachines, "Existing Candy Machines");
-            if (showCandyMachines) {
+            if (showCandyMachines) 
+            {
                 scrollViewPosition = EditorGUILayout.BeginScrollView(scrollViewPosition, SolanaEditorUtility.scrollViewStyle);
-                MetaplexEditorUtility.CandyMachineField("");
-                MetaplexEditorUtility.CandyMachineField("");
-                MetaplexEditorUtility.CandyMachineField("");
-                MetaplexEditorUtility.CandyMachineField("");
                 EditorGUILayout.EndScrollView();
             }
             EditorGUILayout.EndFoldoutHeaderGroup();

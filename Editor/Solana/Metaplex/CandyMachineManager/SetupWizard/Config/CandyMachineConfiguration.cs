@@ -18,8 +18,8 @@ namespace Solana.Unity.SDK.Editor
 
         [JsonProperty, SerializeField]
         [SetupQuestion("What is the symbol of your collection? Leave empty for no symbol."), Tooltip("The symbol of this collection.")]
-        private string symbol;       
-        
+        private string symbol;
+
         [JsonProperty, SerializeField]
         [SetupQuestion("What is the seller fee basis points?"), Tooltip("The seller fee basis points charged when a token from this collection is traded.")]
         private int sellerFeeBasisPoints;
@@ -51,7 +51,6 @@ namespace Solana.Unity.SDK.Editor
         public CandyMachineData ToCandyMachineData()
         {
             return new() {
-                Uuid = null,
                 Symbol = symbol,
                 SellerFeeBasisPoints = (ushort)sellerFeeBasisPoints,
                 MaxSupply = (ulong)number,
@@ -59,7 +58,7 @@ namespace Solana.Unity.SDK.Editor
                 Creators = creators.Select(creator => {
                     return creator.ToCandyMachineCreator();
                 }).ToArray(),
-                HiddenSettings = null,
+                HiddenSettings = hiddenSettings.ToCandyMachineHiddenSettings(),
                 ItemsAvailable = (ulong)number
             };
         }

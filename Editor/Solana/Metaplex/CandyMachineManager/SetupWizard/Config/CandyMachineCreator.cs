@@ -23,7 +23,8 @@ namespace Solana.Unity.SDK.Editor
         {
             return new() {
                 Address = new(publicKey),
-                Share = share
+                Verified = true,
+                PercentageShare = share
             };
         }
     }

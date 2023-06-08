@@ -1,6 +1,6 @@
 using CandyMachineV2;
-using CandyMachineV2.Types;
 using Newtonsoft.Json;
+using Solana.Unity.Metaplex.Candymachine.Types;
 using Solana.Unity.Wallet;
 using System.Collections.Generic;
 using System.IO;
@@ -74,7 +74,7 @@ namespace Solana.Unity.SDK.Metaplex
             #endregion
         }
 
-        public struct CacheInfo
+        public class CacheInfo
         {
 
             #region Properties
@@ -82,35 +82,10 @@ namespace Solana.Unity.SDK.Metaplex
             public PublicKey CandyMachine { get; private set; }
             public PublicKey CandyGuard { get; private set; }
             public PublicKey Creator { get; private set; }
-            public PublicKey CollectionMint { get; private set; }
+            public PublicKey CollectionMint { get; set; }
 
             #endregion
 
-            #region Constructors
-
-            public CacheInfo(
-                PublicKey candyMachine,
-                PublicKey candyGuard,
-                PublicKey creator,
-                PublicKey collectionMint
-            )
-            {
-                CandyMachine = candyMachine;
-                CandyGuard = candyGuard;
-                Creator = creator;
-                CollectionMint = collectionMint;
-            }
-
-            public CacheInfo(PublicKey candyMachine)
-            {
-                (PublicKey creatorPDA, _) = CandyMachineUtils.getCandyMachineCreator(candyMachine);
-                CandyMachine = candyMachine;
-                CandyGuard = PublicKey.DefaultPublicKey;
-                Creator = creatorPDA;
-                CollectionMint = PublicKey.DefaultPublicKey;
-            }
-
-            #endregion
         }
 
         #endregion
@@ -130,6 +105,15 @@ namespace Solana.Unity.SDK.Metaplex
             Info = new CacheInfo();
             Items = new Dictionary<string, CacheItem>();
             FilePath = filePath;
+        }
+
+        #endregion
+
+        #region Public
+
+        public void SyncFile()
+        {
+
         }
 
         #endregion
