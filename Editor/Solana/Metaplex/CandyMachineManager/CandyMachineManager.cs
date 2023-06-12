@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,10 +9,20 @@ namespace Solana.Unity.SDK.Editor
 
         #region Properties
 
-        string configLocationPath;
-        string rpc;
+        [SerializeField]
+        private string configLocation;
+
+        [SerializeField]
+        private string rpc;
+
+        [SerializeField]
+        private string keypairLocation;
+
+        [SerializeField]
+        private bool showCandyMachines = false;
+
         Vector2 scrollViewPosition = Vector2.zero;
-        bool showCandyMachines = false;
+
         CandyMachineConfiguration[] candyMachines;
 
         #endregion
@@ -31,14 +42,14 @@ namespace Solana.Unity.SDK.Editor
         {
             SolanaEditorUtility.FileSelectField(
                 "Keypair",
-                "",
+                keypairLocation,
                 false,
                 "Select a valid Keypair",
                 "json"
             );
-            configLocationPath = SolanaEditorUtility.FileSelectField(
+            configLocation = SolanaEditorUtility.FileSelectField(
                 "Config Location",
-                configLocationPath,
+                configLocation,
                 true,
                 "Select a config folder"
             );
@@ -46,18 +57,31 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineScrollView();
             if (GUILayout.Button("Create new Candy Machine")) 
             {
-                CandyMachineSetupWizard.OpenNew(configLocationPath);
+                CandyMachineSetupWizard.OpenNew(configLocation);
             }
             if (GUILayout.Button("Import Candy Machine")) 
             {
-                Debug.Log("Launch finder and copy config.");
-                Close();
+                ImportConfig();
+                FetchCandyMachines();
             }
             if (GUILayout.Button("Refresh Candy Machines")) 
             {
-                Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocationPath));
-                // candyMachines = Resources.LoadAll(configLocationPath) as CandyMachineConfiguration[];
+                Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocation));
+                candyMachines = Resources.LoadAll(configLocation) as CandyMachineConfiguration[];
             }
+        }
+
+        private void OnEnable()
+        {
+            var data = EditorPrefs.GetString(typeof(CandyMachineManager).Name, JsonUtility.ToJson(this, false));
+            // Then we apply them to this window
+            JsonUtility.FromJsonOverwrite(data, this);
+        }
+
+        private void OnDisable()
+        {
+            var data = JsonUtility.ToJson(this, false);
+            EditorPrefs.SetString(typeof(CandyMachineManager).Name, data);
         }
 
         #endregion
@@ -67,6 +91,25 @@ namespace Solana.Unity.SDK.Editor
         private void FetchCandyMachines()
         {
 
+        }
+
+        private void ImportConfig()
+        {
+            if (configLocation == null) {
+                Debug.LogError("Select a config location before importing CandyMachines.");
+                return;
+            }
+            var filePath = EditorUtility.OpenFilePanel("Import CandyMachine Config", string.Empty, "json");
+            Debug.Log(string.Format("Importing config from {0}.", "filepath"));
+            string json = File.ReadAllText(filePath);
+            var config = CreateInstance<CandyMachineConfiguration>();
+            config.LoadFromJson(json);
+            var savePath = Path.Combine(
+                "Assets",
+                configLocation,
+                Path.GetFileNameWithoutExtension(filePath) + ".asset"
+            );
+            AssetDatabase.CreateAsset(config, savePath);
         }
 
         private void CandyMachineScrollView() 

@@ -9,9 +9,9 @@ namespace Solana.Unity.SDK.Editor
     internal class CandyMachineGuards
     {
         [SerializeField, JsonProperty("default")]
-        private CandyMachineGuardSet defaultGuards;
+        internal CandyMachineGuardSet defaultGuards;
 
         [SerializeField, JsonProperty]
-        private CandyMachineGuardGroup[] groups;
+        internal CandyMachineGuardGroup[] groups;
     }
 }

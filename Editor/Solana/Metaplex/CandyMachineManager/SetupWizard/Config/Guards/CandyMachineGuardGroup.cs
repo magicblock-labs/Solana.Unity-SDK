@@ -9,13 +9,13 @@ namespace Solana.Unity.SDK.Editor
     internal class CandyMachineGuardGroup
     {
 
-        #region Properties
+        #region Fields
 
         [SerializeField, JsonProperty]
         private string label;
 
         [SerializeField, JsonProperty]
-        private CandyMachineGuardSet guards;
+        internal CandyMachineGuardSet guards;
 
         #endregion
 
@@ -24,7 +24,7 @@ namespace Solana.Unity.SDK.Editor
     [Serializable]
     internal class CandyMachineGuardSet
     {
-        #region Properties
+        #region Fields
 
         [SerializeField, JsonProperty]
         private MintLimitGuard mintLimit;
@@ -76,7 +76,64 @@ namespace Solana.Unity.SDK.Editor
 
         #endregion
 
-        #region Public
+        #region Internal
+
+        // TODO: Optimize with reflection.
+        internal void SetGuardsEnabled()
+        {
+            if (mintLimit != null) {
+                mintLimit.enabled = true;
+            }
+            if (addressGate != null) {
+                addressGate.enabled = true;
+            }
+            if (allowList != null) {
+                allowList.enabled = true;
+            }
+            if (botTax != null) {
+                botTax.enabled = true;
+            }
+            if (endDate != null) {
+                endDate.enabled = true;
+            }
+            if (gatekeeper != null) {
+                gatekeeper.enabled = true;
+            }
+            if (nftBurn != null) {
+                nftBurn.enabled = true;
+            }
+            if (nftGate != null) {
+                nftGate.enabled = true;
+            }
+            if (nftPayment != null) {
+                nftPayment.enabled = true;
+            }
+            if (redeemedAmount != null) {
+                redeemedAmount.enabled = true;
+            }
+            if (solPayment != null) {
+                solPayment.enabled = true;
+            }
+            if (startDate != null) {
+                startDate.enabled = true;
+            }
+            if (thirdPartySigner != null) {
+                thirdPartySigner.enabled = true;
+            }
+            if (tokenBurn != null) {
+                tokenBurn.enabled = true;
+            }
+            if (tokenGate != null) {
+                tokenGate.enabled = true;
+            }
+            if (tokenPayment != null) {
+                tokenPayment.enabled = true;
+            }
+        }
+
+        #endregion
+
+        #region ShouldSerialize
 
         public bool ShouldSerializemintLimit()
         {
@@ -159,5 +216,6 @@ namespace Solana.Unity.SDK.Editor
         }
 
         #endregion
+
     }
 }

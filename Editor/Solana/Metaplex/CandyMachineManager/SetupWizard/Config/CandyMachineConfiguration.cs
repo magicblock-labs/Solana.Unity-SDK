@@ -7,10 +7,20 @@ using UnityEngine;
 namespace Solana.Unity.SDK.Editor
 {
     [Serializable, CreateAssetMenu(menuName = "Config"), JsonObject(MemberSerialization.OptIn)]
-    public class CandyMachineConfiguration : ScriptableObject
+    internal class CandyMachineConfiguration : ConfigurableObject
     {
 
         #region Properties
+
+        internal override bool IsValidConfiguration {
+            get {
+                return creators != null;
+            }
+        }
+
+        #endregion
+
+        #region Fields
 
         [JsonProperty, SerializeField]
         [SetupQuestion("How many NFTs will be in your CandyMachine?"), Tooltip("The number of NFTs in your CandyMachine.")]
@@ -46,9 +56,9 @@ namespace Solana.Unity.SDK.Editor
 
         #endregion
 
-        #region Public
+        #region Internal
 
-        public CandyMachineData ToCandyMachineData()
+        internal CandyMachineData ToCandyMachineData()
         {
             return new() {
                 Symbol = symbol,
@@ -62,6 +72,20 @@ namespace Solana.Unity.SDK.Editor
                 ItemsAvailable = (ulong)number
             };
         }
+
+        internal override void LoadFromJson(string json)
+        {
+            base.LoadFromJson(json);
+            guards.defaultGuards.SetGuardsEnabled();
+            foreach (var group in guards.groups) 
+            {
+                group.guards.SetGuardsEnabled();
+            }
+        }
+
+        #endregion
+
+        #region ShouldSerialize
 
         public bool ShouldSerializehiddenSettings() => hiddenSettings.useHiddenSettings;
 

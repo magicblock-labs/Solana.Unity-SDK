@@ -1,45 +1,26 @@
-using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor
 {
-    public abstract class SolanaSetupWizard<SetupObject> : EditorWindow where SetupObject : ScriptableObject
+    /// <summary>
+    /// An EditorWindow which can be used to create <see cref="ConfigurableObject"/>s.
+    /// </summary>
+    /// <typeparam name="SetupObject">The type of object being created.</typeparam>
+    internal abstract class SolanaSetupWizard<SetupObject> : EditorWindow where SetupObject : ConfigurableObject
     {
-
-        #region Types
-
-        /// <summary>
-        /// Used to store questions along with their designated fields.
-        /// </summary>
-        private struct SetupQuestion
-        {
-            #region Properties
-
-            internal string question;
-            internal List<string> properties;
-
-            #endregion
-
-            #region Constructors
-
-            public SetupQuestion(string question)
-            {
-                this.question = question;
-                this.properties = new List<string>();
-            }
-
-            #endregion
-        }
-
-        #endregion
 
         #region Properties
 
-        /// <summary>
-        /// The index of the question being displayed.
-        /// </summary>
+        protected abstract string SavePath { get; }
+
+        #endregion
+
+        #region Fields
+
         private int questionIndex = 0;
 
         /// <summary>
@@ -50,7 +31,7 @@ namespace Solana.Unity.SDK.Editor
         /// <summary>
         /// The questions to display during setup.
         /// </summary>
-        private readonly List<SetupQuestion> questions = new();
+        private FieldInfo[] questions;
 
         private Vector2 scrollPosition;
 
@@ -62,46 +43,14 @@ namespace Solana.Unity.SDK.Editor
         {
             var targetInstance = CreateInstance<SetupObject>();
             target = new(targetInstance);
-            GetQuestions();
+            TypeInfo typeInfo = typeof(SetupObject).GetTypeInfo();
+            questions = typeInfo.DeclaredFields.ToArray();
         }
 
         protected void OnGUI()
         {
             RenderCurrentQuestion();
-            EditorGUILayout.BeginHorizontal();
-            {
-                GUILayout.FlexibleSpace();
-                EditorGUI.BeginDisabledGroup(questionIndex == 0);
-                {
-                    if (GUILayout.Button("Back")) 
-                    {
-                        questionIndex--;
-                        questionIndex = Mathf.Max(0, questionIndex);
-                        GUI.FocusControl(null);
-                        target.ApplyModifiedProperties();
-                    }
-                }
-                EditorGUI.EndDisabledGroup();
-                if (questionIndex < questions.Count - 1) 
-                {
-                    if (GUILayout.Button("Next")) 
-                    {
-                        questionIndex++;
-                        GUI.FocusControl(null);
-                        target.ApplyModifiedProperties();
-                    }
-                }
-                else 
-                {
-                    if (GUILayout.Button("Finish")) 
-                    {
-                        target.ApplyModifiedProperties();
-                        OnWizardFinished();
-                    }
-                }
-                GUILayout.FlexibleSpace();
-            }
-            EditorGUILayout.EndHorizontal();
+            NavigationControls();
         }
 
         #endregion
@@ -115,14 +64,13 @@ namespace Solana.Unity.SDK.Editor
         {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             {
-                var question = questions[questionIndex];
+                var questionName = questions[questionIndex];
+                var question = questionName.GetCustomAttribute<SetupQuestionAttribute>();
                 SolanaEditorUtility.Heading(question.question, TextAnchor.UpperCenter);
                 EditorGUILayout.BeginVertical(MetaplexEditorUtility.answerFieldStyle);
                 {
-                    foreach (var prop in question.properties) {
-                        var serializedProperty = target.FindProperty(prop);
-                        EditorGUILayout.PropertyField(serializedProperty);
-                    }
+                    var serializedProperty = target.FindProperty(questionName.Name);
+                    EditorGUILayout.PropertyField(serializedProperty);
                 }
                 EditorGUILayout.EndVertical();
             }
@@ -132,34 +80,57 @@ namespace Solana.Unity.SDK.Editor
         /// <summary>
         /// Called when the user clicks the "Finish" button at the end of the setup wizard.
         /// </summary>
-        private protected abstract void OnWizardFinished();
+        private protected virtual void OnWizardFinished()
+        {
+            var filePath = EditorUtility.SaveFilePanel("Save Config File", SavePath, "config", "asset");
+            filePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+            AssetDatabase.CreateAsset(target.targetObject, filePath);
+            AssetDatabase.SaveAssets();
+            Close();
+        }
 
         #endregion
 
         #region Private
 
-        /// <summary>
-        /// Reads all of the <see cref="SetupQuestionAttribute"/>s in the current target and their respective
-        /// fields.
-        /// </summary>
-        private void GetQuestions()
+        private void NavigationControls()
         {
-            TypeInfo typeInfo = typeof(SetupObject).GetTypeInfo();
-            SetupQuestion? currentQuestion = null;
-            var fields = typeInfo.DeclaredFields;
-            foreach (var prop in fields) 
+            EditorGUILayout.BeginHorizontal();
             {
-                var newQuestion = prop.GetCustomAttribute<SetupQuestionAttribute>();
-                if (newQuestion != null) 
+                GUILayout.FlexibleSpace();
+                EditorGUI.BeginDisabledGroup(questionIndex == 0);
                 {
-                    currentQuestion = new(newQuestion.question);
-                    questions.Add(currentQuestion.Value);
+                    if (GUILayout.Button("Back")) {
+                        questionIndex--;
+                        questionIndex = Mathf.Max(0, questionIndex);
+                        GUI.FocusControl(null);
+                        target.ApplyModifiedProperties();
+                    }
                 }
-                if (currentQuestion.HasValue) 
-                {
-                    currentQuestion.Value.properties.Add(prop.Name);
+                EditorGUI.EndDisabledGroup();
+                if (questionIndex < questions.Length - 1) {
+                    if (GUILayout.Button("Next")) {
+                        questionIndex++;
+                        GUI.FocusControl(null);
+                        target.ApplyModifiedProperties();
+                    }
                 }
+                else {
+                    if (GUILayout.Button("Finish")) {
+                        GUI.FocusControl(null);
+                        target.ApplyModifiedProperties();
+                        target.ApplyModifiedProperties();
+                        var targetObject = (SetupObject)target.targetObject;
+                        if (targetObject.IsValidConfiguration) {
+                            OnWizardFinished();
+                        } else {
+                            Debug.LogError("Configuration is invalid.");
+                        }
+                    }
+                }
+                GUILayout.FlexibleSpace();
             }
+            EditorGUILayout.EndHorizontal();
         }
 
         #endregion

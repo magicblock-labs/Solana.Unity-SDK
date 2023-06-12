@@ -11,6 +11,12 @@ namespace Solana.Unity.SDK.Editor
 
         #region Properties
 
+        protected override string SavePath => configPath;
+
+        #endregion
+
+        #region Fields
+
         private static string configPath;
 
         #endregion
@@ -36,11 +42,10 @@ namespace Solana.Unity.SDK.Editor
         /// <inheritdoc/>
         private protected override void OnWizardFinished()
         {
-            AssetDatabase.CreateAsset(target.targetObject, configPath);
-            var config = (CandyMachineConfiguration)target.targetObject;
+            var filePath = EditorUtility.SaveFilePanel("Save Config File", configPath, "config", "asset");
+            filePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+            AssetDatabase.CreateAsset(target.targetObject, filePath);
             AssetDatabase.SaveAssets();
-            var candyMachineData = config.ToCandyMachineData();
-            // TODO: Init candy machine
             Close();
         }
 
