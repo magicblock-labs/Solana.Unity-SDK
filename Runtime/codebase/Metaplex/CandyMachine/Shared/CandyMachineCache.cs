@@ -1,4 +1,3 @@
-using CandyMachineV2;
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.Candymachine.Types;
 using Solana.Unity.Wallet;
@@ -16,7 +15,7 @@ namespace Solana.Unity.SDK.Metaplex
         public class CacheItem
         {
 
-            #region Properties
+            #region Fields
 
             public string name;
             public string imageHash;
@@ -120,7 +119,7 @@ namespace Solana.Unity.SDK.Metaplex
 
         #region Static
 
-        public static CandyMachineCache LoadFromPath(string cachePath, bool create = false)
+        public static CandyMachineCache LoadFromPath(string cachePath)
         {
             if (File.Exists(cachePath)) 
             {
@@ -128,12 +127,6 @@ namespace Solana.Unity.SDK.Metaplex
                 using StreamReader reader = new(cachePath);
                 var cacheJson = reader.ReadToEnd();
                 return JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson);
-            }
-
-            if (create) 
-            {
-                Debug.Log(string.Format("Creating cache at path {0}...", cachePath));
-                return new(cachePath);
             }
 
             Debug.LogError(string.Format("Cache file not found at {0}.", cachePath));

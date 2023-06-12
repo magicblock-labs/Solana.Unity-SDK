@@ -66,8 +66,7 @@ namespace Solana.Unity.SDK.Editor
             }
             if (GUILayout.Button("Refresh Candy Machines")) 
             {
-                Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocation));
-                candyMachines = Resources.LoadAll(configLocation) as CandyMachineConfiguration[];
+                FetchCandyMachines();
             }
         }
 
@@ -76,6 +75,7 @@ namespace Solana.Unity.SDK.Editor
             var data = EditorPrefs.GetString(typeof(CandyMachineManager).Name, JsonUtility.ToJson(this, false));
             // Then we apply them to this window
             JsonUtility.FromJsonOverwrite(data, this);
+            FetchCandyMachines();
         }
 
         private void OnDisable()
@@ -90,12 +90,22 @@ namespace Solana.Unity.SDK.Editor
 
         private void FetchCandyMachines()
         {
-
+            if (configLocation == null)
+            {
+                Debug.LogError("Could not fetch CandyMachines, please set a config location");
+                return;
+            }
+            Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocation));
+            EditorUtility.DisplayProgressBar("CandyMachine Manager", "Loading CandyMachine info...", 0.5f);
+            var path = Path.GetRelativePath("Resources", configLocation);
+            candyMachines = Resources.LoadAll<CandyMachineConfiguration>(path);
+            EditorUtility.ClearProgressBar();
         }
 
         private void ImportConfig()
         {
-            if (configLocation == null) {
+            if (configLocation == null) 
+            {
                 Debug.LogError("Select a config location before importing CandyMachines.");
                 return;
             }
@@ -118,6 +128,13 @@ namespace Solana.Unity.SDK.Editor
             if (showCandyMachines) 
             {
                 scrollViewPosition = EditorGUILayout.BeginScrollView(scrollViewPosition, SolanaEditorUtility.scrollViewStyle);
+                if (candyMachines != null) 
+                {
+                    foreach (var candyMachine in candyMachines) 
+                    {
+                        MetaplexEditorUtility.CandyMachineField(new() { isInitialized = false });
+                    }
+                }
                 EditorGUILayout.EndScrollView();
             }
             EditorGUILayout.EndFoldoutHeaderGroup();

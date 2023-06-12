@@ -1,10 +1,25 @@
+using CandyMachineV2;
+using Solana.Unity.SDK.Metaplex;
+using Solana.Unity.Wallet;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor 
 {
-    public static class MetaplexEditorUtility 
+    internal static class MetaplexEditorUtility 
     {
+
+        #region Types
+
+        internal struct CandyMachineParams
+        {
+            internal bool isInitialized;
+            internal CandyMachineCache cache;
+            internal RpcCluster cluster;
+        }
+
+        #endregion
 
         #region Styling Constants
 
@@ -39,16 +54,22 @@ namespace Solana.Unity.SDK.Editor
 
         #endregion
 
-        internal static void CandyMachineField(CandyMachineConfiguration config) {
+        #region Internal
+
+        internal static void CandyMachineField(CandyMachineParams info) {
             EditorGUILayout.BeginHorizontal(candyMachineFieldStyle);
             CollectionImage(124);
             EditorGUILayout.BeginVertical();
             EditorGUILayout.Space();
-            CandyMachineInfo();
-            CandyMachineControls();
+            CandyMachineDetails(info);
+            CandyMachineControls(info);
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
         }
+
+        #endregion
+
+        #region UI Components
 
         private static void CollectionImage(int height) {
             Texture2D defaultIcon = (Texture2D)Resources.Load("DefaultCollectionIcon");
@@ -57,12 +78,18 @@ namespace Solana.Unity.SDK.Editor
             }
         }
 
-        private static void CandyMachineControls() {
+        private static void CandyMachineControls(CandyMachineParams info) {
             EditorGUILayout.BeginVertical();
-            if (GUILayout.Button("Settings", settingsButtonStyle)) {
+            if (GUILayout.Button("Edit Config", settingsButtonStyle)) 
+            {
                 Debug.Log("Settings Clicked");
             }
-            CandyMachineControlGrid();
+            if (info.isInitialized) 
+            {
+                CandyMachineControlGrid();
+            } else {
+                CandyMachineSetupControls();
+            }
             EditorGUILayout.EndVertical();
         }
 
@@ -95,14 +122,51 @@ namespace Solana.Unity.SDK.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private static void CandyMachineInfo() {
+        private static void CandyMachineSetupControls()
+        {
+            if (GUILayout.Button("Initialize CandyMachine", settingsButtonStyle)) {
+                InitializeCandyMachine();
+            }
+            if (GUILayout.Button("Upload Assets", settingsButtonStyle)) {
+                UploadCandyMachineAssets();
+            }
+        }
+
+        private static void CandyMachineDetails(CandyMachineParams info) {
             EditorGUILayout.BeginVertical();
             {
-                SolanaEditorUtility.StaticTextProperty("Address", "Some Candy Machine Address");
-                SolanaEditorUtility.StaticTextProperty("Cluster", "mainnet-beta");
-                SolanaEditorUtility.StaticTextProperty("Authority", "Some Solana Address");
+                if (info.cache != null) 
+                {
+                    SolanaEditorUtility.StaticTextProperty("Address", info.cache.Info.CandyMachine);
+                    SolanaEditorUtility.StaticTextProperty("Authority", info.cache.Info.Creator);
+                }
+                SolanaEditorUtility.StaticTextProperty("Cluster", info.cluster.ToString());
             }
             EditorGUILayout.EndVertical();
         }
+
+        #endregion
+
+        #region Private
+
+        private static async void InitializeCandyMachine()
+        {
+            Debug.Log("Initializing CandyMachine...");
+            EditorUtility.DisplayProgressBar("Candy Machine Manager", "Initializing CandyMachine...", 0.5f);
+            var candyMachineAccount = new Account();
+            /*await CandyMachineCommands.CreateCollection(
+                candyMachineAccount
+            );*/
+            // await CandyMachineCommands.InitializeCandyMachine();
+            await Task.Delay(5000);
+            EditorUtility.ClearProgressBar();
+        }
+
+        private static async void UploadCandyMachineAssets()
+        {
+
+        }
+
+        #endregion
     }
 }
