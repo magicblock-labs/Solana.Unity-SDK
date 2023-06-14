@@ -16,11 +16,11 @@ namespace Solana.Unity.SDK.Metaplex
 
         #region Properties
 
-        public string AssetId { get; private set; }
-        public string Name { get; private set; }
-        public string Content { get; private set; }
-        public AssetType Type { get; private set; }
-        public string ContentType { get; private set; }
+        public int AssetId { get; set; }
+        public string Name { get; set; }
+        public string Content { get; set; }
+        public AssetType Type { get; set; }
+        public string ContentType { get; set; }
 
         #endregion
     }

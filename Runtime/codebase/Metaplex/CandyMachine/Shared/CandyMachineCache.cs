@@ -1,12 +1,14 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.Candymachine.Types;
 using Solana.Unity.Wallet;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Metaplex 
 {
+    [Serializable]
     public class CandyMachineCache 
     {
 
@@ -78,9 +80,9 @@ namespace Solana.Unity.SDK.Metaplex
 
             #region Properties
 
-            public PublicKey CandyMachine { get; private set; }
-            public PublicKey CandyGuard { get; private set; }
-            public PublicKey Creator { get; private set; }
+            public PublicKey CandyMachine { get; set; }
+            public PublicKey CandyGuard { get; set; }
+            public PublicKey Creator { get; set; }
             public PublicKey CollectionMint { get; set; }
 
             #endregion
@@ -91,9 +93,9 @@ namespace Solana.Unity.SDK.Metaplex
 
         #region Properties
 
-        public CacheInfo Info { get; private set; }
-        public Dictionary<string, CacheItem> Items { get; private set; }
-        public string FilePath { get; private set; }
+        public CacheInfo Info { get; set; }
+        public Dictionary<int, CacheItem> Items { get; set; }
+        public string FilePath { get; set; }
 
         #endregion
 
@@ -102,7 +104,7 @@ namespace Solana.Unity.SDK.Metaplex
         public CandyMachineCache(string filePath)
         {
             Info = new CacheInfo();
-            Items = new Dictionary<string, CacheItem>();
+            Items = new Dictionary<int, CacheItem>();
             FilePath = filePath;
         }
 
@@ -112,25 +114,10 @@ namespace Solana.Unity.SDK.Metaplex
 
         public void SyncFile()
         {
-
-        }
-
-        #endregion
-
-        #region Static
-
-        public static CandyMachineCache LoadFromPath(string cachePath)
-        {
-            if (File.Exists(cachePath)) 
-            {
-                Debug.Log(string.Format("Loading cache from path {0}...", cachePath));
-                using StreamReader reader = new(cachePath);
-                var cacheJson = reader.ReadToEnd();
-                return JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson);
-            }
-
-            Debug.LogError(string.Format("Cache file not found at {0}.", cachePath));
-            return null;
+            Debug.Log("Syncing Cache file.");
+            var json = JsonConvert.SerializeObject(this);
+            File.WriteAllText(FilePath, json);
+            Debug.Log("Cache file saved.");
         }
 
         #endregion

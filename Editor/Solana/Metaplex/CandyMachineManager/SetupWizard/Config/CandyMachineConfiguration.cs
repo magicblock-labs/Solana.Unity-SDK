@@ -24,35 +24,35 @@ namespace Solana.Unity.SDK.Editor
 
         [JsonProperty, SerializeField]
         [SetupQuestion("How many NFTs will be in your CandyMachine?"), Tooltip("The number of NFTs in your CandyMachine.")]
-        private int number;
+        internal int number;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("What is the symbol of your collection? Leave empty for no symbol."), Tooltip("The symbol of this collection.")]
-        private string symbol;
+        internal string symbol;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("What is the seller fee basis points?"), Tooltip("The seller fee basis points charged when a token from this collection is traded.")]
-        private int sellerFeeBasisPoints;
+        internal int sellerFeeBasisPoints;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Do you want to use a sequential mint index generation? We recommend you choose no."), Tooltip("Whether tokens should mint sequentially.")]
-        private bool isSequential;
+        internal bool isSequential;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Enter your hidden settings, leave disabled if you don't wish to use hidden settings."), Tooltip("The hidden settings for this collection.")]
-        private CandyMachineHiddenSettings hiddenSettings;
+        internal CandyMachineHiddenSettings hiddenSettings;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Enter the list of Creators below, total royalty share must add to 100."), Tooltip("The creators of this collection, and their seller fee basis points share in %.")]
-        private CandyMachineCreator[] creators;
+        internal CandyMachineCreator[] creators;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Do you want your NFTs to remain mutable? We HIGHLY recommend you choose yes."), Tooltip("Whether you will be able to update token metadata after minting.")]
-        private bool isMutable;
+        internal bool isMutable;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Add your default guards and guard groups below, leave empty for no guards."), Tooltip("The guard groups for this CandyMachine.")]
-        private CandyMachineGuards guards;
+        internal CandyMachineGuards guards;
 
         #endregion
 

@@ -61,7 +61,7 @@ namespace CandyMachineV2
             + 4 + MAX_NAME_LEN                        // u32 + max name length
             + 4 + MAX_URI_LEN                         // u32 + max uri length
             + 32;                                     // hash
-        private static readonly string COLLECTION_CACHE_KEY = "-1";
+        private static readonly int COLLECTION_CACHE_KEY = -1;
 
         #endregion
 

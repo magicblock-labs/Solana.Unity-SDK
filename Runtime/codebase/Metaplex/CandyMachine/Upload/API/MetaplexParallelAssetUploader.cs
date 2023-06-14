@@ -1,3 +1,4 @@
+using Solana.Unity.Wallet;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -18,13 +19,14 @@ namespace Solana.Unity.SDK.Metaplex
         public abstract Task Prepare();
 
         public virtual async Task Upload(
-            CandyMachineDetails config,
+            Account Keypair,
+            string RpcUrl,
             CandyMachineCache cache,
             LocalMetaplexAsset.AssetType assetType,
             Stack<LocalMetaplexAsset> assets
         )
         {
-            List<Task<(string, string)>> uploads = new();
+            List<Task<(int, string)>> uploads = new();
             
             while (assets.Count > 0 && uploads.Count < PARALLEL_LIMIT)
             {
@@ -63,14 +65,15 @@ namespace Solana.Unity.SDK.Metaplex
                 }
             }
 
+            cache.SyncFile();
             return;
         }
 
         #endregion
 
-        #region Public
+        #region Protected
 
-        public abstract Task<(string, string)> UploadAsset(LocalMetaplexAsset asset);
+        protected abstract Task<(int, string)> UploadAsset(LocalMetaplexAsset asset);
 
         #endregion
     }

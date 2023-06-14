@@ -79,12 +79,12 @@ namespace Solana.Unity.SDK.Editor
         public static string FileSelectField(
             string labelText,
             string currentPath,
-            bool inProjectResources,
+            bool inProject,
             string explorerTitle = null,
             string extension = null
         ) {
             // Layout:
-            var basePath = Path.GetDirectoryName(Application.dataPath + "/Resources/");
+            var basePath = Path.GetDirectoryName(Application.dataPath);
             string newPath = null;
             StaticTextProperty(labelText, currentPath, "Select", delegate {
                 if (extension == null) 
@@ -96,16 +96,17 @@ namespace Solana.Unity.SDK.Editor
                     newPath = EditorUtility.OpenFilePanel(explorerTitle, basePath, extension);
                 }
             });
+            var relativePath = Path.GetRelativePath(basePath, newPath ?? basePath);
             if (newPath == null)
             {
                 return currentPath;
             } 
-            else if (inProjectResources && Path.GetRelativePath(basePath, newPath).StartsWith(".."))
+            else if (inProject && relativePath.StartsWith(".."))
             {
-                Debug.LogError("Path must be inside the Resources folder.");
+                Debug.LogError("Path must be inside the project folder.");
                 return currentPath;
             }
-            return inProjectResources ? Path.GetRelativePath(Application.dataPath, newPath) : newPath;
+            return inProject ? relativePath : newPath;
         }
 
         public static void StaticTextProperty(

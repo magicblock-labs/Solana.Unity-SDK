@@ -1,4 +1,8 @@
+using Newtonsoft.Json;
+using Solana.Unity.SDK.Metaplex;
+using Solana.Unity.Wallet;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,7 +27,7 @@ namespace Solana.Unity.SDK.Editor
 
         Vector2 scrollViewPosition = Vector2.zero;
 
-        CandyMachineConfiguration[] candyMachines;
+        (CandyMachineConfiguration config, CandyMachineCache cache)[] candyMachines;
 
         #endregion
 
@@ -96,10 +100,21 @@ namespace Solana.Unity.SDK.Editor
                 return;
             }
             Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocation));
-            EditorUtility.DisplayProgressBar("CandyMachine Manager", "Loading CandyMachine info...", 0.5f);
-            var path = Path.GetRelativePath("Resources", configLocation);
-            candyMachines = Resources.LoadAll<CandyMachineConfiguration>(path);
-            EditorUtility.ClearProgressBar();
+            var configGUIDS = AssetDatabase.FindAssets("t: candyMachineConfiguration", new[] { configLocation });
+            candyMachines = configGUIDS.Select(guid => {
+                var configPath = AssetDatabase.GUIDToAssetPath(guid);
+                var config = AssetDatabase.LoadAssetAtPath<CandyMachineConfiguration>(configPath);
+                var cachePath = Path.Combine(configLocation, config.name + "-cache") + ".json";
+                var cacheJson = AssetDatabase.LoadAssetAtPath<TextAsset>(cachePath);
+                if (cacheJson != null) 
+                {
+                    var cache = JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson.text);
+                    return (config, cache);
+                }
+                var newCache = new CandyMachineCache(cachePath);
+                newCache.SyncFile();
+                return (config, newCache);
+            }).ToArray();
         }
 
         private void ImportConfig()
@@ -132,7 +147,11 @@ namespace Solana.Unity.SDK.Editor
                 {
                     foreach (var candyMachine in candyMachines) 
                     {
-                        MetaplexEditorUtility.CandyMachineField(new() { isInitialized = false });
+                        MetaplexEditorUtility.CandyMachineField(
+                            candyMachine.cache,
+                            candyMachine.config,
+                            rpc
+                        );
                     }
                 }
                 EditorGUILayout.EndScrollView();

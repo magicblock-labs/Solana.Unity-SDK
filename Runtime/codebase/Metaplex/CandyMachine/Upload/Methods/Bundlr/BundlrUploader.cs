@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -15,9 +13,9 @@ namespace Solana.Unity.SDK.Metaplex
             throw new System.NotImplementedException();
         }
 
-        public override Task<(string, string)> UploadAsset(LocalMetaplexAsset asset)
+        protected override Task<(int, string)> UploadAsset(LocalMetaplexAsset asset)
         {
-            return Task.Run(delegate { Debug.Log("Asset Uploaded"); return ("", ""); });
+            return Task.Run(delegate { Debug.Log("Asset Uploaded"); return (asset.AssetId, ""); });
         }
 
         #endregion
