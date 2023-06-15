@@ -100,7 +100,8 @@ namespace Solana.Unity.SDK
         private static List<Nft.Nft> _nfts = new();
         private static bool _isLoadingNfts;
 
-        public delegate void NFTsUpdate(List<Nft.Nft> nfts, int total);
+        public delegate void NFTsUpdate(List<Nft.Nft> nfts, int 
+        );
         private static event NFTsUpdate OnNFTsUpdateInternal;
         public static event NFTsUpdate OnNFTsUpdate
         {
@@ -365,7 +366,10 @@ namespace Solana.Unity.SDK
                     loadingTasks.Add(tNft);
                     tNft.ContinueWith(nft =>
                         {
-                            if(nft == null) return;
+                            if(nft == null) {
+                                total--;
+                                return;
+                            }
                             nfts.Add(nft);
                             if(notifyRegisteredListeners) 
                                 OnNFTsUpdateInternal?.Invoke(nfts, total);
