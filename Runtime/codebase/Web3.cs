@@ -100,8 +100,7 @@ namespace Solana.Unity.SDK
         private static List<Nft.Nft> _nfts = new();
         private static bool _isLoadingNfts;
 
-        public delegate void NFTsUpdate(List<Nft.Nft> nfts, int 
-        );
+        public delegate void NFTsUpdate(List<Nft.Nft> nfts, int total);
         private static event NFTsUpdate OnNFTsUpdateInternal;
         public static event NFTsUpdate OnNFTsUpdate
         {
