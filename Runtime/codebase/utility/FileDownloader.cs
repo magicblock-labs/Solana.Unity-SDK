@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -8,6 +9,8 @@ using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Wallet;
 using UnityEngine;
 using UnityEngine.Networking;
+using ThreeDISevenZeroR.UnityGifDecoder;
+using ThreeDISevenZeroR.UnityGifDecoder.Model;
 
 namespace Solana.Unity.SDK.Utility
 {
@@ -69,6 +72,10 @@ namespace Solana.Unity.SDK.Utility
 
             if (typeof(T) == typeof(Texture2D))
             {
+                if (path.Contains(".gif"))
+                {
+                    return await LoadGif<T>(path);
+                }
                 return await LoadTexture<T>(path);
             }
             else
@@ -100,6 +107,72 @@ namespace Solana.Unity.SDK.Utility
             var tex = new Texture2D(2, 2);
             tex.LoadImage(data);
             return (T)Convert.ChangeType(tex, typeof(T));
+        }
+
+        private static async Task<T> LoadGif<T>(string filePath, CancellationToken token = default)
+        {
+            using (UnityWebRequest uwr = UnityWebRequest.Get(filePath))
+            {
+                uwr.SendWebRequest();
+                while (!uwr.isDone && !token.IsCancellationRequested)
+                {
+                    await Task.Yield();
+                }
+
+                if (uwr.result == UnityWebRequest.Result.ConnectionError)
+                {
+                    Debug.Log(uwr.error);
+                    return default;
+                }
+
+                Texture mainTexture = GetTextureFromGifByteStream(uwr.downloadHandler.data);
+
+                var changeType = (T)Convert.ChangeType(mainTexture, typeof(T));
+                return changeType;
+            }
+        }
+
+        private static Texture2D GetTextureFromGifByteStream(byte[] bytes)
+        {
+            // Can use frame delayed for animated gifs, but i didnt to that for memory reasons 
+            var frameDelays = new List<float>();
+
+            using (var gifStream = new GifStream(bytes))
+            {
+                while (gifStream.HasMoreData)
+                {
+                    switch (gifStream.CurrentToken)
+                    {
+                        case GifStream.Token.Image:
+                            GifImage image = gifStream.ReadImage();
+                            var frame = new Texture2D(
+                                gifStream.Header.width,
+                                gifStream.Header.height,
+                                TextureFormat.ARGB32, false);
+
+                            frame.SetPixels32(image.colors);
+                            frame.Apply();
+
+                            frameDelays.Add(image.SafeDelaySeconds); // More about SafeDelay below
+
+                            //var imageSize = ServiceFactory.Resolve<NftService>().NftImageSize;
+                            //Texture2D resizedTexture = Resize(frame, imageSize, imageSize);
+
+                            return frame;
+
+                        case GifStream.Token.Comment:
+                            var commentText = gifStream.ReadComment();
+                            Debug.Log(commentText);
+                            break;
+
+                        default:
+                            gifStream.SkipToken(); // Other tokens
+                            break;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private static async Task<T> LoadJsonWebRequest<T>(string path)
