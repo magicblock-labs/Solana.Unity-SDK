@@ -318,11 +318,11 @@ namespace Solana.Unity.SDK
             {
                 if (_activeRpcClient == null && CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster], logger: true);
+                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster]);
                 }
                 if (_activeRpcClient == null && !CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri, logger: true);
+                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri);
                 }
 
                 return _activeRpcClient;
@@ -349,7 +349,7 @@ namespace Solana.Unity.SDK
                 if (CustomStreamingRpcUri != null)
                 {
                     _webSocketConnection = new TaskCompletionSource<object>();
-                    _activeStreamingRpcClient = ClientFactory.GetStreamingClient(CustomStreamingRpcUri, true);
+                    _activeStreamingRpcClient = ClientFactory.GetStreamingClient(CustomStreamingRpcUri);
                     _activeStreamingRpcClient
                         .ConnectAsync()
                         .AsUniTask()
