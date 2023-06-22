@@ -3,6 +3,6 @@ mergeInto(LibraryManager.library, {
 	{
 		url = UTF8ToString(linkUrl);
     	console.log('Opening link: ' + url);
-		window.open(url);
+		window.open(url,'_blank');
 	}
 });
