@@ -1,6 +1,4 @@
 using Newtonsoft.Json;
-using Solana.Unity.SDK.Metaplex;
-using Solana.Unity.Wallet;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -44,7 +42,7 @@ namespace Solana.Unity.SDK.Editor
 
         private void OnGUI() 
         {
-            SolanaEditorUtility.FileSelectField(
+            keypairLocation = SolanaEditorUtility.FileSelectField(
                 "Keypair",
                 keypairLocation,
                 false,
@@ -130,7 +128,6 @@ namespace Solana.Unity.SDK.Editor
             var config = CreateInstance<CandyMachineConfiguration>();
             config.LoadFromJson(json);
             var savePath = Path.Combine(
-                "Assets",
                 configLocation,
                 Path.GetFileNameWithoutExtension(filePath) + ".asset"
             );
@@ -145,11 +142,12 @@ namespace Solana.Unity.SDK.Editor
                 scrollViewPosition = EditorGUILayout.BeginScrollView(scrollViewPosition, SolanaEditorUtility.scrollViewStyle);
                 if (candyMachines != null) 
                 {
-                    foreach (var candyMachine in candyMachines) 
+                    foreach (var (config, cache) in candyMachines) 
                     {
                         MetaplexEditorUtility.CandyMachineField(
-                            candyMachine.cache,
-                            candyMachine.config,
+                            cache,
+                            config,
+                            keypairLocation,
                             rpc
                         );
                     }

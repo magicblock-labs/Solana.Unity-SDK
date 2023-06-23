@@ -28,6 +28,7 @@ namespace Solana.Unity.SDK.Editor
 
         internal Unity.Metaplex.Candymachine.Types.HiddenSettings ToCandyMachineHiddenSettings()
         {
+            if (!useHiddenSettings) return null;
             return new() {
                 Name = name,
                 Uri = uri,

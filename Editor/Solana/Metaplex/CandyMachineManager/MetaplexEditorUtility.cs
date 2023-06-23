@@ -1,4 +1,4 @@
-using Solana.Unity.SDK.Metaplex;
+using Solana.Unity.Wallet;
 using UnityEditor;
 using UnityEngine;
 
@@ -44,6 +44,7 @@ namespace Solana.Unity.SDK.Editor
         internal static void CandyMachineField(
             CandyMachineCache cache,
             CandyMachineConfiguration config,
+            string keyPair,
             string rpcUrl
         )
         {
@@ -52,7 +53,7 @@ namespace Solana.Unity.SDK.Editor
             EditorGUILayout.BeginVertical();
             EditorGUILayout.Space();
             CandyMachineDetails(cache);
-            CandyMachineControls(cache, config, rpcUrl);
+            CandyMachineControls(cache, config, keyPair, rpcUrl);
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
         }
@@ -73,6 +74,7 @@ namespace Solana.Unity.SDK.Editor
         private static void CandyMachineControls(
             CandyMachineCache cache, 
             CandyMachineConfiguration config,
+            string keyPair,
             string rpcUrl
         )
         {
@@ -82,17 +84,29 @@ namespace Solana.Unity.SDK.Editor
                 {
                     Debug.Log("Settings Clicked");
                 }
-                if (cache.Info.CandyMachine != null) 
+                if (cache.Info.CandyMachine != null && cache.Info.CandyMachine != string.Empty) 
                 {
-                    CandyMachineControlGrid();
-                } else {
-                    CandyMachineSetupControls(cache, config, rpcUrl);
+                    CandyMachineControlGrid(
+                        cache.Info.CandyMachine, 
+                        cache.Info.CandyGuard, 
+                        keyPair, 
+                        rpcUrl
+                    );
+                } 
+                else 
+                {
+                    CandyMachineSetupControls(cache, config, keyPair, rpcUrl);
                 }
             }
             EditorGUILayout.EndVertical();
         }
 
-        private static void CandyMachineControlGrid() 
+        private static void CandyMachineControlGrid(
+            string candyMachineKey, 
+            string candyGuardKey, 
+            string keypair,
+            string rpcUrl
+        ) 
         {
             EditorGUILayout.BeginHorizontal();
             {
@@ -124,7 +138,12 @@ namespace Solana.Unity.SDK.Editor
                 {
                     if (GUILayout.Button("Mint", settingsButtonStyle)) 
                     {
-                        Debug.Log("Settings Clicked");
+                        CandyMachineController.MintToken(
+                            new(candyMachineKey), 
+                            new(candyGuardKey),
+                            keypair,
+                            rpcUrl
+                        );
                     }
                     if (GUILayout.Button("Reveal", settingsButtonStyle)) 
                     {
@@ -138,7 +157,8 @@ namespace Solana.Unity.SDK.Editor
 
         private static void CandyMachineSetupControls(
             CandyMachineCache cache, 
-            CandyMachineConfiguration config, 
+            CandyMachineConfiguration config,
+            string keyPair,
             string rpcUrl
         )
         {
@@ -146,12 +166,20 @@ namespace Solana.Unity.SDK.Editor
             {
                 if (GUILayout.Button("Deploy", settingsButtonStyle))
                 {
-                    CandyMachineController.InitializeCandyMachine();
+                    CandyMachineController.InitializeCandyMachine(
+                        config,
+                        cache,
+                        "TEST TEST 1",
+                        "",
+                        keyPair,
+                        rpcUrl
+                    );
                 }
-                if (GUILayout.Button("Upload", settingsButtonStyle)) 
+                // TODO: Enable once Bundlr uploader is fixed.
+                /*if (GUILayout.Button("Upload", settingsButtonStyle)) 
                 {
-                    CandyMachineController.UploadCandyMachineAssets(cache, config, rpcUrl);
-                }
+                    CandyMachineController.UploadCandyMachineAssets(cache, config, keyPair, rpcUrl);
+                }*/
             }
             EditorGUILayout.EndHorizontal();
         }

@@ -1,23 +1,23 @@
-using System;
-using System.Text;
-using System.Threading.Tasks;
-using Solana.Unity.Metaplex.Candymachine;
-using Solana.Unity.Metaplex.Candymachine.Types;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Builders;
-using Solana.Unity.Rpc.Models;
-using Solana.Unity.Metaplex.Candymachine.Errors;
-using UnityEngine;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities;
-using Solana.Unity.SDK.Metaplex;
+using Solana.Unity.Metaplex.NFT;
+using Solana.Unity.Metaplex.Candymachine.Types;
+using Solana.Unity.Metaplex.Candymachine;
+using Solana.Unity.Metaplex.CandyGuard.Program;
+using Solana.Unity.Rpc.Models;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
+using Solana.Unity.Metaplex.CandyGuard;
 
-using MetaplexCreator = Solana.Unity.Metaplex.NFT.Library.Creator;
-
-namespace CandyMachineV2
+namespace Solana.Unity.SDK.Metaplex
 {
 
     public static class CandyMachineCommands
@@ -25,9 +25,9 @@ namespace CandyMachineV2
 
         #region Program IDs
 
-        public static readonly PublicKey TokenMetadataProgramId = new("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
-        public static readonly PublicKey CandyMachineProgramId = new("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
-        public static readonly PublicKey instructionSysVarAccount = new("Sysvar1nstructions1111111111111111111111111");
+        public static readonly PublicKey CandyMachineProgramId = new("CndyV3LdqHUfDLmE5naZjVN8rBZz4tqhdefbAnjHG3JR");
+        public static readonly PublicKey CandyGuardProgramId = new("Guard1JwRhJkVH6XZhzoYxeBVQe872VH6QggF4BWmS9g");
+        private static readonly uint COMPUTE_UNITS = 400_000;
 
         #endregion
 
@@ -61,114 +61,32 @@ namespace CandyMachineV2
             + 4 + MAX_NAME_LEN                        // u32 + max name length
             + 4 + MAX_URI_LEN                         // u32 + max uri length
             + 32;                                     // hash
-        private static readonly int COLLECTION_CACHE_KEY = -1;
 
         #endregion
 
-        public static async Task<Transaction> CreateCollection(
-            Account candyMachineAccount,
-            CandyMachineCache cache,
-            CandyMachineData candyMachineData,
+        public static async Task<(string txId, Account collectionMint)> CreateCollection(
+            Account payer,
+            Metadata metdata,
             IRpcClient rpc
         )
         {
             var collectionMint = new Account();
-            if (cache.Items.TryGetValue(COLLECTION_CACHE_KEY, out var collectionItem))
-            {
-                var rent = await rpc.GetMinimumBalanceForRentExemptionAsync(TokenProgram.MintAccountDataSize);
-                var associatedTokenAddress = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
-                    cache.Info.Creator, 
-                    collectionMint.PublicKey
-                );
-                var collectionMetadataKey = PDALookup.FindMetadataPDA(collectionMint.PublicKey);
-                var collectionMasterEdition = PDALookup.FindMasterEditionPDA(collectionMint.PublicKey);
-                var collectionMetadata = new Metadata {
-                    name = collectionItem.name,
-                    symbol = candyMachineData.Symbol,
-                    uri = collectionItem.metadataLink,
-                    sellerFeeBasisPoints = 0,
-                    creators = new List<MetaplexCreator> { new (cache.Info.Creator, 100, true) }
-                };
-                var blockHash = await rpc.GetRecentBlockHashAsync();
-
-                var transaction = new TransactionBuilder()
-                    .AddInstruction(
-                        SystemProgram.CreateAccount(
-                            cache.Info.Creator,
-                            collectionMint.PublicKey,
-                            rent.Result,
-                            TokenProgram.MintAccountDataSize,
-                            TokenProgram.ProgramIdKey
-                        )
-                    )
-                    .AddInstruction(
-                        TokenProgram.InitializeMint(
-                            collectionMint.PublicKey,
-                            0,
-                            cache.Info.Creator,
-                            cache.Info.Creator
-                        )
-                    )
-                    .AddInstruction(
-                        AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
-                            cache.Info.Creator,
-                            cache.Info.Creator,
-                            collectionMint.PublicKey
-                        )
-                    )
-                    .AddInstruction(
-                        TokenProgram.MintTo(
-                            collectionMint.PublicKey,
-                            associatedTokenAddress,
-                            1,
-                            cache.Info.Creator
-                        )
-                    )
-                    .AddInstruction(
-                        MetadataProgram.CreateMetadataAccount(
-                            collectionMetadataKey,
-                            collectionMint.PublicKey,
-                            cache.Info.Creator,
-                            cache.Info.Creator,
-                            cache.Info.Creator,
-                            collectionMetadata,
-                            TokenStandard.NonFungible,
-                            true,
-                            true,
-                            null,
-                            1
-                        )
-                    )
-                    .AddInstruction(
-                        MetadataProgram.CreateMasterEdition(
-                            1,
-                            collectionMasterEdition,
-                            collectionMint.PublicKey,
-                            cache.Info.Creator,
-                            cache.Info.Creator,
-                            cache.Info.Creator,
-                            collectionMetadataKey
-                        )
-                    )
-                    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
-                    .SetFeePayer(cache.Info.Creator);
-
-                collectionItem.onChain = true;
-                cache.Info.CollectionMint = collectionMint.PublicKey;
-                var tx = Transaction.Deserialize(transaction.Serialize());
-                tx.PartialSign(collectionMint);
-                return tx;
-            } else {
-                Debug.LogError("Trying to create and set collection when collection item info isn't in cache! This shouldn't happen!");
-                return null;
-            }
+            var metadataClient = new MetadataClient(rpc);
+            var request = await metadataClient.CreateNFT(
+                payer,
+                collectionMint,
+                TokenStandard.NonFungible,
+                metdata,
+                true,
+                true
+            );
+            return (request.Result, collectionMint);
         }
 
-        public static async Task<Transaction> InitializeCandyMachine(
+        public static async Task<string> InitializeCandyMachine(
             Account account,
             Account candyMachineAccount,
             PublicKey collectionMint,
-            PublicKey collectionUpdateAuthority,
             CandyMachineData candyMachineData,
             IRpcClient rpc
         )
@@ -177,8 +95,8 @@ namespace CandyMachineV2
             var collectionMetadata = PDALookup.FindMetadataPDA(collectionMint);
             var collectionMasterEdition = PDALookup.FindMasterEditionPDA(collectionMint);
             var collectionDelegateRecord = PDALookup.FindDelegateRecordPDA(
-                collectionUpdateAuthority,
-                collectionMint, 
+                account,
+                collectionMint,
                 candyMachineCreator,
                 MetadataDelegateRole.Collection
             );
@@ -190,11 +108,11 @@ namespace CandyMachineV2
                 CollectionMint = collectionMint,
                 CollectionMetadata = collectionMetadata,
                 CollectionMasterEdition = collectionMasterEdition,
-                CollectionUpdateAuthority = collectionUpdateAuthority,
+                CollectionUpdateAuthority = account,
                 CollectionDelegateRecord = collectionDelegateRecord,
-                TokenMetadataProgram = TokenMetadataProgramId,
+                TokenMetadataProgram = MetadataProgram.ProgramIdKey,
                 SystemProgram = SystemProgram.ProgramIdKey,
-                SysvarInstructions = instructionSysVarAccount
+                SysvarInstructions = SysVars.InstructionAccount
             };
             var candyMachineInstruction = CandyMachineProgram.InitializeV2(
                 initializeCandyMachineAccounts,
@@ -203,108 +121,154 @@ namespace CandyMachineV2
                 CandyMachineProgramId
             );
             var blockHash = await rpc.GetRecentBlockHashAsync();
-            try {
-                var candyAccountSize = GetSpaceForCandyMachine(candyMachineData);
-                var minimumRent = await rpc.GetMinimumBalanceForRentExemptionAsync((long)candyAccountSize);
-                var transaction = new TransactionBuilder()
-                    .AddInstruction(
-                        SystemProgram.CreateAccount(
-                            account,
-                            candyMachineAccount.PublicKey,
-                            minimumRent.Result,
-                            TokenProgram.MintAccountDataSize,
-                            TokenProgram.ProgramIdKey
-                        )
-                    )
-                    .AddInstruction(candyMachineInstruction)
-                    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
-                    .SetFeePayer(account);
-
-                var tx = Transaction.Deserialize(transaction.Serialize());
-                tx.PartialSign(candyMachineAccount);
-                return tx;
-            }
-            catch 
-            {
-                Debug.LogError(
-                    string.Format("Error: {0} Numerical overflow error.", CandyMachineErrorKind.NumericalOverflowError)
-                );
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Mint one token from the Candy Machine
-        /// </summary>
-        /// <param name="account">The target account used for minting the token</param>
-        /// <param name="candyMachineKey">The CandyMachine public key</param>
-        /// <param name="rpc">The RPC instance</param>
-/*        public static async Task<Transaction> MintOneToken(Account account, PublicKey candyMachineKey, IRpcClient rpc)
-        {
-            var mint = new Account();
-            var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(account, mint.PublicKey);
-
-            var candyMachineClient = new CandyMachineClient(rpc, null, CandyMachineProgramId);
-            var candyMachineWrap = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
-            var candyMachine = candyMachineWrap.ParsedResult;
-
-            var candyMachineCreator = getCandyMachineCreator(candyMachineKey);
-
-            var mintNftAccounts = new MintV2Accounts {
-                CandyMachine = candyMachineKey,
-                AuthorityPda = candyMachineCreator,
-                Payer = account,
-                MintAuthority = account,
-                NftMetadata = getMetadata(mint.PublicKey),
-                NftMasterEdition = getMasterEdition(mint.PublicKey),
-                Mint = mint.PublicKey,
-                RecentBlockhashes = SysVars.RecentBlockHashesKey,
-                SystemProgram = SystemProgram.ProgramIdKey,
-                TokenMetadataProgram = TokenMetadataProgramId,
-                SplTokenProgram = TokenProgram.ProgramIdKey,
-                UpdateAuthority = account
-            };
-
-            var candyMachineInstruction = CandyMachineProgram.MintV2(mintNftAccounts, CandyMachineProgramId);
-
-            var blockHash = await rpc.GetRecentBlockHashAsync();
-            var minimumRent = await rpc.GetMinimumBalanceForRentExemptionAsync(TokenProgram.MintAccountDataSize);
-
+            var candyAccountSize = GetSpaceForCandyMachine(candyMachineData);
+            var minimumRent = await rpc.GetMinimumBalanceForRentExemptionAsync((long)candyAccountSize);
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
                 .AddInstruction(
                     SystemProgram.CreateAccount(
                         account,
-                        mint.PublicKey,
+                        candyMachineAccount,
                         minimumRent.Result,
-                        TokenProgram.MintAccountDataSize,
-                        TokenProgram.ProgramIdKey))
-                .AddInstruction(
-                    TokenProgram.InitializeMint(
-                        mint.PublicKey,
-                        0,
-                        account,
-                        account))
-                .AddInstruction(
-                    AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
-                        account,
-                        account,
-                        mint.PublicKey))
-                .AddInstruction(
-                    TokenProgram.MintTo(
-                        mint.PublicKey,
-                        associatedTokenAccount,
-                        1,
-                        account))
-                .AddInstruction(candyMachineInstruction);
+                        candyAccountSize,
+                        CandyMachineProgramId
+                    )
+                )
+                .AddInstruction(candyMachineInstruction)
+                .Build(new List<Account> { account, candyMachineAccount });
+            var txId = await rpc.SendTransactionAsync(transaction, true);
+            return txId.Result;
+        }
 
-            var tx = Transaction.Deserialize(transaction.Serialize());
-            tx.PartialSign(mint);
-            return tx;
-        }*/
+        public static async Task<string> MintOneToken(
+            Account account,
+            Account mint,
+            PublicKey candyMachineAccount, 
+            PublicKey candyGuardAccount,
+            CandyGuardMintSettings mintSettings,
+            IRpcClient rpc
+        )
+        {
+            var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(account, mint.PublicKey);
+            var candyMachineClient = new CandyMachineClient(rpc, null, CandyMachineProgramId);
+            var stateRequest = await candyMachineClient.GetCandyMachineAsync(candyMachineAccount);
+            var state = stateRequest.ParsedResult;
+            var candyMachineCreator = GetCandyMachineCreator(candyMachineAccount);
 
-        public static PublicKey GetCandyMachineCreator(PublicKey candyMachineAddress)
+            var mintNftAccounts = new Unity.Metaplex.CandyGuard.Program.MintV2Accounts {
+                CandyMachineAuthorityPda = candyMachineCreator,
+                Payer = account,
+                Minter = account,
+                CandyMachine = candyMachineAccount,
+                NftMetadata = PDALookup.FindMetadataPDA(mint),
+                NftMasterEdition = PDALookup.FindMasterEditionPDA(mint),
+                SystemProgram = SystemProgram.ProgramIdKey,
+                TokenMetadataProgram = MetadataProgram.ProgramIdKey,
+                SplTokenProgram = TokenProgram.ProgramIdKey,
+                CollectionDelegateRecord = PDALookup.FindDelegateRecordPDA(
+                    account, 
+                    state.CollectionMint, 
+                    candyMachineCreator, 
+                    MetadataDelegateRole.Collection
+                ),
+                CollectionMasterEdition = PDALookup.FindMasterEditionPDA(state.CollectionMint),
+                CollectionMetadata = PDALookup.FindMetadataPDA(state.CollectionMint),
+                CollectionMint = state.CollectionMint,
+                CollectionUpdateAuthority = account,
+                NftMint = mint,
+                NftMintAuthority = account,
+                Token = associatedTokenAccount,
+                TokenRecord = PDALookup.FindTokenRecordPDA(associatedTokenAccount, mint),
+                SplAtaProgram = AssociatedTokenAccountProgram.ProgramIdKey,
+                SysvarInstructions = SysVars.InstructionAccount,
+                RecentSlothashes = new PublicKey("SysvarS1otHashes111111111111111111111111111"),
+                AuthorizationRules = null,
+                AuthorizationRulesProgram = null,
+                CandyGuard = candyGuardAccount,
+                CandyMachineProgram = CandyMachineProgramId
+            };
+            var mintSettingsAccounts = mintSettings.GetMintArgs(account);
+            var candyMachineInstruction = CandyGuardProgram.MintV2(
+                mintNftAccounts,
+                new byte[0],
+                mintSettings.GuardGroup,
+                CandyGuardProgramId
+            );
+
+            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var computeInstruction = ComputeBudgetProgram.SetComputeUnitLimit(COMPUTE_UNITS);
+            candyMachineInstruction = new TransactionInstruction {
+                Data = candyMachineInstruction.Data,
+                ProgramId = candyMachineInstruction.ProgramId,
+                Keys = candyMachineInstruction.Keys.Select(k => {
+                    if (k.PublicKey == mint.PublicKey) {
+                        return AccountMeta.Writable(mint, true);
+                    }
+                    return k;
+                }).Concat(mintSettingsAccounts).ToList()
+            };
+
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(account)
+                .AddInstruction(computeInstruction)
+                .AddInstruction(candyMachineInstruction)
+                .Build(new List<Account> { account, mint });
+            var txId = await rpc.SendTransactionAsync(transaction);
+            return txId.Result;
+        }
+
+        public static async Task<string> InitializeGuards(
+            Account account,
+            GuardData guardData,
+            IRpcClient rpc
+        )
+        {
+            if (guardData == null) 
+            {
+                Debug.LogError("Missing guard configuration");
+                return null;
+            }
+            Debug.Log("Initializing Candy Guard...");
+            var guardDataBytes = new byte[3600];
+            var offset = guardData.Serialize(guardDataBytes, 0);
+            var resultData = new byte[offset];
+            guardDataBytes.CopyTo(resultData, 0);
+            var baseAccount = new Account();
+            if (PublicKey.TryFindProgramAddress(
+                new List<byte[]> { baseAccount.PublicKey.KeyBytes }, 
+                CandyGuardProgramId, 
+                out var program, 
+                out var _
+            ))
+            {
+                var candyGuardInstruction = CandyGuardProgram.Initialize(
+                    new() {
+                        SystemProgram = SystemProgram.ProgramIdKey,
+                        Authority = account,
+                        Base = baseAccount,
+                        CandyGuard = program,
+                        Payer = account
+                    },
+                    resultData,
+                    CandyGuardProgramId
+                );
+                var blockHash = await rpc.GetRecentBlockHashAsync();
+                var transaction = new TransactionBuilder()
+                    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                    .SetFeePayer(account)
+                    .AddInstruction(candyGuardInstruction)
+                    .Build(new List<Account> { baseAccount });
+                var txId = await rpc.SendTransactionAsync(transaction);
+                return txId.Result;
+            }
+            return null;
+        }
+
+        #region Private
+
+        private static PublicKey GetCandyMachineCreator(PublicKey candyMachineAddress)
         {
             if (!PublicKey.TryFindProgramAddress(
                     new[] { Encoding.UTF8.GetBytes("candy_machine"), candyMachineAddress.KeyBytes },
@@ -316,27 +280,27 @@ namespace CandyMachineV2
             return candyMachineCreator;
         }
 
-        public static ulong GetSpaceForCandyMachine(CandyMachineData candyMachineData)
+        private static ulong GetSpaceForCandyMachine(CandyMachineData candyMachineData)
         {
             var space = HIDDEN_SETTINGS_START;
             if (candyMachineData.HiddenSettings == null) {
                 space += 4;
                 space += candyMachineData.ItemsAvailable * GetConfigLineSize(candyMachineData.ConfigLineSettings);
-                checked {
-                    space /= 8;
-                }
+                space += candyMachineData.ItemsAvailable / 8;
                 space += 1;
                 space += candyMachineData.ItemsAvailable * 4;
             }
             return space;
         }
 
-        public static ulong GetConfigLineSize(ConfigLineSettings configLine)
+        private static ulong GetConfigLineSize(ConfigLineSettings configLine)
         {
             if (configLine == null) {
                 return 0;
             }
             return configLine.NameLength + configLine.UriLength;
         }
+
+        #endregion
     }
 }

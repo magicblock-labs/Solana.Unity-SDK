@@ -1,12 +1,13 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.Utilities.Json;
+using Solana.Unity.Rpc;
 using Solana.Unity.SDK.Metaplex;
 using Solana.Unity.Wallet;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace Solana.Unity.SDK.Editor
 
         #region Types
 
-        private struct UploadQueue
+        public struct UploadQueue
         {
             internal List<int> imagesToUpload;
             internal List<int> animationsToUpload;
@@ -29,17 +30,49 @@ namespace Solana.Unity.SDK.Editor
 
         #region Initialize
 
-        internal static async void InitializeCandyMachine()
+        internal static async void InitializeCandyMachine(
+            CandyMachineConfiguration config,
+            CandyMachineCache cache,
+            string collectionNFTName,
+            string collectionMetadataUrl,
+            string keypair,
+            string rpcUrl
+        )
         {
             Debug.Log("Initializing CandyMachine...");
-            EditorUtility.DisplayProgressBar("Candy Machine Manager", "Initializing CandyMachine...", 0.5f);
+            var configData = config.ToCandyMachineData(cache);
             var candyMachineAccount = new Account();
-            /*await CandyMachineCommands.CreateCollection(
-                candyMachineAccount
-            );*/
-            // await CandyMachineCommands.InitializeCandyMachine();
-            await Task.Delay(5000);
-            EditorUtility.ClearProgressBar();
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
+
+            var (collectionTxId, collectionMint) = await CandyMachineCommands.CreateCollection(
+                wallet.Account,
+                new() { 
+                    name = collectionNFTName,
+                    symbol = config.symbol,
+                    sellerFeeBasisPoints = 0,
+                    uri = collectionMetadataUrl,
+                    creators = config.creators.Select(c => new Unity.Metaplex.NFT.Library.Creator(new (c.address), c.share, true)).ToList(),
+                },
+                rpcClient
+            );
+            Debug.LogFormat("Minted Collection NFT - Transaction ID: {0}", collectionTxId);
+            var initTx = await CandyMachineCommands.InitializeCandyMachine(
+                wallet.Account,
+                candyMachineAccount,
+                collectionMint,
+                configData,
+                rpcClient
+            );
+            Debug.LogFormat("Initializing CandyMachine - Transaction ID: {0}", initTx);
+
+            cache.Info.CandyMachine = candyMachineAccount.PublicKey;
+            cache.Info.CollectionMint = collectionMint.PublicKey;
+            cache.Info.Creator = wallet.Account.PublicKey;
+            cache.SyncFile();
+            Debug.LogFormat("Initialized CandyMachine: {0}", candyMachineAccount.PublicKey);
         }
 
         #endregion
@@ -49,11 +82,19 @@ namespace Solana.Unity.SDK.Editor
         internal static async void UploadCandyMachineAssets(
             CandyMachineCache cache, 
             CandyMachineConfiguration config,
+            string keypair,
             string rpcUrl
         )
         {
-            var uploader = MetaplexUploaderFactory.New(MetaplexUploaderFactory.CandyMachineUploadMethod.Bundlr);
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            var uploader = MetaplexUploaderFactory.New(
+                rpcClient,
+                IMetaplexAssetUploader.UploadMethod.Bundlr
+            );
             var assetPairs = await GetCandyMachineAssetsAsync();
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
 
             if (assetPairs != null) 
             {
@@ -72,7 +113,7 @@ namespace Solana.Unity.SDK.Editor
 
                     if (requiresUpload) 
                     {
-                        await uploader.Prepare();
+                        await uploader.Prepare(wallet.Account, uploadQueue.Value, assetPairs);
                         Debug.Log("Uploading Image/Animation Assets...");
 
                         // Upload image assets.
@@ -95,6 +136,7 @@ namespace Solana.Unity.SDK.Editor
                             uploader
                         );
 
+                        var metadataToRemove = new List<int>();
                         // Update metadata indices for any failed asset uploads.
                         foreach (var index in uploadQueue.Value.metadataToUpload) 
                         {
@@ -102,8 +144,12 @@ namespace Solana.Unity.SDK.Editor
                             if (cacheItem.imageLink == string.Empty || cacheItem.animationLink == string.Empty) 
                             {
                                 // Image or animation didn't upload.
-                                uploadQueue.Value.metadataToUpload.Remove(index);
+                                metadataToRemove.Add(index);
                             }
+                        }
+                        foreach (var index in metadataToRemove) 
+                        {
+                            uploadQueue.Value.metadataToUpload.Remove(index);
                         }
                         Debug.Log("Asset upload complete. Uploading Metadata...");
                         await UploadAssetList(
@@ -115,8 +161,7 @@ namespace Solana.Unity.SDK.Editor
                             uploader
                         );
                         Debug.Log("Upload completed. Beginning sanity check...");
-                    }
-                    else {
+                    } else {
                         Debug.Log("No assets need uploading, skipping...");
                     }
 
@@ -171,7 +216,7 @@ namespace Solana.Unity.SDK.Editor
                         /* Replaces the media link without modifying the original file to avoid changing 
                         the hash of the metadata file. */
                         var content = assetType switch {
-                            LocalMetaplexAsset.AssetType.Metadata => GetUpdatedMetadata(
+                            LocalMetaplexAsset.AssetType.Metadata => IMetaplexAssetUploader.GetUpdatedMetadata(
                                 filePath,
                                 cacheItem.imageLink,
                                 cacheItem.animationLink
@@ -188,29 +233,7 @@ namespace Solana.Unity.SDK.Editor
                     }
                 }
             }
-            await uploader.Upload(new(), rpcUrl, cache, assetType, assets);
-        }
-
-        private static string GetUpdatedMetadata(string metadataFilePath, string imageLink, string animationLink)
-        {
-            var metadataJson = File.ReadAllText(metadataFilePath);
-            var metadata = JsonConvert.DeserializeObject<MetaplexTokenStandard>(metadataJson);
-            metadata.properties.files = metadata.properties.files.Select((file) => {
-                if (file.uri == metadata.default_image) 
-                {
-                    file.uri = imageLink;
-                }
-                var hasAnimation = animationLink != string.Empty && metadata.animation_url != string.Empty;
-                if (hasAnimation && file.uri == metadata.animation_url) 
-                {
-                    file.uri = animationLink;
-                }
-
-                return file;
-            }).ToList();
-            metadata.default_image = imageLink;
-            metadata.animation_url = animationLink;
-            return JsonConvert.SerializeObject(metadata);
+            await uploader.Upload(rpcUrl, cache, assetType, assets);
         }
 
         private static async Task<UploadQueue?> ValidateCache(
@@ -338,19 +361,19 @@ namespace Solana.Unity.SDK.Editor
                     var metadataJson = File.ReadAllText(metadataFile);
                     var metadata = JsonConvert.DeserializeObject<MetaplexTokenStandard>(metadataJson);
 
-                    var imageBytes = File.ReadAllBytes(imageFiles.ElementAt(0));
+                    var imageBytes = Encoding.Default.GetBytes(imageFiles.ElementAt(0));
                     var imageHash = BitConverter.ToString(imageBytes).Replace("-", "");
 
-                    var metadataBytes = File.ReadAllBytes(metadataFile);
-                    var metadataHash = BitConverter.ToString(imageBytes).Replace("-", "");
+                    var metadataBytes = Encoding.Default.GetBytes(metadataFile);
+                    var metadataHash = BitConverter.ToString(metadataBytes).Replace("-", "");
 
                     string animationFile = null;
                     if (animationFiles.Count() == 1) 
                     {
                         animationFile = animationFiles.ElementAt(0);
                     }
-                    var animationBytes = animationFile != null ? File.ReadAllBytes(animationFiles.ElementAt(0)) : null;
-                    var animationHash = animationFile != null ? BitConverter.ToString(imageBytes).Replace("-", "") : null;
+                    var animationBytes = animationFile != null ? Encoding.Default.GetBytes(animationFiles.ElementAt(0)) : null;
+                    var animationHash = animationFile != null ? BitConverter.ToString(animationBytes).Replace("-", "") : null;
 
                     var assetPair = new CandyMachineCache.CacheItem(
                         metadata.name,
@@ -405,6 +428,44 @@ namespace Solana.Unity.SDK.Editor
         {
             Uri.TryCreate(path, UriKind.Absolute, out var uri);
             return uri?.IsFile == false;
+        }
+
+        #endregion
+
+        #region Mint
+
+        internal static async void MintToken(
+            PublicKey candyMachineKey,
+            PublicKey candyGuardKey,
+            string keypair,
+            string rpcUrl
+        )
+        {
+            Debug.Log("Minting Token...");
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
+            var mintAccount = new Account();
+            var txId = await CandyMachineCommands.MintOneToken(
+                wallet.Account,
+                mintAccount,
+                candyMachineKey, 
+                candyGuardKey, 
+                new() {
+                    NftGate = new() { Mint = new("GcCuUs735yuBSvzfNvvPTfUP67mYMvCeLJf6mK55NsfC") }
+                }, 
+                rpcClient
+            );
+            if (txId != null) 
+            {
+                Debug.LogFormat("Mint transaction: {0}", txId);
+                Debug.LogFormat("Minted NFT - Address: {0}", mintAccount);
+            } 
+            else 
+            {
+                Debug.LogError("Mint transaction failed.");
+            }
         }
 
         #endregion

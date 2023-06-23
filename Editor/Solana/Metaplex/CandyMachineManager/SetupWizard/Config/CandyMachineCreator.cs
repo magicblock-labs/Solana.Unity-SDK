@@ -14,15 +14,15 @@ namespace Solana.Unity.SDK.Editor
     internal class CandyMachineCreator
     {
         [SerializeField, JsonProperty]
-        private string publicKey;
+        internal string address;
 
         [SerializeField, JsonProperty]
-        private byte share;
+        internal byte share;
 
         internal Unity.Metaplex.Candymachine.Types.Creator ToCandyMachineCreator()
         {
             return new() {
-                Address = new(publicKey),
+                Address = new(address),
                 Verified = true,
                 PercentageShare = share
             };

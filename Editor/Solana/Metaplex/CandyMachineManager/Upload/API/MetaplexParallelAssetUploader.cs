@@ -3,24 +3,27 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Solana.Unity.SDK.Metaplex
+namespace Solana.Unity.SDK.Editor
 {
-    public abstract class MetaplexParallelAssetUploader : IMetaplexAssetUploader
+    internal abstract class MetaplexParallelAssetUploader : IMetaplexAssetUploader
     {
 
         #region Properties
 
-        private const uint PARALLEL_LIMIT = 45;
+        private const int PARALLEL_LIMIT = 45;
 
         #endregion
 
         #region IMetaplexAssetUploader
 
-        public abstract Task Prepare();
+        public abstract Task Prepare(
+            Account payer,
+            CandyMachineController.UploadQueue uploadQueue,
+            Dictionary<int, CandyMachineCache.CacheItem> assetPairs
+        );
 
         public virtual async Task Upload(
-            Account Keypair,
-            string RpcUrl,
+            string rpcUrl,
             CandyMachineCache cache,
             LocalMetaplexAsset.AssetType assetType,
             Stack<LocalMetaplexAsset> assets

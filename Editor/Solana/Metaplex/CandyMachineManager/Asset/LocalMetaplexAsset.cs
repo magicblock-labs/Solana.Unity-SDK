@@ -1,4 +1,4 @@
-namespace Solana.Unity.SDK.Metaplex
+namespace Solana.Unity.SDK.Editor
 {
     public struct LocalMetaplexAsset
     {

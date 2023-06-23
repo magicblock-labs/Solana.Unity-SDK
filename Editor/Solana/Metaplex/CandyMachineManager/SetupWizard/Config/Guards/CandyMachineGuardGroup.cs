@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Solana.Unity.Metaplex.CandyGuard;
 using System;
 using UnityEngine;
 
@@ -8,6 +9,15 @@ namespace Solana.Unity.SDK.Editor
     [Serializable]
     internal class CandyMachineGuardGroup
     {
+
+        #region Properties
+
+        internal Group FormattedGroup => new() {
+            Guards = guards.FormattedSet,
+            Label = label
+        };
+
+        #endregion
 
         #region Fields
 
@@ -24,6 +34,30 @@ namespace Solana.Unity.SDK.Editor
     [Serializable]
     internal class CandyMachineGuardSet
     {
+
+        #region Properties
+
+        internal GuardSet FormattedSet => new() {
+            MintLimit = mintLimit.CandyGuardParam,
+            AddressGate = addressGate.CandyGuardParam,
+            AllowList = allowList.CandyGuardParam,
+            BotTax = botTax.CandyGuardParam,
+            StartDate = startDate.CandyGuardParam,
+            EndDate = endDate.CandyGuardParam,
+            Gatekeeper = gatekeeper.CandyGuardParam,
+            NftBurn = nftBurn.CandyGuardParam,
+            NftGate = nftGate.CandyGuardParam,
+            NftPayment = nftPayment.CandyGuardParam,
+            RedeemedAmount = redeemedAmount.CandyGuardParam,
+            SolPayment = solPayment.CandyGuardParam,
+            ThirdPartySigner = thirdPartySigner.CandyGuardParam,
+            TokenBurn = tokenBurn.CandyGuardParam,
+            TokenGate = tokenGate.CandyGuardParam,
+            TokenPayment = tokenPayment.CandyGuardParam
+        };
+
+        #endregion
+
         #region Fields
 
         [SerializeField, JsonProperty]

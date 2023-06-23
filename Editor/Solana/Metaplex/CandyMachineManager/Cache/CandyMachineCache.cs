@@ -1,14 +1,13 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.Candymachine.Types;
-using Solana.Unity.Wallet;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-namespace Solana.Unity.SDK.Metaplex 
+namespace Solana.Unity.SDK.Editor
 {
-    [Serializable]
+    [Serializable, JsonObject(MemberSerialization.OptIn)]
     public class CandyMachineCache 
     {
 
@@ -19,13 +18,28 @@ namespace Solana.Unity.SDK.Metaplex
 
             #region Fields
 
+            [JsonProperty]
             public string name;
+
+            [JsonProperty("image_hash")]
             public string imageHash;
+
+            [JsonProperty("image_link")]
             public string imageLink;
+
+            [JsonProperty("metadata_hash")]
             public string metadataHash;
+
+            [JsonProperty("metadata_link")]
             public string metadataLink;
+
+            [JsonProperty]
             public bool onChain;
+
+            [JsonProperty("animation_hash")]
             public string animationHash;
+
+            [JsonProperty("animation_link")]
             public string animationLink;
 
             #endregion
@@ -80,10 +94,17 @@ namespace Solana.Unity.SDK.Metaplex
 
             #region Properties
 
-            public PublicKey CandyMachine { get; set; }
-            public PublicKey CandyGuard { get; set; }
-            public PublicKey Creator { get; set; }
-            public PublicKey CollectionMint { get; set; }
+            [JsonProperty("candyMachine")]
+            public string CandyMachine { get; set; }
+
+            [JsonProperty("candyGuard")]
+            public string CandyGuard { get; set; }
+
+            [JsonProperty("candyMachineCreator")]
+            public string Creator { get; set; }
+
+            [JsonProperty("collectionMint")]
+            public string CollectionMint { get; set; }
 
             #endregion
 
@@ -93,7 +114,10 @@ namespace Solana.Unity.SDK.Metaplex
 
         #region Properties
 
+        [JsonProperty("program")]
         public CacheInfo Info { get; set; }
+
+        [JsonProperty("items")]
         public Dictionary<int, CacheItem> Items { get; set; }
         public string FilePath { get; set; }
 
