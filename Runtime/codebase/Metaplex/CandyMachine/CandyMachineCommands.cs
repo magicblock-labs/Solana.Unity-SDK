@@ -64,13 +64,13 @@ namespace Solana.Unity.SDK.Metaplex
 
         #endregion
 
-        public static async Task<(string txId, Account collectionMint)> CreateCollection(
+        public static async Task<string> CreateCollection(
             Account payer,
+            Account collectionMint,
             Metadata metdata,
             IRpcClient rpc
         )
         {
-            var collectionMint = new Account();
             var metadataClient = new MetadataClient(rpc);
             var request = await metadataClient.CreateNFT(
                 payer,
@@ -80,7 +80,7 @@ namespace Solana.Unity.SDK.Metaplex
                 true,
                 true
             );
-            return (request.Result, collectionMint);
+            return request.Result;
         }
 
         public static async Task<string> InitializeCandyMachine(
@@ -219,7 +219,7 @@ namespace Solana.Unity.SDK.Metaplex
             return txId.Result;
         }
 
-        public static async Task<string> InitializeGuards(
+        public static async Task<(string txId, PublicKey guardAccount)> InitializeGuards(
             Account account,
             GuardData guardData,
             IRpcClient rpc
@@ -228,7 +228,7 @@ namespace Solana.Unity.SDK.Metaplex
             if (guardData == null) 
             {
                 Debug.LogError("Missing guard configuration");
-                return null;
+                return (null, null);
             }
             Debug.Log("Initializing Candy Guard...");
             var guardDataBytes = new byte[3600];
@@ -239,7 +239,7 @@ namespace Solana.Unity.SDK.Metaplex
             if (PublicKey.TryFindProgramAddress(
                 new List<byte[]> { baseAccount.PublicKey.KeyBytes }, 
                 CandyGuardProgramId, 
-                out var program, 
+                out var guardAccount, 
                 out var _
             ))
             {
@@ -248,7 +248,7 @@ namespace Solana.Unity.SDK.Metaplex
                         SystemProgram = SystemProgram.ProgramIdKey,
                         Authority = account,
                         Base = baseAccount,
-                        CandyGuard = program,
+                        CandyGuard = guardAccount,
                         Payer = account
                     },
                     resultData,
@@ -261,9 +261,41 @@ namespace Solana.Unity.SDK.Metaplex
                     .AddInstruction(candyGuardInstruction)
                     .Build(new List<Account> { baseAccount });
                 var txId = await rpc.SendTransactionAsync(transaction);
-                return txId.Result;
+                return (txId.Result, guardAccount);
             }
-            return null;
+            Debug.LogError("Failed to create CandyGuard account.");
+            return (null, null);
+        }
+
+        public static async Task<string> AddGuards(
+            Account account,
+            PublicKey guardAccount,
+            GuardData guardData,
+            IRpcClient rpc
+        )
+        {
+            var guardDataBytes = new byte[3600];
+            var offset = guardData.Serialize(guardDataBytes, 0);
+            var resultData = new byte[offset];
+            guardDataBytes.CopyTo(resultData, 0);
+            var candyGuardInstruction = CandyGuardProgram.Update(
+                    new() {
+                        SystemProgram = SystemProgram.ProgramIdKey,
+                        Authority = account,
+                        CandyGuard = guardAccount,
+                        Payer = account
+                    },
+                    resultData,
+                    CandyGuardProgramId
+                );
+            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(account)
+                .AddInstruction(candyGuardInstruction)
+                .Build(new List<Account> { account });
+            var txId = await rpc.SendTransactionAsync(transaction);
+            return txId.Result;
         }
 
         #region Private

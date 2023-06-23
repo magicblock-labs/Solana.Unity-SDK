@@ -47,8 +47,12 @@ namespace Solana.Unity.SDK.Editor
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
             var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
 
-            var (collectionTxId, collectionMint) = await CandyMachineCommands.CreateCollection(
+            // Create collection NFT.
+
+            var collectionMint = new Account();
+            var collectionTxId = await CandyMachineCommands.CreateCollection(
                 wallet.Account,
+                collectionMint,
                 new() { 
                     name = collectionNFTName,
                     symbol = config.symbol,
@@ -59,6 +63,9 @@ namespace Solana.Unity.SDK.Editor
                 rpcClient
             );
             Debug.LogFormat("Minted Collection NFT - Transaction ID: {0}", collectionTxId);
+            
+            // Initialize CandyMachine account.
+
             var initTx = await CandyMachineCommands.InitializeCandyMachine(
                 wallet.Account,
                 candyMachineAccount,

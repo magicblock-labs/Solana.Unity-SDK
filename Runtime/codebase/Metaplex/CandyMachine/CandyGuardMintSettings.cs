@@ -42,6 +42,11 @@ namespace Solana.Unity.SDK.Metaplex
             public byte TokenStandard { get; set; }
         }
 
+        public class TokenBurnMintSettings 
+        {
+            public PublicKey Mint { get; set; }
+        }
+
         #endregion
 
         #region Constants
@@ -58,6 +63,7 @@ namespace Solana.Unity.SDK.Metaplex
         public NftPaymentMintSettings NftPayment { get; set; }
         public NftGateMintSettings NftGate { get; set; }
         public NftBurnMintSettings NftBurn { get; set; }
+        public TokenBurnMintSettings TokenBurn { get; set; }
 
         #endregion
 
@@ -131,6 +137,13 @@ namespace Solana.Unity.SDK.Metaplex
                 remainingAccounts.Add(AccountMeta.Writable(tokenEdition, false));
                 remainingAccounts.Add(AccountMeta.Writable(NftBurn.Mint, false));
                 remainingAccounts.Add(AccountMeta.Writable(collectionMetadata, false));
+            }
+
+            if (TokenBurn != null) 
+            {
+                var burnAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, TokenBurn.Mint);
+                remainingAccounts.Add(AccountMeta.Writable(burnAta, false));
+                remainingAccounts.Add(AccountMeta.Writable(TokenBurn.Mint, false));
             }
 
             return remainingAccounts;
