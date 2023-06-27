@@ -116,14 +116,32 @@ namespace Solana.Unity.SDK.Editor
             Action buttonAction = null
         ) {
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(label, propLabelStyle);
-            if (buttonText != null && buttonAction != null) {
-                if (GUILayout.Button(buttonText, selectButtonStyle)) {
-                    buttonAction?.Invoke();
+            {
+                GUILayout.Label(label, propLabelStyle);
+                if (buttonText != null && buttonAction != null) {
+                    if (GUILayout.Button(buttonText, selectButtonStyle)) {
+                        buttonAction?.Invoke();
+                    }
                 }
+                GUILayout.Box(value, fileSelectPathStyle);
             }
-            GUILayout.Box(value, fileSelectPathStyle);
             EditorGUILayout.EndHorizontal();
+        }
+
+        public static int DropdownField(
+            string label,
+            int value,
+            string[] options
+        )
+        {
+            int index;
+            EditorGUILayout.BeginHorizontal();
+            {
+                GUILayout.Label(label, propLabelStyle);
+                index = EditorGUILayout.Popup(value, options);
+            }
+            EditorGUILayout.EndHorizontal();
+            return index;
         }
 
         public static void Heading(string text, TextAnchor alignment)

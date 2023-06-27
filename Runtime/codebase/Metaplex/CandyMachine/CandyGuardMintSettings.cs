@@ -2,6 +2,7 @@ using Solana.Unity.Metaplex.Utilities;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -42,9 +43,35 @@ namespace Solana.Unity.SDK.Metaplex
             public byte TokenStandard { get; set; }
         }
 
-        public class TokenBurnMintSettings 
+        public class AllowListMintSettings
+        {
+            public byte[] MerkleRoot { get; set; }
+        }
+
+        public class MintLimitMintSettings
+        {
+            public int Id { get; set; }
+        }
+
+        public class SolPaymentMintSettings
+        {
+            public PublicKey Destination { get; set; }
+        }
+
+        public class TokenBurnMintSettings
         {
             public PublicKey Mint { get; set; }
+        }
+
+        public class TokenGateMintSettings
+        {
+            public PublicKey Mint { get; set; }
+        }
+
+        public class TokenPaymentMintSettings
+        {
+            public PublicKey Mint { get; set; }
+            public PublicKey DestinationAta { get; set; }
         }
 
         #endregion
@@ -60,16 +87,25 @@ namespace Solana.Unity.SDK.Metaplex
         public string GuardGroup;
         public ThirdPartySignerMintSettings ThirdPartySigner { get; set; }
         public GatekeeperMintSettings Gatekeeper { get; set; }
+        public AllowListMintSettings AllowList { get; set; }
+        public MintLimitMintSettings MintLimit { get; set; }
+        public SolPaymentMintSettings SolPayment { get; set; }
         public NftPaymentMintSettings NftPayment { get; set; }
         public NftGateMintSettings NftGate { get; set; }
         public NftBurnMintSettings NftBurn { get; set; }
         public TokenBurnMintSettings TokenBurn { get; set; }
+        public TokenGateMintSettings TokenGate { get; set; }
+        public TokenPaymentMintSettings TokenPayment { get; set; }
 
         #endregion
 
         #region Public
 
-        public List<AccountMeta> GetMintArgs(Account payer)
+        public List<AccountMeta> GetMintArgs(
+            Account payer,
+            PublicKey candyMachineKey,
+            PublicKey candyGuardKey
+        )
         {
             var remainingAccounts = new List<AccountMeta>();
 
@@ -88,7 +124,8 @@ namespace Solana.Unity.SDK.Metaplex
                 GATEWAY_PROGRAM_ID,
                 out var tokenAccount,
                 out var _
-            )) {
+            ))
+            {
                 remainingAccounts.Add(AccountMeta.Writable(tokenAccount, false));
                 if (Gatekeeper.ExpireOnUse && PublicKey.TryFindProgramAddress(
                     new byte[][] { Gatekeeper.Network.KeyBytes, Encoding.UTF8.GetBytes("expire") }, 
@@ -139,6 +176,48 @@ namespace Solana.Unity.SDK.Metaplex
                 remainingAccounts.Add(AccountMeta.Writable(collectionMetadata, false));
             }
 
+            if (AllowList != null) 
+            {
+                if (PublicKey.TryFindProgramAddress(
+                    new List<byte[]> { 
+                        Encoding.UTF8.GetBytes("allow_list"),
+                        AllowList.MerkleRoot,
+                        payer.PublicKey,
+                        candyGuardKey,
+                        candyMachineKey
+                    },
+                   CandyMachineCommands.CandyGuardProgramId,
+                    out var proofPda,
+                    out var _
+                )) 
+                {
+                    remainingAccounts.Add(AccountMeta.ReadOnly(proofPda, false));
+                }
+            }
+
+            if (MintLimit != null) 
+            {
+                if (PublicKey.TryFindProgramAddress(
+                    new List<byte[]> {
+                        Encoding.UTF8.GetBytes("mint_limit"),
+                        BitConverter.GetBytes(MintLimit.Id),
+                        payer.PublicKey,
+                        candyGuardKey,
+                        candyMachineKey
+                    },
+                   CandyMachineCommands.CandyGuardProgramId,
+                    out var proofPda,
+                    out var _
+                )) {
+                    remainingAccounts.Add(AccountMeta.Writable(proofPda, false));
+                }
+            }
+
+            if (SolPayment != null)
+            {
+                remainingAccounts.Add(AccountMeta.Writable(SolPayment.Destination, false));
+            }
+
             if (TokenBurn != null) 
             {
                 var burnAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, TokenBurn.Mint);
@@ -146,7 +225,79 @@ namespace Solana.Unity.SDK.Metaplex
                 remainingAccounts.Add(AccountMeta.Writable(TokenBurn.Mint, false));
             }
 
+            if (TokenGate != null) 
+            {
+                var gateAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, TokenGate.Mint);
+                remainingAccounts.Add(AccountMeta.ReadOnly(gateAta, false));
+            }
+
+            if (TokenPayment != null) 
+            {
+                var payerTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, TokenPayment.Mint);
+                remainingAccounts.Add(AccountMeta.Writable(payerTokenAccount, false));
+                remainingAccounts.Add(AccountMeta.Writable(TokenPayment.DestinationAta, false));
+            }
+
             return remainingAccounts;
+        }
+
+        public void OverrideWith(CandyGuardMintSettings overrides)
+        {
+            GuardGroup = overrides.GuardGroup;
+            if (overrides.Gatekeeper != null)
+            {
+                Gatekeeper = overrides.Gatekeeper;
+            }
+
+            if (overrides.ThirdPartySigner != null) 
+            {
+                ThirdPartySigner = overrides.ThirdPartySigner;
+            }
+
+            if (overrides.NftGate != null) 
+            {
+                NftGate = overrides.NftGate;
+            }
+
+            if (overrides.NftBurn != null)
+            {
+                NftBurn = overrides.NftBurn;
+            }
+
+            if (overrides.NftPayment != null)
+            {
+                NftPayment = overrides.NftPayment;
+            }
+
+            if (overrides.AllowList != null)
+            {
+                AllowList = overrides.AllowList;
+            }
+
+            if (overrides.TokenGate != null)
+            {
+                TokenGate = overrides.TokenGate;
+            }
+
+            if (overrides.TokenBurn != null)
+            {
+                TokenBurn = overrides.TokenBurn;
+            }
+
+            if (overrides.MintLimit != null)
+            {
+                MintLimit = overrides.MintLimit;
+            }
+
+            if (overrides.SolPayment != null)
+            {
+                SolPayment = overrides.SolPayment;
+            }
+
+            if (overrides.TokenPayment != null)
+            {
+                TokenPayment = overrides.TokenPayment;
+            }
         }
 
         #endregion

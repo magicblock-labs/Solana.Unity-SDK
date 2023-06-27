@@ -9,6 +9,28 @@ namespace Solana.Unity.SDK.Editor
     public class CandyMachineManager : EditorWindow 
     {
 
+        #region Types
+
+        private struct CandyMachine
+        {
+            internal CandyMachineConfiguration config;
+            internal CandyMachineCache cache;
+            internal MetaplexEditorUtility.CandyMachineState state;
+
+            internal CandyMachine(
+                CandyMachineConfiguration config, 
+                CandyMachineCache cache, 
+                MetaplexEditorUtility.CandyMachineState state
+            )
+            {
+                this.config = config;
+                this.cache = cache;
+                this.state = state;
+            }
+        }
+
+        #endregion
+
         #region Properties
 
         [SerializeField]
@@ -25,7 +47,7 @@ namespace Solana.Unity.SDK.Editor
 
         Vector2 scrollViewPosition = Vector2.zero;
 
-        (CandyMachineConfiguration config, CandyMachineCache cache)[] candyMachines;
+        CandyMachine[] candyMachines;
 
         #endregion
 
@@ -107,11 +129,11 @@ namespace Solana.Unity.SDK.Editor
                 if (cacheJson != null) 
                 {
                     var cache = JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson.text);
-                    return (config, cache);
+                    return new CandyMachine(config, cache, new());
                 }
                 var newCache = new CandyMachineCache(cachePath);
                 newCache.SyncFile();
-                return (config, newCache);
+                return new CandyMachine(config, null, new());
             }).ToArray();
         }
 
@@ -142,11 +164,12 @@ namespace Solana.Unity.SDK.Editor
                 scrollViewPosition = EditorGUILayout.BeginScrollView(scrollViewPosition, SolanaEditorUtility.scrollViewStyle);
                 if (candyMachines != null) 
                 {
-                    foreach (var (config, cache) in candyMachines) 
+                    foreach (var candyMachine in candyMachines) 
                     {
                         MetaplexEditorUtility.CandyMachineField(
-                            cache,
-                            config,
+                            candyMachine.state,
+                            candyMachine.cache,
+                            candyMachine.config,
                             keypairLocation,
                             rpc
                         );

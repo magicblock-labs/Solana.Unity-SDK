@@ -1,13 +1,22 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.CandyGuard;
+using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Programs.Utilities;
 using System;
-using System.Text;
 using UnityEngine;
+
+using static Solana.Unity.SDK.Metaplex.CandyGuardMintSettings;
 
 namespace Solana.Unity.SDK.Editor
 {
 
+    /// <summary>
+    /// Abstract representation of a serializable CandyMachine guard for creating configs
+    /// in the editor.
+    /// 
+    /// Field <see cref="enabled"/>: Controls whether this guard is being used, as guards
+    /// can't be made null within a <see cref="ScriptableObject"/>.
+    /// </summary>
     internal abstract class CandyMachineGuard
     {
         [SerializeField]
@@ -25,6 +34,11 @@ namespace Solana.Unity.SDK.Editor
         private int limit;
 
         internal MintLimit CandyGuardParam => new() { Id = (byte)id, Limit = (ushort)limit };
+
+        internal MintLimitMintSettings GetMintSettings()
+        {
+            return enabled ? new() { Id = id } : null;
+        }
     }
 
     [Serializable]
@@ -43,6 +57,12 @@ namespace Solana.Unity.SDK.Editor
         private string merkleRoot;
 
         internal AllowList CandyGuardParam => new() { MerkleRoot = KeyStore.Utils.HexToByteArray(merkleRoot) };
+        internal AllowListMintSettings GetMintSettings()
+        {
+            return enabled ? new() { 
+                MerkleRoot = KeyStore.Utils.HexToByteArray(merkleRoot) 
+            }: null;
+        }
     }
 
     [Serializable]
@@ -82,6 +102,14 @@ namespace Solana.Unity.SDK.Editor
             ExpireOnUse = expireOnUse,
             GatekeeperNetwork = new(gatekeeperNetwork)
         };
+
+        internal GatekeeperMintSettings GetMintSettings()
+        {
+            return enabled ? new() { 
+                ExpireOnUse = expireOnUse,
+                Network = new(gatekeeperNetwork) 
+            } : null;
+        }
     }
 
     [Serializable]
@@ -93,6 +121,21 @@ namespace Solana.Unity.SDK.Editor
         internal NftBurn CandyGuardParam => new() {
             RequiredCollection = new(requiredCollection)
         };
+
+        internal NftBurnMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
+        {
+            foreach (var account in tokenAccounts) 
+            {
+                if (account?.metadata?.collectionLink?.key?.Key == requiredCollection) {
+                    return new NftBurnMintSettings() {
+                        Mint = new(account.mint),
+                        RequiredCollection = new(requiredCollection),
+                        TokenStandard = (byte)account.metadata.tokenStandard
+                    };
+                }
+            }
+            return null;
+        }
     }
 
     [Serializable]
@@ -104,6 +147,18 @@ namespace Solana.Unity.SDK.Editor
         internal NftGate CandyGuardParam => new() {
             RequiredCollection = new(requiredCollection)
         };
+
+        internal NftGateMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
+        {
+            foreach (var account in tokenAccounts) {
+                if (account?.metadata?.collectionLink?.key?.Key == requiredCollection) {
+                    return new NftGateMintSettings() {
+                        Mint = new(account.mint)
+                    };
+                }
+            }
+            return null;
+        }
     }
 
     [Serializable]
@@ -119,6 +174,20 @@ namespace Solana.Unity.SDK.Editor
             Destination = new(destination),
             RequiredCollection = new(requiredCollection)
         };
+
+        internal NftPaymentMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
+        {
+            foreach (var account in tokenAccounts) {
+                if (account?.metadata?.collectionLink?.key?.Key == requiredCollection) {
+                    return new NftPaymentMintSettings() {
+                        Mint = new(account.mint),
+                        Destination = new (destination),
+                        TokenStandard = (byte)account.metadata.tokenStandard
+                    };
+                }
+            }
+            return null;
+        }
     }
 
     [Serializable]
@@ -143,6 +212,13 @@ namespace Solana.Unity.SDK.Editor
             Destination = new(destination),
             Lamports = SolHelper.ConvertToLamports(value)
         };
+
+        internal SolPaymentMintSettings GetMintSettings()
+        {
+            return enabled ? new() { 
+                Destination = new(destination) 
+            } : null;
+        }
     }
 
     [Serializable]
@@ -165,6 +241,11 @@ namespace Solana.Unity.SDK.Editor
         internal ThirdPartySigner CandyGuardParam => new() {
             SignerKey = new(signerKey)
         };
+
+        internal ThirdPartySignerMintSettings GetMintSettings()
+        {
+            return enabled ? new() { Signer = new(signerKey) } : null;
+        }
     }
 
     [Serializable]
@@ -180,6 +261,11 @@ namespace Solana.Unity.SDK.Editor
             Amount = (ulong)amount,
             Mint = new(mint)
         };
+
+        internal TokenBurnMintSettings GetMintSettings()
+        {
+            return enabled ? new() { Mint = new(mint) } : null;
+        }
     }
 
     [Serializable]
@@ -195,6 +281,11 @@ namespace Solana.Unity.SDK.Editor
             Amount = (ulong)amount,
             Mint = new(mint)
         };
+
+        internal TokenGateMintSettings GetMintSettings()
+        {
+            return enabled ? new() { Mint = new(mint) } : null;
+        }
     }
 
     [Serializable]
@@ -214,5 +305,13 @@ namespace Solana.Unity.SDK.Editor
             Amount = (ulong)amount,
             Mint = new(mint)
         };
+
+        internal TokenPaymentMintSettings GetMintSettings()
+        {
+            return enabled ? new() {
+                Mint = new (mint),
+                DestinationAta = new (destinationAta)
+            } : null;
+        }
     }
 }

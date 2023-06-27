@@ -1,6 +1,10 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.CandyGuard;
+using Solana.Unity.Metaplex.NFT.Library;
+using Solana.Unity.Rpc;
+using Solana.Unity.SDK.Metaplex;
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor
@@ -22,13 +26,21 @@ namespace Solana.Unity.SDK.Editor
         #region Fields
 
         [SerializeField, JsonProperty]
-        private string label;
+        internal string label;
 
         [SerializeField, JsonProperty]
         internal CandyMachineGuardSet guards;
 
         #endregion
 
+        #region Internal
+
+        internal CandyGuardMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
+        {
+            return guards.GetMintSettings(label, tokenAccounts);
+        }
+
+        #endregion
     }
 
     [Serializable]
@@ -163,6 +175,27 @@ namespace Solana.Unity.SDK.Editor
             if (tokenPayment != null) {
                 tokenPayment.enabled = true;
             }
+        }
+
+        internal CandyGuardMintSettings GetMintSettings(
+            string label,
+            MetadataAccount[] tokenAccounts
+        )
+        {
+            return new CandyGuardMintSettings() {
+                GuardGroup = label,
+                ThirdPartySigner = thirdPartySigner.GetMintSettings(),
+                MintLimit = mintLimit.GetMintSettings(),
+                Gatekeeper = gatekeeper.GetMintSettings(),
+                AllowList = allowList.GetMintSettings(),
+                SolPayment = solPayment.GetMintSettings(),
+                NftPayment = nftPayment.GetMintSettings(tokenAccounts),
+                NftGate = nftGate.GetMintSettings(tokenAccounts),
+                NftBurn = nftBurn.GetMintSettings(tokenAccounts),
+                TokenBurn = tokenBurn.GetMintSettings(),
+                TokenGate = tokenGate.GetMintSettings(),
+                TokenPayment = tokenPayment.GetMintSettings()
+            };
         }
 
         #endregion

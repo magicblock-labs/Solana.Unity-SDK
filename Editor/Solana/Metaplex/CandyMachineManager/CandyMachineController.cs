@@ -1,4 +1,6 @@
 using Newtonsoft.Json;
+using Solana.Unity.Extensions;
+using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities.Json;
 using Solana.Unity.Rpc;
 using Solana.Unity.SDK.Metaplex;
@@ -74,7 +76,6 @@ namespace Solana.Unity.SDK.Editor
                 rpcClient
             );
             Debug.LogFormat("Initializing CandyMachine - Transaction ID: {0}", initTx);
-
             cache.Info.CandyMachine = candyMachineAccount.PublicKey;
             cache.Info.CollectionMint = collectionMint.PublicKey;
             cache.Info.Creator = wallet.Account.PublicKey;
@@ -444,24 +445,26 @@ namespace Solana.Unity.SDK.Editor
         internal static async void MintToken(
             PublicKey candyMachineKey,
             PublicKey candyGuardKey,
+            CandyMachineConfiguration config,
             string keypair,
-            string rpcUrl
+            string rpcUrl,
+            string guardGroup
         )
         {
             Debug.Log("Minting Token...");
             var rpcClient = ClientFactory.GetClient(rpcUrl);
             var keyPairJson = File.ReadAllText(keypair);
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
-            var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
             var mintAccount = new Account();
-            var txId = await CandyMachineCommands.MintOneToken(
+            var mintSettings = await GetMintSettings(guardGroup, config, wallet, rpcClient);
+
+            var txId = await CandyMachineCommands.MintOneTokenWithGuards(
                 wallet.Account,
                 mintAccount,
                 candyMachineKey, 
                 candyGuardKey, 
-                new() {
-                    NftGate = new() { Mint = new("GcCuUs735yuBSvzfNvvPTfUP67mYMvCeLJf6mK55NsfC") }
-                }, 
+                mintSettings, 
                 rpcClient
             );
             if (txId != null) 
@@ -473,6 +476,40 @@ namespace Solana.Unity.SDK.Editor
             {
                 Debug.LogError("Mint transaction failed.");
             }
+        }
+
+        #endregion
+
+        #region Private
+
+        private static async Task<CandyGuardMintSettings> GetMintSettings(
+            string guardGroup,
+            CandyMachineConfiguration config, 
+            Wallet.Wallet minter,
+            IRpcClient rpcClient
+        )
+        {
+            var tokenWallet = await TokenWallet.LoadAsync(rpcClient, new TokenMintResolver(), minter.Account);
+            var balances = tokenWallet.Balances();
+            var tokenAccounts = new List<MetadataAccount>();
+            foreach (var balance in balances) { 
+                var account = await MetadataAccount.GetAccount(rpcClient, new PublicKey(balance.TokenMint));
+                tokenAccounts.Add(account);
+            }
+
+            var settings = config.guards?.defaultGuards?.GetMintSettings(null, tokenAccounts.ToArray());
+            if (guardGroup != null) 
+            {
+                var groups = config.guards.groups.Where(group => group.label == guardGroup).ToArray();
+                if (groups.Length > 0) {
+                    var groupSettings = groups[0].GetMintSettings(tokenAccounts.ToArray());
+                    settings.OverrideWith(groupSettings);
+                }
+                else {
+                    Debug.LogErrorFormat("Couldn't find guard group {0}.", guardGroup);
+                }
+            }
+            return settings;
         }
 
         #endregion

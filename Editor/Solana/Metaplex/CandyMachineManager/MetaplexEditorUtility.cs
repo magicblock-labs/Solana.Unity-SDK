@@ -1,4 +1,4 @@
-using Solana.Unity.Wallet;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -39,9 +39,19 @@ namespace Solana.Unity.SDK.Editor
 
         #endregion
 
+        #region Types
+
+        internal class CandyMachineState
+        {
+            internal int guardGroup;
+        }
+
+        #endregion
+
         #region Internal
 
-        internal static void CandyMachineField(
+        internal static CandyMachineState CandyMachineField(
+            CandyMachineState state,
             CandyMachineCache cache,
             CandyMachineConfiguration config,
             string keyPair,
@@ -49,13 +59,18 @@ namespace Solana.Unity.SDK.Editor
         )
         {
             EditorGUILayout.BeginHorizontal(candyMachineFieldStyle);
-            CollectionImage(124);
-            EditorGUILayout.BeginVertical();
-            EditorGUILayout.Space();
-            CandyMachineDetails(cache);
-            CandyMachineControls(cache, config, keyPair, rpcUrl);
-            EditorGUILayout.EndVertical();
+            {
+                CollectionImage(124);
+                EditorGUILayout.BeginVertical();
+                {
+                    EditorGUILayout.Space();
+                    CandyMachineDetails(cache);
+                    CandyMachineControls(state, cache, config, keyPair, rpcUrl);
+                }
+                EditorGUILayout.EndVertical();
+            }
             EditorGUILayout.EndHorizontal();
+            return state;
         }
 
         #endregion
@@ -71,7 +86,8 @@ namespace Solana.Unity.SDK.Editor
             }
         }
 
-        private static void CandyMachineControls(
+        private static CandyMachineState CandyMachineControls(
+            CandyMachineState state,
             CandyMachineCache cache, 
             CandyMachineConfiguration config,
             string keyPair,
@@ -80,13 +96,12 @@ namespace Solana.Unity.SDK.Editor
         {
             EditorGUILayout.BeginVertical();
             {
-                if (GUILayout.Button("Edit Config", settingsButtonStyle)) 
-                {
-                    Debug.Log("Settings Clicked");
-                }
+                
                 if (cache.Info.CandyMachine != null && cache.Info.CandyMachine != string.Empty) 
                 {
                     CandyMachineControlGrid(
+                        state,
+                        config,
                         cache.Info.CandyMachine, 
                         cache.Info.CandyGuard, 
                         keyPair, 
@@ -99,15 +114,23 @@ namespace Solana.Unity.SDK.Editor
                 }
             }
             EditorGUILayout.EndVertical();
+            return state;
         }
 
         private static void CandyMachineControlGrid(
+            CandyMachineState state,
+            CandyMachineConfiguration config,
             string candyMachineKey, 
             string candyGuardKey, 
             string keypair,
             string rpcUrl
         ) 
         {
+            var groups = config.guards?.groups?.Select(group => group.label).ToArray();
+            if (groups != null) 
+            {
+                state.guardGroup = SolanaEditorUtility.DropdownField("Mint Guard Group", state.guardGroup, groups);
+            }
             EditorGUILayout.BeginHorizontal();
             {
                 EditorGUILayout.BeginVertical();
@@ -141,8 +164,10 @@ namespace Solana.Unity.SDK.Editor
                         CandyMachineController.MintToken(
                             new(candyMachineKey), 
                             new(candyGuardKey),
+                            config,
                             keypair,
-                            rpcUrl
+                            rpcUrl,
+                            groups?[state.guardGroup]
                         );
                     }
                     if (GUILayout.Button("Reveal", settingsButtonStyle)) 
@@ -191,7 +216,6 @@ namespace Solana.Unity.SDK.Editor
                 if (cache.Info.CandyMachine != null) {
                     SolanaEditorUtility.StaticTextProperty("Address", cache.Info.CandyMachine);
                     SolanaEditorUtility.StaticTextProperty("Authority", cache.Info.Creator);
-                    SolanaEditorUtility.StaticTextProperty("Cache", cache.FilePath);
                 }
             }
             EditorGUILayout.EndVertical();
