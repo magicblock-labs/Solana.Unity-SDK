@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -6,8 +7,12 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Wallet;
+using ThreeDISevenZeroR.UnityGifDecoder;
+using ThreeDISevenZeroR.UnityGifDecoder.Model;
 using UnityEngine;
 using UnityEngine.Networking;
+
+// ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK.Utility
 {
@@ -69,7 +74,14 @@ namespace Solana.Unity.SDK.Utility
 
             if (typeof(T) == typeof(Texture2D))
             {
-                return await LoadTexture<T>(path);
+                if (path.ToLower().EndsWith(".gif") || path.ToLower().EndsWith("ext=gif"))
+                {
+                    return await LoadGif<T>(path);
+                }
+                else
+                {
+                    return await LoadTexture<T>(path);
+                }
             }
             else
             {
@@ -101,6 +113,68 @@ namespace Solana.Unity.SDK.Utility
             tex.LoadImage(data);
             return (T)Convert.ChangeType(tex, typeof(T));
         }
+        
+        private static async Task<T> LoadGif<T>(string path, CancellationToken token = default)
+        {
+            using (UnityWebRequest uwr = UnityWebRequest.Get(path))
+            {
+                uwr.SendWebRequest();
+                while (!uwr.isDone && !token.IsCancellationRequested)
+                {
+                    await Task.Yield();
+                }
+
+                if (uwr.result == UnityWebRequest.Result.ConnectionError)
+                {
+                    Debug.Log(uwr.error);
+                    return default;
+                }
+
+                Texture mainTexture = GetTextureFromGifByteStream(uwr.downloadHandler.data);
+
+                var changeType = (T)Convert.ChangeType(mainTexture, typeof(T));
+                return changeType;
+            }
+        }
+        
+        private static Texture2D GetTextureFromGifByteStream(byte[] bytes)
+        {
+            var frameDelays = new List<float>();
+
+            using (var gifStream = new GifStream(bytes))
+            {
+                while (gifStream.HasMoreData)
+                {
+                    switch (gifStream.CurrentToken)
+                    {
+                        case GifStream.Token.Image:
+                            GifImage image = gifStream.ReadImage();
+                            var frame = new Texture2D(
+                                gifStream.Header.width,
+                                gifStream.Header.height,
+                                TextureFormat.ARGB32, false);
+
+                            frame.SetPixels32(image.colors);
+                            frame.Apply();
+
+                            frameDelays.Add(image.SafeDelaySeconds);
+
+                            return frame;
+
+                        case GifStream.Token.Comment:
+                            var commentText = gifStream.ReadComment();
+                            Debug.Log(commentText);
+                            break;
+
+                        default:
+                            gifStream.SkipToken(); // Other tokens
+                            break;
+                    }
+                }
+            }
+
+            return null;
+        }
 
         private static async Task<T> LoadJsonWebRequest<T>(string path)
         {
@@ -123,7 +197,7 @@ namespace Solana.Unity.SDK.Utility
             Debug.Log(json);
             try
             {
-                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+                var data = JsonConvert.DeserializeObject<T>(json);
                 return data;
             }
             catch
