@@ -119,8 +119,11 @@ namespace Solana.Unity.SDK
         #endregion
 
         #region Convenience shortnames for accessing commonly used wallet methods
-        public static IRpcClient Rpc => Instance != null ? Instance.WalletBase?.ActiveRpcClient : null;
-        public static IStreamingRpcClient WsRpc => Instance != null ? Instance.WalletBase?.ActiveStreamingRpcClient : null;
+        public static IRpcClient Rpc => Instance != null && Instance.WalletBase != null
+            ? Instance.WalletBase?.ActiveRpcClient : Instance != null ? Instance.GetDefaultRpc() : null;
+
+        public static IStreamingRpcClient WsRpc => Instance != null && Instance.WalletBase != null 
+            ? Instance.WalletBase?.ActiveStreamingRpcClient : Instance != null ? Instance.GetDefaultWsRpc() : null;
         public static Account Account => Instance != null ? Instance.WalletBase?.Account : null;
         public static WalletBase Wallet => Instance != null ? Instance.WalletBase : null;
         
@@ -379,7 +382,7 @@ namespace Solana.Unity.SDK
                 }
             }
             await UniTask.WhenAll(loadingTasks);
-            if(total == 0) OnNFTsUpdateInternal?.Invoke(nfts, total);
+            OnNFTsUpdateInternal?.Invoke(nfts, nfts.Count);
             _nfts = nfts;
             return nfts;
         }
@@ -399,6 +402,18 @@ namespace Solana.Unity.SDK
                 },
                 commitment
             );
+        }
+        
+        private IRpcClient GetDefaultRpc()
+        {
+            var inGame = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            return inGame.ActiveRpcClient;
+        }
+        
+        private IStreamingRpcClient GetDefaultWsRpc()
+        {
+            var inGame = new InGameWallet(rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            return inGame.ActiveStreamingRpcClient;
         }
         
         #endregion
