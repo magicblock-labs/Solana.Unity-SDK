@@ -21,7 +21,6 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     [Preserve]
     public Task<AuthorizationResult> Authorize(Uri identityUri, Uri iconUri, string identityName, string cluster)
     {
-        Debug.Log("Unity Internal A");
         var request = PrepareAuthRequest(
             identityUri,
             iconUri, 
@@ -29,10 +28,6 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             cluster,
             "authorize");
         
-        Debug.Log(request.Id);
-        Debug.Log(request.Method);
-        Debug.Log(JsonConvert.SerializeObject(request));
-        Debug.Log("Unity Internal SendRequest");
         return SendRequest<AuthorizationResult>(request);
     }
 
