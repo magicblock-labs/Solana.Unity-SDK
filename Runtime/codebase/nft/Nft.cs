@@ -64,6 +64,7 @@ namespace Solana.Unity.SDK.Nft
 
             var met = new Metaplex(newData);
             var newNft = new Nft(met);
+            newNft.metaplexData.nftImage.externalUrl = met.data?.offchainData?.default_image;
             
             if (loadTexture) await newNft.LoadTexture(imageHeightAndWidth);
             
