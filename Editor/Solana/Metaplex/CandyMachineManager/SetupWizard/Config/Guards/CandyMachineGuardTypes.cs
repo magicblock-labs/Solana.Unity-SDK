@@ -33,7 +33,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private int limit;
 
-        internal MintLimit CandyGuardParam => new() { Id = (byte)id, Limit = (ushort)limit };
+        internal MintLimit CandyGuardParam => enabled ? new() { 
+            Id = (byte)id, 
+            Limit = (ushort)limit 
+        } : null;
 
         internal MintLimitMintSettings GetMintSettings()
         {
@@ -47,7 +50,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string address;
 
-        internal AddressGate CandyGuardParam => new() { Address = new(address) };
+        internal AddressGate CandyGuardParam => enabled ? new() { 
+            Address = new(address) 
+        } : null;
     }
 
     [Serializable]
@@ -56,7 +61,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string merkleRoot;
 
-        internal AllowList CandyGuardParam => new() { MerkleRoot = KeyStore.Utils.HexToByteArray(merkleRoot) };
+        internal AllowList CandyGuardParam => enabled ? new() { 
+            MerkleRoot = KeyStore.Utils.HexToByteArray(merkleRoot) 
+        } : null;
+
         internal AllowListMintSettings GetMintSettings()
         {
             return enabled ? new() { 
@@ -74,10 +82,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private bool lastInstruction;
 
-        internal BotTax CandyGuardParam => new() { 
+        internal BotTax CandyGuardParam => enabled ? new() { 
             Lamports = (ulong)(value * SolHelper.LAMPORTS_PER_SOL), 
             LastInstruction = lastInstruction 
-        };
+        } : null;
     }
 
     [Serializable]
@@ -86,7 +94,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string date;
 
-        internal EndDate CandyGuardParam => new() { Date = DateTimeOffset.Parse(date).ToUnixTimeSeconds() };
+        internal EndDate CandyGuardParam => enabled ? new() { 
+            Date = DateTimeOffset.Parse(date).ToUnixTimeSeconds() 
+        } : null;
     }
 
     [Serializable]
@@ -98,10 +108,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private bool expireOnUse;
 
-        internal Gatekeeper CandyGuardParam => new() {
+        internal Gatekeeper CandyGuardParam => enabled ? new() {
             ExpireOnUse = expireOnUse,
             GatekeeperNetwork = new(gatekeeperNetwork)
-        };
+        } : null;
 
         internal GatekeeperMintSettings GetMintSettings()
         {
@@ -118,9 +128,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string requiredCollection;
 
-        internal NftBurn CandyGuardParam => new() {
+        internal NftBurn CandyGuardParam => enabled ? new() {
             RequiredCollection = new(requiredCollection)
-        };
+        } : null;
 
         internal NftBurnMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
         {
@@ -144,9 +154,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string requiredCollection;
 
-        internal NftGate CandyGuardParam => new() {
+        internal NftGate CandyGuardParam => enabled ? new() {
             RequiredCollection = new(requiredCollection)
-        };
+        } : null;
 
         internal NftGateMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
         {
@@ -170,10 +180,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string destination;
 
-        internal NftPayment CandyGuardParam => new() {
+        internal NftPayment CandyGuardParam => enabled ? new() {
             Destination = new(destination),
             RequiredCollection = new(requiredCollection)
-        };
+        } : null;
 
         internal NftPaymentMintSettings GetMintSettings(MetadataAccount[] tokenAccounts)
         {
@@ -196,7 +206,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private int maximum;
 
-        internal RedeemedAmount CandyGuardParam => new() { Maximum = (ulong)maximum };
+        internal RedeemedAmount CandyGuardParam => enabled ? new() { 
+            Maximum = (ulong)maximum 
+        } : null;
     }
 
     [Serializable]
@@ -208,10 +220,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string destination;
 
-        internal SolPayment CandyGuardParam => new() {
+        internal SolPayment CandyGuardParam => enabled ? new() {
             Destination = new(destination),
             Lamports = SolHelper.ConvertToLamports(value)
-        };
+        } : null;
 
         internal SolPaymentMintSettings GetMintSettings()
         {
@@ -227,9 +239,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string date;
 
-        internal StartDate CandyGuardParam => new() {
+        internal StartDate CandyGuardParam => enabled ? new() {
             Date = DateTimeOffset.Parse(date).ToUnixTimeSeconds()
-        };
+        } : null;
     }
 
     [Serializable]
@@ -238,9 +250,9 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string signerKey;
 
-        internal ThirdPartySigner CandyGuardParam => new() {
+        internal ThirdPartySigner CandyGuardParam => enabled ? new() {
             SignerKey = new(signerKey)
-        };
+        } : null;
 
         internal ThirdPartySignerMintSettings GetMintSettings()
         {
@@ -257,10 +269,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string mint;
 
-        internal TokenBurn CandyGuardParam => new() {
+        internal TokenBurn CandyGuardParam => enabled ? new() {
             Amount = (ulong)amount,
             Mint = new(mint)
-        };
+        } : null;
 
         internal TokenBurnMintSettings GetMintSettings()
         {
@@ -277,10 +289,10 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string mint;
 
-        internal TokenGate CandyGuardParam => new() {
+        internal TokenGate CandyGuardParam => enabled ? new() {
             Amount = (ulong)amount,
             Mint = new(mint)
-        };
+        } : null;
 
         internal TokenGateMintSettings GetMintSettings()
         {
@@ -300,11 +312,11 @@ namespace Solana.Unity.SDK.Editor
         [ShowWhen("enabled"), SerializeField, JsonProperty]
         private string destinationAta;
 
-        internal TokenPayment CandyGuardParam => new() {
+        internal TokenPayment CandyGuardParam => enabled ? new() {
             DestinationAta = new(destinationAta),
             Amount = (ulong)amount,
             Mint = new(mint)
-        };
+        } : null;
 
         internal TokenPaymentMintSettings GetMintSettings()
         {

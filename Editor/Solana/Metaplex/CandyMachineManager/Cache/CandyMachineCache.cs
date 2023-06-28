@@ -119,28 +119,26 @@ namespace Solana.Unity.SDK.Editor
 
         [JsonProperty("items")]
         public Dictionary<int, CacheItem> Items { get; set; }
-        public string FilePath { get; set; }
 
         #endregion
 
         #region Constructors
 
-        public CandyMachineCache(string filePath)
+        public CandyMachineCache()
         {
             Info = new CacheInfo();
             Items = new Dictionary<int, CacheItem>();
-            FilePath = filePath;
         }
 
         #endregion
 
         #region Public
 
-        public void SyncFile()
+        public void SyncFile(string path)
         {
             Debug.Log("Syncing Cache file.");
             var json = JsonConvert.SerializeObject(this);
-            File.WriteAllText(FilePath, json);
+            File.WriteAllText(path, json);
             Debug.Log("Cache file saved.");
         }
 

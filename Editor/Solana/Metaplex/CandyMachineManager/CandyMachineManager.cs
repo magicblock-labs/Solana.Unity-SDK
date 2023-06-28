@@ -97,7 +97,6 @@ namespace Solana.Unity.SDK.Editor
         private void OnEnable()
         {
             var data = EditorPrefs.GetString(typeof(CandyMachineManager).Name, JsonUtility.ToJson(this, false));
-            // Then we apply them to this window
             JsonUtility.FromJsonOverwrite(data, this);
             FetchCandyMachines();
         }
@@ -124,16 +123,13 @@ namespace Solana.Unity.SDK.Editor
             candyMachines = configGUIDS.Select(guid => {
                 var configPath = AssetDatabase.GUIDToAssetPath(guid);
                 var config = AssetDatabase.LoadAssetAtPath<CandyMachineConfiguration>(configPath);
-                var cachePath = Path.Combine(configLocation, config.name + "-cache") + ".json";
-                var cacheJson = AssetDatabase.LoadAssetAtPath<TextAsset>(cachePath);
-                if (cacheJson != null) 
+                CandyMachineCache cache = null;
+                if (config.cacheFilePath != string.Empty) 
                 {
-                    var cache = JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson.text);
-                    return new CandyMachine(config, cache, new());
+                    var cacheJson = File.ReadAllText(config.cacheFilePath);
+                    cache = JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson);
                 }
-                var newCache = new CandyMachineCache(cachePath);
-                newCache.SyncFile();
-                return new CandyMachine(config, null, new());
+                return new CandyMachine(config, cache, new());
             }).ToArray();
         }
 

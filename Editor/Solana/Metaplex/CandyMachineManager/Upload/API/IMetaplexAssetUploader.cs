@@ -55,6 +55,7 @@ namespace Solana.Unity.SDK.Editor
 
         public Task Upload(
             string rpcUrl,
+            CandyMachineConfiguration config,
             CandyMachineCache cache,
             LocalMetaplexAsset.AssetType assetType,
             Stack<LocalMetaplexAsset> assets

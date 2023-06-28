@@ -64,7 +64,7 @@ namespace Solana.Unity.SDK.Editor
                 EditorGUILayout.BeginVertical();
                 {
                     EditorGUILayout.Space();
-                    CandyMachineDetails(cache);
+                    CandyMachineDetails(cache, config);
                     CandyMachineControls(state, cache, config, keyPair, rpcUrl);
                 }
                 EditorGUILayout.EndVertical();
@@ -97,11 +97,12 @@ namespace Solana.Unity.SDK.Editor
             EditorGUILayout.BeginVertical();
             {
                 
-                if (cache.Info.CandyMachine != null && cache.Info.CandyMachine != string.Empty) 
+                if (cache?.Info.CandyMachine != null && cache?.Info.CandyMachine != string.Empty) 
                 {
                     CandyMachineControlGrid(
                         state,
                         config,
+                        cache,
                         cache.Info.CandyMachine, 
                         cache.Info.CandyGuard, 
                         keyPair, 
@@ -120,6 +121,7 @@ namespace Solana.Unity.SDK.Editor
         private static void CandyMachineControlGrid(
             CandyMachineState state,
             CandyMachineConfiguration config,
+            CandyMachineCache cache,
             string candyMachineKey, 
             string candyGuardKey, 
             string keypair,
@@ -139,9 +141,16 @@ namespace Solana.Unity.SDK.Editor
                     {
                         Debug.Log("Settings Clicked");
                     }
-                    if (GUILayout.Button("Upload", settingsButtonStyle)) 
+                    if (GUILayout.Button("Update Guards", settingsButtonStyle)) 
                     {
-                        Debug.Log("Settings Clicked");
+                        CandyMachineController.UpdateGuards(
+                            new(candyGuardKey),
+                            new(candyMachineKey),
+                            config,
+                            cache,
+                            keypair,
+                            rpcUrl
+                        );
                     }
                 }
                 EditorGUILayout.EndVertical();
@@ -187,6 +196,16 @@ namespace Solana.Unity.SDK.Editor
             string rpcUrl
         )
         {
+            GUILayout.Label(
+                "Import an existing cache - leave empty to create one on upload.",
+                SolanaEditorUtility.propLabelStyle
+            );
+            SolanaEditorUtility.FileSelectField(
+                "Cache",
+                config.cacheFilePath,
+                false,
+                "Import an existing cache"
+            );
             EditorGUILayout.BeginHorizontal();
             {
                 if (GUILayout.Button("Deploy", settingsButtonStyle))
@@ -209,11 +228,12 @@ namespace Solana.Unity.SDK.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private static void CandyMachineDetails(CandyMachineCache cache)
+        private static void CandyMachineDetails(CandyMachineCache cache, CandyMachineConfiguration config)
         {
             EditorGUILayout.BeginVertical();
             {
-                if (cache.Info.CandyMachine != null) {
+                if (cache?.Info.CandyMachine != null) {
+                    SolanaEditorUtility.StaticTextProperty("Cache", config.cacheFilePath);
                     SolanaEditorUtility.StaticTextProperty("Address", cache.Info.CandyMachine);
                     SolanaEditorUtility.StaticTextProperty("Authority", cache.Info.Creator);
                 }

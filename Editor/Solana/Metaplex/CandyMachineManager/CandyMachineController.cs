@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Solana.Unity.Extensions;
+using Solana.Unity.Metaplex.CandyGuard;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities.Json;
 using Solana.Unity.Rpc;
@@ -79,7 +80,7 @@ namespace Solana.Unity.SDK.Editor
             cache.Info.CandyMachine = candyMachineAccount.PublicKey;
             cache.Info.CollectionMint = collectionMint.PublicKey;
             cache.Info.Creator = wallet.Account.PublicKey;
-            cache.SyncFile();
+            cache.SyncFile(config.cacheFilePath);
             Debug.LogFormat("Initialized CandyMachine: {0}", candyMachineAccount.PublicKey);
         }
 
@@ -129,6 +130,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl,
                             uploadQueue.Value.imagesToUpload,
                             assetPairs,
+                            config,
                             cache,
                             LocalMetaplexAsset.AssetType.Image,
                             uploader
@@ -139,6 +141,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl,
                             uploadQueue.Value.animationsToUpload,
                             assetPairs,
+                            config,
                             cache,
                             LocalMetaplexAsset.AssetType.Animation,
                             uploader
@@ -164,6 +167,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl,
                             uploadQueue.Value.metadataToUpload,
                             assetPairs,
+                            config,
                             cache,
                             LocalMetaplexAsset.AssetType.Metadata,
                             uploader
@@ -196,6 +200,7 @@ namespace Solana.Unity.SDK.Editor
             string rpcUrl,
             List<int> indices,
             Dictionary<int, CandyMachineCache.CacheItem> assetPairs,
+            CandyMachineConfiguration config,
             CandyMachineCache cache,
             LocalMetaplexAsset.AssetType assetType,
             IMetaplexAssetUploader uploader
@@ -241,7 +246,7 @@ namespace Solana.Unity.SDK.Editor
                     }
                 }
             }
-            await uploader.Upload(rpcUrl, cache, assetType, assets);
+            await uploader.Upload(rpcUrl, config, cache, assetType, assets);
         }
 
         private static async Task<UploadQueue?> ValidateCache(
@@ -458,15 +463,32 @@ namespace Solana.Unity.SDK.Editor
             var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
             var mintAccount = new Account();
             var mintSettings = await GetMintSettings(guardGroup, config, wallet, rpcClient);
-
-            var txId = await CandyMachineCommands.MintOneTokenWithGuards(
-                wallet.Account,
-                mintAccount,
-                candyMachineKey, 
-                candyGuardKey, 
-                mintSettings, 
-                rpcClient
-            );
+            string txId;
+            if (candyGuardKey != null) 
+            {
+                txId = await CandyMachineCommands.MintOneTokenWithGuards(
+                    wallet.Account,
+                    wallet.Account,
+                    mintAccount,
+                    wallet.Account,
+                    candyMachineKey,
+                    candyGuardKey,
+                    mintSettings,
+                    rpcClient
+                );
+            }
+            else 
+            {
+                txId = await CandyMachineCommands.MintOneToken(
+                    wallet.Account,
+                    wallet.Account,
+                    mintAccount,
+                    wallet.Account,
+                    candyMachineKey,
+                    rpcClient
+                );
+            }
+            
             if (txId != null) 
             {
                 Debug.LogFormat("Mint transaction: {0}", txId);
@@ -475,6 +497,73 @@ namespace Solana.Unity.SDK.Editor
             else 
             {
                 Debug.LogError("Mint transaction failed.");
+            }
+        }
+
+        #endregion
+
+        #region Guards
+
+        internal static async void UpdateGuards(
+            PublicKey candyGuardKey,
+            PublicKey candyMachineKey,
+            CandyMachineConfiguration config,
+            CandyMachineCache cache,
+            string keypair,
+            string rpcUrl
+        )
+        {
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var guardData = new GuardData() {
+                Default = config.guards.defaultGuards.FormattedSet,
+                Groups = config.guards.groups.Select(group => group.FormattedGroup).ToArray()
+            };
+            string updateTx;
+            var candyGuard = candyGuardKey;
+            if (candyGuardKey != null) 
+            {
+                Debug.Log("Updating Guards...");
+                updateTx = await CandyMachineCommands.AddGuards(
+                    wallet.Account,
+                    candyGuardKey,
+                    guardData,
+                    rpcClient
+                );
+            }
+            else 
+            {
+                Debug.Log("Initializing Guards...");
+                (updateTx, candyGuard) = await CandyMachineCommands.InitializeGuards(
+                    wallet.Account,
+                    guardData,
+                    rpcClient
+                );
+                cache.Info.CandyGuard = candyGuard;
+                cache.SyncFile(config.cacheFilePath);
+            }
+            if (updateTx == null) {
+                Debug.LogError("Failed to update guard account.");
+                return;
+            }
+
+            Debug.Log("Wrapping CandyMachine...");
+            var wrapTx = await CandyMachineCommands.WrapCandyMachine(
+                wallet.Account,
+                candyGuard,
+                candyMachineKey,
+                rpcClient
+            );
+            if (wrapTx == null) 
+            {
+                Debug.LogError("Failed to update guard account.");
+            }
+            else 
+            {
+                Debug.LogFormat("Wrap transaction: {0}", wrapTx);
+                Debug.Log("The candy guard is now the mint authority of the candy machine.");
             }
         }
 

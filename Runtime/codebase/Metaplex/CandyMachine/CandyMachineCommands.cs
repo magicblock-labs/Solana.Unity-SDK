@@ -90,7 +90,7 @@ namespace Solana.Unity.SDK.Metaplex
             PublicKey collectionMint,
             CandyMachineData candyMachineData,
             IRpcClient rpc,
-            bool skipPreflight = true
+            bool skipPreflight = false
         )
         {
             var candyMachineCreator = GetCandyMachineCreator(candyMachineAccount);
@@ -143,34 +143,107 @@ namespace Solana.Unity.SDK.Metaplex
             return txId.Result;
         }
 
-        public static async Task<string> MintOneTokenWithGuards(
-            Account account,
+        public static async Task<string> MintOneToken(
+            Account payer,
+            PublicKey receiver,
             Account mint,
-            PublicKey candyMachineAccount, 
-            PublicKey candyGuardAccount,
-            CandyGuardMintSettings mintSettings,
+            PublicKey collectionUpdateAuthority,
+            PublicKey candyMachineKey,
             IRpcClient rpc,
-            bool skipPreflight = true
+            bool skipPreflight = false
         )
         {
-            var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(account, mint.PublicKey);
+            var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
+                receiver, 
+                mint.PublicKey
+            );
             var candyMachineClient = new CandyMachineClient(rpc, null, CandyMachineProgramId);
-            var stateRequest = await candyMachineClient.GetCandyMachineAsync(candyMachineAccount);
+            var stateRequest = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
             var state = stateRequest.ParsedResult;
-            var candyMachineCreator = GetCandyMachineCreator(candyMachineAccount);
+            var candyMachineCreator = GetCandyMachineCreator(candyMachineKey);
 
-            var mintNftAccounts = new Unity.Metaplex.CandyGuard.Program.MintV2Accounts {
-                CandyMachineAuthorityPda = candyMachineCreator,
-                Payer = account,
-                Minter = account,
-                CandyMachine = candyMachineAccount,
+            var mintNftAccounts = new Unity.Metaplex.Candymachine.MintV2Accounts {
+                MintAuthority = payer,
+                AuthorityPda = candyMachineCreator,
+                Payer = payer,
+                NftOwner = receiver,
+                CandyMachine = candyMachineKey,
                 NftMetadata = PDALookup.FindMetadataPDA(mint),
                 NftMasterEdition = PDALookup.FindMasterEditionPDA(mint),
                 SystemProgram = SystemProgram.ProgramIdKey,
                 TokenMetadataProgram = MetadataProgram.ProgramIdKey,
                 SplTokenProgram = TokenProgram.ProgramIdKey,
                 CollectionDelegateRecord = PDALookup.FindDelegateRecordPDA(
-                    account, 
+                    collectionUpdateAuthority,
+                    state.CollectionMint,
+                    candyMachineCreator,
+                    MetadataDelegateRole.Collection
+                ),
+                CollectionMasterEdition = PDALookup.FindMasterEditionPDA(state.CollectionMint),
+                CollectionMetadata = PDALookup.FindMetadataPDA(state.CollectionMint),
+                CollectionMint = state.CollectionMint,
+                CollectionUpdateAuthority = collectionUpdateAuthority,
+                NftMint = mint,
+                NftMintAuthority = payer,
+                Token = associatedTokenAccount,
+                TokenRecord = PDALookup.FindTokenRecordPDA(associatedTokenAccount, mint),
+                SplAtaProgram = AssociatedTokenAccountProgram.ProgramIdKey,
+                SysvarInstructions = SysVars.InstructionAccount,
+                RecentSlothashes = RECENT_SLOTHASHES
+            };
+            var candyMachineInstruction = CandyMachineProgram.MintV2(mintNftAccounts, CandyMachineProgramId);
+            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var computeInstruction = ComputeBudgetProgram.SetComputeUnitLimit(COMPUTE_UNITS);
+            candyMachineInstruction = new TransactionInstruction {
+                Data = candyMachineInstruction.Data,
+                ProgramId = candyMachineInstruction.ProgramId,
+                Keys = candyMachineInstruction.Keys.Select(k => {
+                    if (k.PublicKey == mint.PublicKey) {
+                        return AccountMeta.Writable(mint, true);
+                    }
+                    return k;
+                }).ToList()
+            };
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(payer)
+                .AddInstruction(computeInstruction)
+                .AddInstruction(candyMachineInstruction)
+                .Build(new List<Account> { payer, mint });
+            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            return txId.Result;
+        }
+
+        public static async Task<string> MintOneTokenWithGuards(
+            Account payer,
+            PublicKey receiver,
+            Account mint,
+            PublicKey collectionUpdateAuthority,
+            PublicKey candyMachineKey, 
+            PublicKey candyGuardKey,
+            CandyGuardMintSettings mintSettings,
+            IRpcClient rpc,
+            bool skipPreflight = false
+        )
+        {
+            var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, mint.PublicKey);
+            var candyMachineClient = new CandyMachineClient(rpc, null, CandyMachineProgramId);
+            var stateRequest = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
+            var state = stateRequest.ParsedResult;
+            var candyMachineCreator = GetCandyMachineCreator(candyMachineKey);
+
+            var mintNftAccounts = new Unity.Metaplex.CandyGuard.Program.MintV2Accounts {
+                CandyMachineAuthorityPda = candyMachineCreator,
+                Payer = payer,
+                Minter = receiver,
+                CandyMachine = candyMachineKey,
+                NftMetadata = PDALookup.FindMetadataPDA(mint),
+                NftMasterEdition = PDALookup.FindMasterEditionPDA(mint),
+                SystemProgram = SystemProgram.ProgramIdKey,
+                TokenMetadataProgram = MetadataProgram.ProgramIdKey,
+                SplTokenProgram = TokenProgram.ProgramIdKey,
+                CollectionDelegateRecord = PDALookup.FindDelegateRecordPDA(
+                    collectionUpdateAuthority, 
                     state.CollectionMint, 
                     candyMachineCreator, 
                     MetadataDelegateRole.Collection
@@ -178,20 +251,18 @@ namespace Solana.Unity.SDK.Metaplex
                 CollectionMasterEdition = PDALookup.FindMasterEditionPDA(state.CollectionMint),
                 CollectionMetadata = PDALookup.FindMetadataPDA(state.CollectionMint),
                 CollectionMint = state.CollectionMint,
-                CollectionUpdateAuthority = account,
+                CollectionUpdateAuthority = collectionUpdateAuthority,
                 NftMint = mint,
-                NftMintAuthority = account,
+                NftMintAuthority = payer,
                 Token = associatedTokenAccount,
                 TokenRecord = PDALookup.FindTokenRecordPDA(associatedTokenAccount, mint),
                 SplAtaProgram = AssociatedTokenAccountProgram.ProgramIdKey,
                 SysvarInstructions = SysVars.InstructionAccount,
                 RecentSlothashes = RECENT_SLOTHASHES,
-                AuthorizationRules = null,
-                AuthorizationRulesProgram = null,
-                CandyGuard = candyGuardAccount,
+                CandyGuard = candyGuardKey,
                 CandyMachineProgram = CandyMachineProgramId
             };
-            var mintSettingsAccounts = mintSettings.GetMintArgs(account, candyMachineAccount, candyGuardAccount);
+            var mintSettingsAccounts = mintSettings.GetMintArgs(payer, candyMachineKey, candyGuardKey);
             var candyMachineInstruction = CandyGuardProgram.MintV2(
                 mintNftAccounts,
                 new byte[0],
@@ -214,10 +285,10 @@ namespace Solana.Unity.SDK.Metaplex
 
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
-                .SetFeePayer(account)
+                .SetFeePayer(payer)
                 .AddInstruction(computeInstruction)
                 .AddInstruction(candyMachineInstruction)
-                .Build(new List<Account> { account, mint });
+                .Build(new List<Account> { payer, mint });
             var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
@@ -226,7 +297,7 @@ namespace Solana.Unity.SDK.Metaplex
             Account account,
             GuardData guardData,
             IRpcClient rpc,
-            bool skipPreflight = true
+            bool skipPreflight = false
         )
         {
             if (guardData == null) 
@@ -273,32 +344,61 @@ namespace Solana.Unity.SDK.Metaplex
 
         public static async Task<string> AddGuards(
             Account account,
-            PublicKey guardAccount,
+            PublicKey guardKey,
             GuardData guardData,
             IRpcClient rpc,
-            bool skipPreflight
+            bool skipPreflight = false
         )
         {
             var guardDataBytes = new byte[3600];
             var offset = guardData.Serialize(guardDataBytes, 0);
             var resultData = new byte[offset];
-            guardDataBytes.CopyTo(resultData, 0);
+            Array.Copy(guardDataBytes, resultData, offset);
             var candyGuardInstruction = CandyGuardProgram.Update(
-                    new() {
-                        SystemProgram = SystemProgram.ProgramIdKey,
-                        Authority = account,
-                        CandyGuard = guardAccount,
-                        Payer = account
-                    },
-                    resultData,
-                    CandyGuardProgramId
-                );
+                new() {
+                    SystemProgram = SystemProgram.ProgramIdKey,
+                    Authority = account,
+                    CandyGuard = guardKey,
+                    Payer = account
+                },
+                resultData,
+                CandyGuardProgramId
+            );
             var blockHash = await rpc.GetRecentBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
                 .AddInstruction(candyGuardInstruction)
                 .Build(new List<Account> { account });
+            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            return txId.Result;
+        }
+
+        public static async Task<string> WrapCandyMachine(
+            Account account,
+            PublicKey candyGuardKey,
+            PublicKey candyMachineAccount,
+            IRpcClient rpc,
+            bool skipPreflight = false
+        )
+        {
+            var wrapAccounts = new WrapAccounts() {
+                Authority = account,
+                CandyMachineAuthority = account,
+                CandyGuard = candyGuardKey,
+                CandyMachine = candyMachineAccount,
+                CandyMachineProgram = CandyMachineProgramId
+            };
+            var wrapInstruction = CandyGuardProgram.Wrap(
+                wrapAccounts,
+                CandyGuardProgramId
+            );
+            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(account)
+                .AddInstruction(wrapInstruction)
+                .Build(new List<Account>() { account });
             var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }

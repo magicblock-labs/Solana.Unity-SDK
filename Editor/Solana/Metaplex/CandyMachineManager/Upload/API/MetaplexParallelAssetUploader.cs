@@ -24,6 +24,7 @@ namespace Solana.Unity.SDK.Editor
 
         public virtual async Task Upload(
             string rpcUrl,
+            CandyMachineConfiguration config,
             CandyMachineCache cache,
             LocalMetaplexAsset.AssetType assetType,
             Stack<LocalMetaplexAsset> assets
@@ -68,7 +69,7 @@ namespace Solana.Unity.SDK.Editor
                 }
             }
 
-            cache.SyncFile();
+            cache.SyncFile(config.cacheFilePath);
             return;
         }
 

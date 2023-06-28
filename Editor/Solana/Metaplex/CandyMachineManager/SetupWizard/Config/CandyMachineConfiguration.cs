@@ -55,6 +55,9 @@ namespace Solana.Unity.SDK.Editor
         [SetupQuestion("Add your default guards and guard groups below, leave empty for no guards."), Tooltip("The guard groups for this CandyMachine.")]
         internal CandyMachineGuards guards;
 
+        [SerializeField]
+        internal string cacheFilePath;
+
         #endregion
 
         #region Internal
