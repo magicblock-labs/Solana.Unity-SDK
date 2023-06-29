@@ -64,8 +64,7 @@ namespace Solana.Unity.SDK.Nft
 
             var met = new Metaplex(newData);
             var newNft = new Nft(met);
-            newNft.metaplexData.nftImage.externalUrl = met.data?.offchainData?.default_image;
-            
+
             if (loadTexture) await newNft.LoadTexture(imageHeightAndWidth);
             
             FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft.metaplexData.data);
@@ -115,6 +114,7 @@ namespace Solana.Unity.SDK.Nft
                 nftImage.externalUrl = metaplexData.data.offchainData.default_image;
                 nftImage.file = compressedTexture;
                 metaplexData.nftImage = nftImage;
+                nftImage.externalUrl = metaplexData.data.offchainData.default_image;
             }
             FileLoader.SaveToPersistentDataPath(Path.Combine(Application.persistentDataPath, $"{metaplexData.data.mint}.png"), compressedTexture);
         }

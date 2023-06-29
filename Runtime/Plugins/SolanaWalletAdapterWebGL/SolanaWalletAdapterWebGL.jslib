@@ -73,7 +73,7 @@ mergeInto(LibraryManager.library, {
                   const signedMessage = await window.xnft.solana.signMessage(messageBytes);
                   signatureStr = signedMessage.toString('base64');
                 } else {
-                    var signature = await window.walletAdapterLib.signMessage(walletName, base64Message);
+                    var signature = await window.walletAdapterLib.signMessage(walletName, atob(base64Message));
                     signatureStr =  signature.toString('base64');
                 }
                 var bufferSize = lengthBytesUTF8(signatureStr) + 1;
