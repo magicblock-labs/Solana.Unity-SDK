@@ -22,6 +22,8 @@ namespace Solana.Unity.SDK.Example
         [SerializeField]
         private Button sendBtn;
         [SerializeField]
+        private Button signBtn;
+        [SerializeField]
         private Button receiveBtn;
         [SerializeField]
         private Button swapBtn;
@@ -50,6 +52,11 @@ namespace Solana.Unity.SDK.Example
             sendBtn.onClick.AddListener(() =>
             {
                 TransitionToTransfer();
+            });
+            
+            signBtn.onClick.AddListener(() =>
+            {
+                manager.ShowScreen(this, "sign_screen");
             });
 
             receiveBtn.onClick.AddListener(() =>

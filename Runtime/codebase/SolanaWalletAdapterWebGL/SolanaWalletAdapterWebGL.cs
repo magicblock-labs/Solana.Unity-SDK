@@ -160,7 +160,7 @@ namespace Solana.Unity.SDK
         {
             _signedMessageTaskCompletionSource = new TaskCompletionSource<byte[]>();
             var base64MessageStr = Convert.ToBase64String(message) ;
-            ExternSignMessageWallet(_currentWallet.name,base64MessageStr, OnMessageSigned);
+            ExternSignMessageWallet(_currentWallet.name, base64MessageStr, OnMessageSigned);
             return _signedMessageTaskCompletionSource.Task;
         }
 
