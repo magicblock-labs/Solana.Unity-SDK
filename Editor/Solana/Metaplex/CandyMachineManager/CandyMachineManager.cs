@@ -124,7 +124,7 @@ namespace Solana.Unity.SDK.Editor
                 var configPath = AssetDatabase.GUIDToAssetPath(guid);
                 var config = AssetDatabase.LoadAssetAtPath<CandyMachineConfiguration>(configPath);
                 CandyMachineCache cache = null;
-                if (config.cacheFilePath != string.Empty) 
+                if (config.cacheFilePath != string.Empty && config.cacheFilePath != null) 
                 {
                     var cacheJson = File.ReadAllText(config.cacheFilePath);
                     cache = JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson);

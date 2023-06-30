@@ -1,9 +1,12 @@
 using Newtonsoft.Json;
 using Solana.Unity.Extensions;
-using Solana.Unity.Metaplex.CandyGuard;
+using Solana.Unity.Metaplex.Candymachine.Types;
 using Solana.Unity.Metaplex.NFT.Library;
+using Solana.Unity.Metaplex.Utilities;
 using Solana.Unity.Metaplex.Utilities.Json;
 using Solana.Unity.Rpc;
+using Solana.Unity.Rpc.Builders;
+using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK.Metaplex;
 using Solana.Unity.Wallet;
 using System;
@@ -11,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -28,6 +32,14 @@ namespace Solana.Unity.SDK.Editor
             internal List<int> animationsToUpload;
             internal List<int> metadataToUpload;
         }
+
+        #endregion
+
+        #region Constants
+
+        private const string ZERO_INDEX_NAME_PATTERN = "ID";
+        private const string ONE_INDEX_NAME_PATTERN = "ID+1";
+        private const char NAME_PATTERN_DESIGNATOR = '$';
 
         #endregion
 
@@ -567,13 +579,9 @@ namespace Solana.Unity.SDK.Editor
             }
         }
 
-        #endregion
-
-        #region Private
-
         private static async Task<CandyGuardMintSettings> GetMintSettings(
             string guardGroup,
-            CandyMachineConfiguration config, 
+            CandyMachineConfiguration config,
             Wallet.Wallet minter,
             IRpcClient rpcClient
         )
@@ -581,7 +589,8 @@ namespace Solana.Unity.SDK.Editor
             var tokenWallet = await TokenWallet.LoadAsync(rpcClient, new TokenMintResolver(), minter.Account);
             var balances = tokenWallet.Balances();
             var tokenAccounts = new List<MetadataAccount>();
-            foreach (var balance in balances) { 
+            foreach (var balance in balances) 
+            {
                 var account = await MetadataAccount.GetAccount(rpcClient, new PublicKey(balance.TokenMint));
                 tokenAccounts.Add(account);
             }
@@ -590,15 +599,244 @@ namespace Solana.Unity.SDK.Editor
             if (guardGroup != null) 
             {
                 var groups = config.guards.groups.Where(group => group.label == guardGroup).ToArray();
-                if (groups.Length > 0) {
+                if (groups.Length > 0) 
+                {
                     var groupSettings = groups[0].GetMintSettings(tokenAccounts.ToArray());
                     settings.OverrideWith(groupSettings);
                 }
-                else {
+                else 
+                {
                     Debug.LogErrorFormat("Couldn't find guard group {0}.", guardGroup);
                 }
             }
             return settings;
+        }
+
+        #endregion
+
+        #region Reveal
+
+        internal static async void Reveal(
+            CandyMachineCache cache,
+            HiddenSettings hiddenSettings,
+            PublicKey candyMachineKey,
+            string keypair,
+            string rpcUrl,
+            bool skipPreflight = false
+        )
+        {
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            if (hiddenSettings == null)
+            {
+                Debug.LogError("HiddenSettings must be present for a reveal.");
+                return;
+            }
+            Debug.Log("Getting metadata accounts...");
+            var creator = CandyMachineCommands.GetCandyMachineCreator(candyMachineKey);
+            var metadataKeys = await GetCreatorMetadataAccounts(creator, 0, rpcClient);
+            if (metadataKeys == null || metadataKeys.Count == 0) 
+            {
+                Debug.LogErrorFormat("No minted NFTs found for CandyMachine {0}", candyMachineKey);
+                return;
+            }
+            Debug.LogFormat("Found {0} metadata accounts.", metadataKeys.Count);
+            var accIndex = 0;
+            var accountInfo = new List<AccountInfo>();
+            while (accIndex < metadataKeys.Count) 
+            {
+                EditorUtility.DisplayProgressBar("Getting NFT Accounts...", string.Empty, accIndex / (float)metadataKeys.Count);
+                var chunkLength = Mathf.Min(100, metadataKeys.Count - accIndex);
+                var keys = metadataKeys.GetRange(accIndex, chunkLength).Select(pair => pair.PublicKey).ToList();
+                var accounts = await rpcClient.GetMultipleAccountsAsync(keys);
+                if (accounts.Result != null) 
+                {
+                    accountInfo.AddRange(accounts.Result.Value);
+                }
+                accIndex = chunkLength;
+            }
+            EditorUtility.ClearProgressBar();
+
+            var namePatterns = hiddenSettings.Name.Split(NAME_PATTERN_DESIGNATOR);
+            if (namePatterns.Length < 3) 
+            {
+                Debug.LogError("No name pattern set in hidden settings");
+                return;
+            }
+            var indexPattern = namePatterns[1] switch {
+                ZERO_INDEX_NAME_PATTERN => 0,
+                ONE_INDEX_NAME_PATTERN => 1,
+                _ => -1
+            };
+            if (indexPattern == -1) 
+            {
+                Debug.LogError("Invalid name pattern in hidden settings");
+                return;
+            }
+            var nftLookup = cache.Items
+                .Where((nft) => nft.Key != -1 && !nft.Value.onChain)
+                // Use index pattern to increment key.
+                .ToDictionary(pair => pair.Key + indexPattern, pair => pair.Value);
+            var namePrefix = namePatterns[0];
+            var nameSuffix = namePatterns[2];
+            var revealErrors = await RevealMetadata(
+                accountInfo,
+                namePrefix,
+                nameSuffix,
+                nftLookup,
+                wallet.Account,
+                skipPreflight,
+                rpcClient
+            );
+            if (revealErrors)
+            {
+                Debug.LogError("Some reveals failed, re-run the command to finish reveal.");
+            } 
+            else
+            {
+                Debug.Log("Reveal Complete!");
+            }
+            return;
+        }
+
+        private static async Task<bool> RevealMetadata(
+            List<AccountInfo> accountInfo,
+            string namePrefix,
+            string nameSuffix,
+            Dictionary<int, CandyMachineCache.CacheItem> nftLookup,
+            Account updateAuthority,
+            bool skipPreflight,
+            IRpcClient rpcClient
+
+        )
+        {
+            var nameRegex = new Regex(string.Format("{0}([0-9]+){1}", namePrefix, nameSuffix));
+            var revealErrors = false;
+            for (int i = 0; i < accountInfo.Count; i++) {
+                var account = accountInfo[i];
+                EditorUtility.DisplayProgressBar("Updating Metadatas...", string.Empty, i / (float)accountInfo.Count);
+                var metadataAccount = await MetadataAccount.BuildMetadataAccount(account);
+                if (!nameRegex.IsMatch(metadataAccount.metadata.name)) {
+                    Debug.LogErrorFormat("Couldn't parse name for NFT: {0}", metadataAccount.metadata.name);
+                    continue;
+                }
+                var index = GetNftIndex(metadataAccount.metadata.name, namePrefix, nameSuffix);
+                var metadataKey = PDALookup.FindMetadataPDA(new(metadataAccount.mint));
+                if (nftLookup.TryGetValue(index, out var cacheItem)) {
+                    var newUri = cacheItem.metadataLink;
+                    var newName = cacheItem.name;
+                    var txResult = await UpdateMetadataValue(
+                        metadataKey,
+                        updateAuthority,
+                        metadataAccount,
+                        newUri,
+                        newName,
+                        rpcClient,
+                        skipPreflight
+                    );
+                    revealErrors = txResult == null;
+                }
+            }
+            EditorUtility.ClearProgressBar();
+            return revealErrors;
+        }
+
+        private static async Task<string> UpdateMetadataValue(
+            PublicKey metadataKey,
+            Account updateAuthority,
+            MetadataAccount metadataAccount,
+            string uri,
+            string name,
+            IRpcClient rpcClient,
+            bool skipPreflight
+        )
+        {
+            if (uri != metadataAccount.metadata.uri) 
+            {
+                metadataAccount.metadata.uri = uri;
+                metadataAccount.metadata.name = name;
+                var newMetadata = new Metadata() {
+                    collection = metadataAccount.metadata.collectionLink,
+                    creators = metadataAccount.metadata.creators.ToList(),
+                    name = name,
+                    programmableConfig = metadataAccount.metadata.programmableConfig,
+                    sellerFeeBasisPoints = metadataAccount.metadata.sellerFeeBasisPoints,
+                    symbol = metadataAccount.metadata.symbol,
+                    uri = uri,
+                    uses = metadataAccount.metadata.uses
+                };
+                var metadataIx = MetadataProgram.UpdateMetadataAccount(
+                    metadataKey,
+                    updateAuthority,
+                    null,
+                    newMetadata,
+                    null
+                );
+                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var tx = new TransactionBuilder()
+                    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                    .SetFeePayer(updateAuthority)
+                    .AddInstruction(metadataIx)
+                    .Build(updateAuthority);
+                var result = await rpcClient.SendTransactionAsync(tx, skipPreflight);
+                return result.Result;
+            }
+            return null;
+        }
+
+        private static async Task<List<AccountKeyPair>> GetCreatorMetadataAccounts(
+            PublicKey creator,
+            int position,
+            IRpcClient rpcClient
+        )
+        {
+            if (position > 4) 
+            {
+                Debug.LogError("CM Creator position cannot be greater than 4.");
+                return null;
+            }
+            var rpcFilter = new MemCmp() {
+                Offset = 1 +  // key
+                    32 + // update auth
+                    32 + // mint
+                    4 +  // name string length
+                    (int)CandyMachineCommands.MAX_NAME_LEN + // name
+                    4 + // uri string length
+                    (int)CandyMachineCommands.MAX_URI_LEN + // uri*
+                    4 + // symbol string length
+                    (int)CandyMachineCommands.MAX_SYMBOL_LEN + // symbol
+                    2 + // seller fee basis points
+                    1 + // whether or not there is a creators vec
+                    4 + // creators
+                    position * // index for each creator
+                    (
+                        32 + // address
+                        1 + // verified
+                        1 // share
+                    ),
+                Bytes = creator
+            };
+            var accounts = await rpcClient.GetProgramAccountsAsync(
+                MetadataProgram.ProgramIdKey,
+                memCmpList: new List<MemCmp>() { rpcFilter }
+            );
+            return accounts.Result;
+        }
+
+        private static int GetNftIndex(string name, string prefix, string suffix)
+        {
+            var newName = name;
+            if (prefix != string.Empty) 
+            {
+                newName = newName.Replace(prefix, "");
+            }
+            if (suffix != string.Empty) 
+            {
+                newName = newName.Replace(suffix, "");
+            }
+            return int.Parse(newName);
         }
 
         #endregion

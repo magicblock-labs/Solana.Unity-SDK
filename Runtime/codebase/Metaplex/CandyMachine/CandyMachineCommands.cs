@@ -1,21 +1,20 @@
-using Solana.Unity.Programs;
-using Solana.Unity.Rpc;
-using Solana.Unity.Wallet;
-using Solana.Unity.Rpc.Builders;
+using Solana.Unity.Metaplex.CandyGuard.Program;
+using Solana.Unity.Metaplex.Candymachine;
+using Solana.Unity.Metaplex.Candymachine.Types;
+using Solana.Unity.Metaplex.NFT;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities;
-using Solana.Unity.Metaplex.NFT;
-using Solana.Unity.Metaplex.Candymachine.Types;
-using Solana.Unity.Metaplex.Candymachine;
-using Solana.Unity.Metaplex.CandyGuard.Program;
+using Solana.Unity.Programs;
+using Solana.Unity.Rpc;
+using Solana.Unity.Rpc.Builders;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Wallet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using Solana.Unity.Metaplex.CandyGuard;
 
 namespace Solana.Unity.SDK.Metaplex
 {
@@ -34,12 +33,12 @@ namespace Solana.Unity.SDK.Metaplex
 
         private static readonly PublicKey RECENT_SLOTHASHES = new("SysvarS1otHashes111111111111111111111111111");
         private static readonly uint COMPUTE_UNITS = 400_000;
-        private static readonly ulong MAX_CREATOR_LIMIT = 5;
-        private static readonly ulong MAX_CREATOR_LEN = 32 + 1 + 1;
-        private static readonly ulong MAX_NAME_LEN = 32;
-        private static readonly ulong MAX_SYMBOL_LEN = 10;
-        private static readonly ulong MAX_URI_LEN = 200;
-        private static readonly ulong HIDDEN_SETTINGS_START =
+        public static readonly ulong MAX_CREATOR_LIMIT = 5;
+        public static readonly ulong MAX_CREATOR_LEN = 32 + 1 + 1;
+        public static readonly ulong MAX_NAME_LEN = 32;
+        public static readonly ulong MAX_SYMBOL_LEN = 10;
+        public static readonly ulong MAX_URI_LEN = 200;
+        public static readonly ulong HIDDEN_SETTINGS_START =
             8                                         // discriminator
             + 8                                       // features
             + 32                                      // authority
@@ -65,14 +64,26 @@ namespace Solana.Unity.SDK.Metaplex
 
         #endregion
 
+        public static PublicKey GetCandyMachineCreator(PublicKey candyMachineAddress)
+        {
+            if (!PublicKey.TryFindProgramAddress(
+                    new[] { Encoding.UTF8.GetBytes("candy_machine"), candyMachineAddress.KeyBytes },
+                    CandyMachineProgramId,
+                    out PublicKey candyMachineCreator,
+                    out _)) {
+                throw new InvalidProgramException();
+            }
+            return candyMachineCreator;
+        }
+
         public static async Task<string> CreateCollection(
             Account payer,
             Account collectionMint,
             Metadata metdata,
-            IRpcClient rpc
+            IRpcClient rpcClient
         )
         {
-            var metadataClient = new MetadataClient(rpc);
+            var metadataClient = new MetadataClient(rpcClient);
             var request = await metadataClient.CreateNFT(
                 payer,
                 collectionMint,
@@ -89,7 +100,7 @@ namespace Solana.Unity.SDK.Metaplex
             Account candyMachineAccount,
             PublicKey collectionMint,
             CandyMachineData candyMachineData,
-            IRpcClient rpc,
+            IRpcClient rpcClient,
             bool skipPreflight = false
         )
         {
@@ -122,9 +133,9 @@ namespace Solana.Unity.SDK.Metaplex
                 (byte)TokenStandard.NonFungible,
                 CandyMachineProgramId
             );
-            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
             var candyAccountSize = GetSpaceForCandyMachine(candyMachineData);
-            var minimumRent = await rpc.GetMinimumBalanceForRentExemptionAsync((long)candyAccountSize);
+            var minimumRent = await rpcClient.GetMinimumBalanceForRentExemptionAsync((long)candyAccountSize);
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
@@ -139,7 +150,7 @@ namespace Solana.Unity.SDK.Metaplex
                 )
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { account, candyMachineAccount });
-            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 
@@ -149,7 +160,7 @@ namespace Solana.Unity.SDK.Metaplex
             Account mint,
             PublicKey collectionUpdateAuthority,
             PublicKey candyMachineKey,
-            IRpcClient rpc,
+            IRpcClient rpcClient,
             bool skipPreflight = false
         )
         {
@@ -157,7 +168,7 @@ namespace Solana.Unity.SDK.Metaplex
                 receiver, 
                 mint.PublicKey
             );
-            var candyMachineClient = new CandyMachineClient(rpc, null, CandyMachineProgramId);
+            var candyMachineClient = new CandyMachineClient(rpcClient, null, CandyMachineProgramId);
             var stateRequest = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
             var state = stateRequest.ParsedResult;
             var candyMachineCreator = GetCandyMachineCreator(candyMachineKey);
@@ -192,7 +203,7 @@ namespace Solana.Unity.SDK.Metaplex
                 RecentSlothashes = RECENT_SLOTHASHES
             };
             var candyMachineInstruction = CandyMachineProgram.MintV2(mintNftAccounts, CandyMachineProgramId);
-            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
             var computeInstruction = ComputeBudgetProgram.SetComputeUnitLimit(COMPUTE_UNITS);
             candyMachineInstruction = new TransactionInstruction {
                 Data = candyMachineInstruction.Data,
@@ -210,7 +221,7 @@ namespace Solana.Unity.SDK.Metaplex
                 .AddInstruction(computeInstruction)
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { payer, mint });
-            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 
@@ -222,12 +233,12 @@ namespace Solana.Unity.SDK.Metaplex
             PublicKey candyMachineKey, 
             PublicKey candyGuardKey,
             CandyGuardMintSettings mintSettings,
-            IRpcClient rpc,
+            IRpcClient rpcClient,
             bool skipPreflight = false
         )
         {
             var associatedTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, mint.PublicKey);
-            var candyMachineClient = new CandyMachineClient(rpc, null, CandyMachineProgramId);
+            var candyMachineClient = new CandyMachineClient(rpcClient, null, CandyMachineProgramId);
             var stateRequest = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
             var state = stateRequest.ParsedResult;
             var candyMachineCreator = GetCandyMachineCreator(candyMachineKey);
@@ -270,7 +281,7 @@ namespace Solana.Unity.SDK.Metaplex
                 CandyGuardProgramId
             );
 
-            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
             var computeInstruction = ComputeBudgetProgram.SetComputeUnitLimit(COMPUTE_UNITS);
             candyMachineInstruction = new TransactionInstruction {
                 Data = candyMachineInstruction.Data,
@@ -289,14 +300,14 @@ namespace Solana.Unity.SDK.Metaplex
                 .AddInstruction(computeInstruction)
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { payer, mint });
-            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 
         public static async Task<(string txId, PublicKey guardAccount)> InitializeGuards(
             Account account,
             GuardData guardData,
-            IRpcClient rpc,
+            IRpcClient rpcClient,
             bool skipPreflight = false
         )
         {
@@ -329,13 +340,13 @@ namespace Solana.Unity.SDK.Metaplex
                     resultData,
                     CandyGuardProgramId
                 );
-                var blockHash = await rpc.GetRecentBlockHashAsync();
+                var blockHash = await rpcClient.GetRecentBlockHashAsync();
                 var transaction = new TransactionBuilder()
                     .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                     .SetFeePayer(account)
                     .AddInstruction(candyGuardInstruction)
                     .Build(new List<Account> { baseAccount });
-                var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+                var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
                 return (txId.Result, guardAccount);
             }
             Debug.LogError("Failed to create CandyGuard account.");
@@ -346,7 +357,7 @@ namespace Solana.Unity.SDK.Metaplex
             Account account,
             PublicKey guardKey,
             GuardData guardData,
-            IRpcClient rpc,
+            IRpcClient rpcClient,
             bool skipPreflight = false
         )
         {
@@ -364,13 +375,13 @@ namespace Solana.Unity.SDK.Metaplex
                 resultData,
                 CandyGuardProgramId
             );
-            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
                 .AddInstruction(candyGuardInstruction)
                 .Build(new List<Account> { account });
-            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 
@@ -378,7 +389,7 @@ namespace Solana.Unity.SDK.Metaplex
             Account account,
             PublicKey candyGuardKey,
             PublicKey candyMachineAccount,
-            IRpcClient rpc,
+            IRpcClient rpcClient,
             bool skipPreflight = false
         )
         {
@@ -393,29 +404,17 @@ namespace Solana.Unity.SDK.Metaplex
                 wrapAccounts,
                 CandyGuardProgramId
             );
-            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
                 .AddInstruction(wrapInstruction)
                 .Build(new List<Account>() { account });
-            var txId = await rpc.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 
         #region Private
-
-        private static PublicKey GetCandyMachineCreator(PublicKey candyMachineAddress)
-        {
-            if (!PublicKey.TryFindProgramAddress(
-                    new[] { Encoding.UTF8.GetBytes("candy_machine"), candyMachineAddress.KeyBytes },
-                    CandyMachineProgramId,
-                    out PublicKey candyMachineCreator,
-                    out _)) {
-                throw new InvalidProgramException();
-            }
-            return candyMachineCreator;
-        }
 
         private static ulong GetSpaceForCandyMachine(CandyMachineData candyMachineData)
         {

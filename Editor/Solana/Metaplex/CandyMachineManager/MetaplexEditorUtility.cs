@@ -181,7 +181,15 @@ namespace Solana.Unity.SDK.Editor
                     }
                     if (GUILayout.Button("Reveal", settingsButtonStyle)) 
                     {
-                        Debug.Log("Settings Clicked");
+                        CandyMachineController.Reveal(
+                            cache,
+                            new() {
+                                Name = "Planet #$ID$"
+                            },
+                            new(candyMachineKey),
+                            keypair,
+                            rpcUrl
+                        );
                     }
                 }
                 EditorGUILayout.EndVertical();
@@ -200,12 +208,18 @@ namespace Solana.Unity.SDK.Editor
                 "Import an existing cache - leave empty to create one on upload.",
                 SolanaEditorUtility.propLabelStyle
             );
-            SolanaEditorUtility.FileSelectField(
+            var newPath = SolanaEditorUtility.FileSelectField(
                 "Cache",
                 config.cacheFilePath,
                 false,
-                "Import an existing cache"
+                "Import an existing cache",
+                "json"
             );
+            if (newPath != config.cacheFilePath) 
+            {
+                config.cacheFilePath = newPath;
+                AssetDatabase.SaveAssets();
+            }
             EditorGUILayout.BeginHorizontal();
             {
                 if (GUILayout.Button("Deploy", settingsButtonStyle))
