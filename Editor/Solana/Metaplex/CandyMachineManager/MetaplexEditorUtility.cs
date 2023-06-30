@@ -177,7 +177,11 @@ namespace Solana.Unity.SDK.Editor
                     }
                     if (GUILayout.Button("Sign", settingsButtonStyle)) 
                     {
-                        Debug.Log("Settings Clicked");
+                        CandyMachineController.Sign(
+                            new (candyMachineKey),
+                            keypair,
+                            rpcUrl
+                        );
                     }
                 }
                 EditorGUILayout.EndVertical();

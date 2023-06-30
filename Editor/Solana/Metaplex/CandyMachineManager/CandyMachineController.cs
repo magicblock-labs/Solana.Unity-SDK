@@ -736,7 +736,10 @@ namespace Solana.Unity.SDK.Editor
                         rpcClient,
                         skipPreflight
                     );
-                    revealErrors = txResult == null;
+                    if (txResult == null) 
+                    {
+                        revealErrors = true;
+                    }
                 }
             }
             EditorUtility.ClearProgressBar();
@@ -873,6 +876,72 @@ namespace Solana.Unity.SDK.Editor
                     Debug.Log("Guard Withdraw Completed!");
                 }
             }
+        }
+
+        #endregion
+
+        #region Sign
+
+        internal static async void Sign(
+            PublicKey candyMachineKey,
+            string keypair,
+            string rpcUrl,
+            bool skipPreflight = false
+        )
+        {
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+
+            var creator = CandyMachineCommands.GetCandyMachineCreator(candyMachineKey);
+            var metadataKeys = await GetCreatorMetadataAccounts(creator, 0, rpcClient);
+            if (metadataKeys == null || metadataKeys.Count == 0) 
+            {
+                Debug.LogErrorFormat("No minted NFTs found for CandyMachine {0}", candyMachineKey);
+                return;
+            }
+            Debug.LogFormat("Found {0} metadata accounts.", metadataKeys.Count);
+            Debug.Log("Signing mint accounts...");
+
+            var isErrors = false;
+            for (int i = 0; i < metadataKeys.Count; i++) 
+            {
+                EditorUtility.DisplayProgressBar("Signing mint accounts...", string.Empty, i / (float) metadataKeys.Count);
+                var metadataAccount = await MetadataAccount.BuildMetadataAccount(metadataKeys[i].Account);
+                var creatorAccount = metadataAccount.metadata.creators.First(creator => creator.key == wallet.Account);
+                if (creatorAccount.verified) continue;
+                var signResult = await SignMintAccount(
+                    wallet.Account,
+                    new(metadataKeys[i].PublicKey),
+                    rpcClient,
+                    skipPreflight
+                );
+                if (signResult == null) 
+                {
+                    isErrors = true;       
+                }
+            }
+            EditorUtility.ClearProgressBar();
+            if (isErrors) Debug.LogError("Failed to sign some mint accounts, re-run command.");
+        }
+
+        private static async Task<string> SignMintAccount(
+            Account signer, 
+            PublicKey mintAccount, 
+            IRpcClient rpcClient,
+            bool skipPreflight
+        )
+        {
+            var recentBlockhash = await rpcClient.GetRecentBlockHashAsync();
+            var signInstruction = MetadataProgram.SignMetadata(mintAccount, signer);
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(recentBlockhash.Result.Value.Blockhash)
+                .SetFeePayer(signer)
+                .AddInstruction(signInstruction)
+                .Build(signer);
+            var result = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+            return result.Result;
         }
 
         #endregion
