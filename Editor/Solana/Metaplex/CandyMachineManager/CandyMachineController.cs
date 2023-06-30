@@ -840,5 +840,41 @@ namespace Solana.Unity.SDK.Editor
         }
 
         #endregion
+
+        #region Withdraw
+
+        internal static async void Withdraw(
+            PublicKey candyMachineKey,
+            PublicKey candyGuardKey,
+            string keypair,
+            string rpcUrl
+        )
+        {
+            Debug.Log("Beginning Withdrawal...");
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var cmWithdrawTx = await CandyMachineCommands.Withdraw(wallet.Account, candyMachineKey, rpcClient);
+            if (cmWithdrawTx == null) {
+                Debug.LogError("Withdrawal failed!");
+            }
+            else 
+            {
+                Debug.Log("Withdraw Completed!");
+            }
+            if (candyGuardKey != null) 
+            {
+                var cgWithdrawTx = await CandyMachineCommands.WithdrawGuards(wallet.Account, candyGuardKey, rpcClient);
+                if (cgWithdrawTx == null) {
+                    Debug.LogError("Guard Withdrawal failed!");
+                }
+                else {
+                    Debug.Log("Guard Withdraw Completed!");
+                }
+            }
+        }
+
+        #endregion
     }
 }

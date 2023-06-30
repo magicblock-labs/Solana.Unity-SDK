@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -55,7 +56,8 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineCache cache,
             CandyMachineConfiguration config,
             string keyPair,
-            string rpcUrl
+            string rpcUrl,
+            Action refreshCallback = null
         )
         {
             EditorGUILayout.BeginHorizontal(candyMachineFieldStyle);
@@ -65,7 +67,14 @@ namespace Solana.Unity.SDK.Editor
                 {
                     EditorGUILayout.Space();
                     CandyMachineDetails(cache, config);
-                    CandyMachineControls(state, cache, config, keyPair, rpcUrl);
+                    CandyMachineControls(
+                        state, 
+                        cache, 
+                        config, 
+                        keyPair, 
+                        rpcUrl,
+                        refreshCallback
+                    );
                 }
                 EditorGUILayout.EndVertical();
             }
@@ -91,7 +100,8 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineCache cache, 
             CandyMachineConfiguration config,
             string keyPair,
-            string rpcUrl
+            string rpcUrl,
+            Action refreshCallback
         )
         {
             EditorGUILayout.BeginVertical();
@@ -111,7 +121,7 @@ namespace Solana.Unity.SDK.Editor
                 } 
                 else 
                 {
-                    CandyMachineSetupControls(cache, config, keyPair, rpcUrl);
+                    CandyMachineSetupControls(cache, config, keyPair, rpcUrl, refreshCallback);
                 }
             }
             EditorGUILayout.EndVertical();
@@ -158,7 +168,12 @@ namespace Solana.Unity.SDK.Editor
                 {
                     if (GUILayout.Button("Withdraw", settingsButtonStyle)) 
                     {
-                        Debug.Log("Settings Clicked");
+                        CandyMachineController.Withdraw(
+                            new(candyMachineKey),
+                            new(candyGuardKey),
+                            keypair,
+                            rpcUrl
+                        );
                     }
                     if (GUILayout.Button("Sign", settingsButtonStyle)) 
                     {
@@ -199,7 +214,8 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineCache cache, 
             CandyMachineConfiguration config,
             string keyPair,
-            string rpcUrl
+            string rpcUrl,
+            Action refreshCallback
         )
         {
             GUILayout.Label(
@@ -217,6 +233,7 @@ namespace Solana.Unity.SDK.Editor
             {
                 config.cacheFilePath = newPath;
                 AssetDatabase.SaveAssets();
+                refreshCallback?.Invoke();
             }
             EditorGUILayout.BeginHorizontal();
             {

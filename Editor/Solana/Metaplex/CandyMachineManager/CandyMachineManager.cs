@@ -167,7 +167,8 @@ namespace Solana.Unity.SDK.Editor
                             candyMachine.cache,
                             candyMachine.config,
                             keypairLocation,
-                            rpc
+                            rpc,
+                            FetchCandyMachines
                         );
                     }
                 }

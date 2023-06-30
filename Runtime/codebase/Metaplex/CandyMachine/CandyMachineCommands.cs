@@ -414,6 +414,50 @@ namespace Solana.Unity.SDK.Metaplex
             return txId.Result;
         }
 
+        public static async Task<string> Withdraw(
+            Account account,
+            PublicKey candyMachineAccount,
+            IRpcClient rpcClient,
+            bool skipPreflight = false
+        )
+        {
+            var withdrawAccounts = new Unity.Metaplex.Candymachine.WithdrawAccounts() {
+                Authority = account,
+                CandyMachine = candyMachineAccount
+            };
+            var withdrawInstruction = CandyMachineProgram.Withdraw(withdrawAccounts, CandyMachineProgramId);
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(account)
+                .AddInstruction(withdrawInstruction)
+                .Build(account);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+            return txId.Result;
+        }
+
+        public static async Task<string> WithdrawGuards(
+            Account account,
+            PublicKey candyGuardAccount,
+            IRpcClient rpcClient,
+            bool skipPreflight = false
+        )
+        {
+            var withdrawAccounts = new Unity.Metaplex.CandyGuard.Program.WithdrawAccounts() {
+                CandyGuard = candyGuardAccount,
+                Authority = account
+            };
+            var withdrawInstruction = CandyGuardProgram.Withdraw(withdrawAccounts, CandyMachineProgramId);
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(account)
+                .AddInstruction(withdrawInstruction)
+                .Build(account);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+            return txId.Result;
+        }
+
         #region Private
 
         private static ulong GetSpaceForCandyMachine(CandyMachineData candyMachineData)
