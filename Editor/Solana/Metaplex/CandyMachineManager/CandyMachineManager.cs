@@ -1,37 +1,21 @@
 using Newtonsoft.Json;
+using Solana.Unity.Metaplex.NFT.Library;
+using Solana.Unity.Rpc;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+
+using static Solana.Unity.SDK.Editor.MetaplexEditorUtility;
 
 namespace Solana.Unity.SDK.Editor 
 {
     public class CandyMachineManager : EditorWindow 
     {
 
-        #region Types
-
-        private struct CandyMachine
-        {
-            internal CandyMachineConfiguration config;
-            internal CandyMachineCache cache;
-            internal MetaplexEditorUtility.CandyMachineState state;
-
-            internal CandyMachine(
-                CandyMachineConfiguration config, 
-                CandyMachineCache cache, 
-                MetaplexEditorUtility.CandyMachineState state
-            )
-            {
-                this.config = config;
-                this.cache = cache;
-                this.state = state;
-            }
-        }
-
-        #endregion
-
-        #region Properties
+        #region Fields
 
         [SerializeField]
         private string configLocation;
@@ -45,9 +29,9 @@ namespace Solana.Unity.SDK.Editor
         [SerializeField]
         private bool showCandyMachines = false;
 
-        Vector2 scrollViewPosition = Vector2.zero;
+        private Vector2 scrollViewPosition = Vector2.zero;
 
-        CandyMachine[] candyMachines;
+        private List<CandyMachine> candyMachines;
 
         #endregion
 
@@ -111,7 +95,7 @@ namespace Solana.Unity.SDK.Editor
 
         #region Private
 
-        private void FetchCandyMachines()
+        private async void FetchCandyMachines()
         {
             if (configLocation == null)
             {
@@ -120,17 +104,40 @@ namespace Solana.Unity.SDK.Editor
             }
             Debug.Log(string.Format("Fetching CandyMachines from {0}.", configLocation));
             var configGUIDS = AssetDatabase.FindAssets("t: candyMachineConfiguration", new[] { configLocation });
-            candyMachines = configGUIDS.Select(guid => {
+            candyMachines = new();
+            for (int i = 0; i < configGUIDS.Length; i++) 
+            {
+                var progress = i / (float)configGUIDS.Length;
+                EditorUtility.DisplayProgressBar("Refreshing CandyMachines...", string.Empty, progress);
+                var guid = configGUIDS[i];
                 var configPath = AssetDatabase.GUIDToAssetPath(guid);
                 var config = AssetDatabase.LoadAssetAtPath<CandyMachineConfiguration>(configPath);
                 CandyMachineCache cache = null;
-                if (config.cacheFilePath != string.Empty && config.cacheFilePath != null) 
-                {
+                RenderTexture collectionIcon = null;
+                if (config.cacheFilePath != string.Empty && config.cacheFilePath != null) {
                     var cacheJson = File.ReadAllText(config.cacheFilePath);
                     cache = JsonConvert.DeserializeObject<CandyMachineCache>(cacheJson);
+                    collectionIcon = await LoadCollectionIcon(cache, rpc);
                 }
-                return new CandyMachine(config, cache, new());
-            }).ToArray();
+                candyMachines.Add(new(config, cache, new(), collectionIcon));
+            }
+            EditorUtility.ClearProgressBar();
+        }
+
+        private async Task<RenderTexture> LoadCollectionIcon(CandyMachineCache cache, string rpc)
+        {
+            if (cache.Info.CollectionMint != null && cache.Info.CollectionMint != string.Empty) {
+                var rpcClient = ClientFactory.GetClient(rpc);
+                var metadata = await MetadataAccount.GetAccount(rpcClient, new(cache.Info.CollectionMint));
+                using var webClient = new WebClient();
+                var imageBytes = await webClient.DownloadDataTaskAsync(metadata.offchainData.default_image);
+                var icon = new Texture2D(124, 124);
+                RenderTexture collectionIcon = new(icon.width, icon.height, 0);
+                icon.LoadImage(imageBytes);
+                Graphics.Blit(icon, collectionIcon);
+                return collectionIcon;
+            }
+            return null;
         }
 
         private void ImportConfig()
@@ -162,10 +169,8 @@ namespace Solana.Unity.SDK.Editor
                 {
                     foreach (var candyMachine in candyMachines) 
                     {
-                        MetaplexEditorUtility.CandyMachineField(
-                            candyMachine.state,
-                            candyMachine.cache,
-                            candyMachine.config,
+                        CandyMachineField(
+                            candyMachine,
                             keypairLocation,
                             rpc,
                             FetchCandyMachines

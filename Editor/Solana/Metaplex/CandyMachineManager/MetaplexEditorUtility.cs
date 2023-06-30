@@ -42,6 +42,27 @@ namespace Solana.Unity.SDK.Editor
 
         #region Types
 
+        internal struct CandyMachine
+        {
+            internal CandyMachineConfiguration config;
+            internal CandyMachineCache cache;
+            internal CandyMachineState state;
+            internal Texture collectionIcon;
+
+            internal CandyMachine(
+                CandyMachineConfiguration config,
+                CandyMachineCache cache,
+                CandyMachineState state,
+                Texture collectionIcon
+            )
+            {
+                this.config = config;
+                this.cache = cache;
+                this.state = state;
+                this.collectionIcon = collectionIcon;
+            }
+        }
+
         internal class CandyMachineState
         {
             internal int guardGroup;
@@ -52,9 +73,7 @@ namespace Solana.Unity.SDK.Editor
         #region Internal
 
         internal static CandyMachineState CandyMachineField(
-            CandyMachineState state,
-            CandyMachineCache cache,
-            CandyMachineConfiguration config,
+            CandyMachine candyMachine,
             string keyPair,
             string rpcUrl,
             Action refreshCallback = null
@@ -62,15 +81,15 @@ namespace Solana.Unity.SDK.Editor
         {
             EditorGUILayout.BeginHorizontal(candyMachineFieldStyle);
             {
-                CollectionImage(124);
+                CollectionImage(candyMachine.collectionIcon);
                 EditorGUILayout.BeginVertical();
                 {
                     EditorGUILayout.Space();
-                    CandyMachineDetails(cache, config);
+                    CandyMachineDetails(candyMachine.cache, candyMachine.config);
                     CandyMachineControls(
-                        state, 
-                        cache, 
-                        config, 
+                        candyMachine.state,
+                        candyMachine.cache,
+                        candyMachine.config, 
                         keyPair, 
                         rpcUrl,
                         refreshCallback
@@ -79,20 +98,21 @@ namespace Solana.Unity.SDK.Editor
                 EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndHorizontal();
-            return state;
+            return candyMachine.state;
         }
 
         #endregion
 
         #region UI Components
 
-        private static void CollectionImage(int height)
+        private static void CollectionImage(Texture collectionIcon)
         {
-            Texture2D defaultIcon = (Texture2D)Resources.Load("DefaultCollectionIcon");
-            if (GUILayout.Button(defaultIcon, collectionButtonStyle)) 
+            var icon = collectionIcon;
+            if (icon == null) 
             {
-                Debug.Log("Collection Clicked");
+                icon = (Texture2D)Resources.Load("DefaultCollectionIcon");
             }
+            GUILayout.Box(icon);
         }
 
         private static CandyMachineState CandyMachineControls(
