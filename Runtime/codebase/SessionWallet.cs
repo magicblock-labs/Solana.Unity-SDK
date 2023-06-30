@@ -68,16 +68,33 @@ namespace Solana.Unity.SDK
             string customRpcUri = null, string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false)
         {
+            Debug.Log("Found Session Wallet");
             SessionWallet sessionWallet = new SessionWallet(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             sessionWallet.TargetProgram = targetProgram;
             if (HasSessionWallet())
             {
                 sessionWallet.Account = await sessionWallet.Login(password);
+                sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
+
+                // If it is not uninitialized, return the session wallet
+                if(!(await sessionWallet.IsSessionTokenInitialized())) {
+                    Debug.Log("Session Token is not initialized");
+                    return sessionWallet;
+                }
+
+                // Otherwise check for a valid session token
+                if ((await sessionWallet.IsSessionTokenValid())) {
+                    Debug.Log("Session Token is valid");
+                    return sessionWallet;
+                }
+                else
+                {
+                    Debug.Log("Session Token is invalid");
+                    sessionWallet.Logout();
+                    return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+                }
             }
-            else
-            {
-                sessionWallet.Account = await sessionWallet.CreateAccount(password:password);
-            }
+            sessionWallet.Account = await sessionWallet.CreateAccount(password:password);
             sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
             return sessionWallet;
         }
@@ -94,8 +111,9 @@ namespace Solana.Unity.SDK
                     return Task.FromResult<Account>(null);
                 decryptedKeystore = keystoreService.DecryptKeyStoreFromJson(password, encryptedKeystoreJson);
             }
-            catch (DecryptionException)
+            catch (DecryptionException e)
             {
+                Debug.LogException(e);
                 return Task.FromResult<Account>(null);
             }
 
@@ -218,7 +236,7 @@ namespace Solana.Unity.SDK
         public async Task<bool> IsSessionTokenInitialized()
         {
             var sessionTokenData = await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA);
-            return sessionTokenData.Result.Value.Data[0] != null;
+            return sessionTokenData.Result.Value != null;
         }
 
         /// <summary>
