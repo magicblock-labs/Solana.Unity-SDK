@@ -183,9 +183,7 @@ namespace Solana.Unity.SDK.Editor
                     {
                         CandyMachineController.Reveal(
                             cache,
-                            new() {
-                                Name = "Planet #$ID$"
-                            },
+                            config.hiddenSettings.ToCandyMachineHiddenSettings(),
                             new(candyMachineKey),
                             keypair,
                             rpcUrl
