@@ -41,6 +41,8 @@ namespace Solana.Unity.SDK.Editor
         private const string ONE_INDEX_NAME_PATTERN = "ID+1";
         private const char NAME_PATTERN_DESIGNATOR = '$';
 
+        private const string DEFAULT_COLLECTION_NAME = "Collection NFT";
+
         #endregion
 
         #region Initialize
@@ -48,8 +50,6 @@ namespace Solana.Unity.SDK.Editor
         internal static async void InitializeCandyMachine(
             CandyMachineConfiguration config,
             CandyMachineCache cache,
-            string collectionNFTName,
-            string collectionMetadataUrl,
             string keypair,
             string rpcUrl
         )
@@ -62,25 +62,31 @@ namespace Solana.Unity.SDK.Editor
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
             var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
 
-            // Create collection NFT.
-
-            var collectionMint = new Account();
+            // Create collection NFT if one wasn't provided during upload.
+            Account collectionMint = new();
+            Metadata collectionMetadata = collectionMetadata = new() {
+                symbol = config.symbol,
+                sellerFeeBasisPoints = 0,
+                creators = config.creators.Select(c => new Unity.Metaplex.NFT.Library.Creator(new(c.address), c.share, true)).ToList(),
+            };
+            if (cache.Items.TryGetValue(-1, out var collectionItem)) 
+            {
+                collectionMetadata.name = collectionItem.name;
+                collectionMetadata.uri = collectionItem.metadataLink;
+            }
+            else 
+            {
+                collectionMetadata.name = DEFAULT_COLLECTION_NAME;
+            }
             var collectionTxId = await CandyMachineCommands.CreateCollection(
                 wallet.Account,
                 collectionMint,
-                new() { 
-                    name = collectionNFTName,
-                    symbol = config.symbol,
-                    sellerFeeBasisPoints = 0,
-                    uri = collectionMetadataUrl,
-                    creators = config.creators.Select(c => new Unity.Metaplex.NFT.Library.Creator(new (c.address), c.share, true)).ToList(),
-                },
+                collectionMetadata,
                 rpcClient
             );
             Debug.LogFormat("Minted Collection NFT - Transaction ID: {0}", collectionTxId);
             
             // Initialize CandyMachine account.
-
             var initTx = await CandyMachineCommands.InitializeCandyMachine(
                 wallet.Account,
                 candyMachineAccount,

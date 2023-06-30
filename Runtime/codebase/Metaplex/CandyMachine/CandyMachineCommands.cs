@@ -79,7 +79,7 @@ namespace Solana.Unity.SDK.Metaplex
         public static async Task<string> CreateCollection(
             Account payer,
             Account collectionMint,
-            Metadata metdata,
+            Metadata metadata,
             IRpcClient rpcClient
         )
         {
@@ -88,7 +88,7 @@ namespace Solana.Unity.SDK.Metaplex
                 payer,
                 collectionMint,
                 TokenStandard.NonFungible,
-                metdata,
+                metadata,
                 true,
                 true
             );
