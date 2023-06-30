@@ -243,11 +243,10 @@ namespace Solana.Unity.SDK.Editor
             {
                 if (GUILayout.Button("Deploy", settingsButtonStyle))
                 {
+
                     CandyMachineController.InitializeCandyMachine(
                         config,
                         cache,
-                        "TEST TEST 1",
-                        "",
                         keyPair,
                         rpcUrl
                     );
