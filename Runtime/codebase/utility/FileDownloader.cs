@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Wallet;
@@ -11,6 +12,7 @@ using ThreeDISevenZeroR.UnityGifDecoder;
 using ThreeDISevenZeroR.UnityGifDecoder.Model;
 using UnityEngine;
 using UnityEngine.Networking;
+using Object = UnityEngine.Object;
 
 // ReSharper disable once CheckNamespace
 
@@ -95,7 +97,7 @@ namespace Solana.Unity.SDK.Utility
 
         private static async Task<T> LoadTexture<T>(string filePath, CancellationToken token = default)
         {
-            using var uwr = UnityWebRequest.Get(filePath);
+            using var uwr = UnityWebRequestTexture.GetTexture(filePath);
             uwr.SendWebRequest();
 
             while (!uwr.isDone && !token.IsCancellationRequested)
@@ -108,33 +110,29 @@ namespace Solana.Unity.SDK.Utility
                 Debug.Log(uwr.error);
                 return default;
             }
-            var data = uwr.downloadHandler.data;
-            var tex = new Texture2D(2, 2);
-            tex.LoadImage(data);
-            return (T)Convert.ChangeType(tex, typeof(T));
+            var texture = DownloadHandlerTexture.GetContent(uwr);
+            Object.Destroy(((DownloadHandlerTexture) uwr.downloadHandler).texture);
+            return (T)Convert.ChangeType(texture, typeof(T));
         }
         
-        private static async Task<T> LoadGif<T>(string path, CancellationToken token = default)
+        private static async UniTask<T> LoadGif<T>(string path, CancellationToken token = default)
         {
-            using (UnityWebRequest uwr = UnityWebRequest.Get(path))
+            using UnityWebRequest uwr = UnityWebRequest.Get(path);
+            uwr.SendWebRequest();
+            while (!uwr.isDone && !token.IsCancellationRequested)
             {
-                uwr.SendWebRequest();
-                while (!uwr.isDone && !token.IsCancellationRequested)
-                {
-                    await Task.Yield();
-                }
-
-                if (uwr.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    Debug.Log(uwr.error);
-                    return default;
-                }
-
-                Texture mainTexture = GetTextureFromGifByteStream(uwr.downloadHandler.data);
-
-                var changeType = (T)Convert.ChangeType(mainTexture, typeof(T));
-                return changeType;
+                await Task.Yield();
             }
+
+            if (uwr.result == UnityWebRequest.Result.ConnectionError)
+            {
+                Debug.Log(uwr.error);
+                return default;
+            }
+
+            Texture mainTexture = GetTextureFromGifByteStream(uwr.downloadHandler.data);
+            var changeType = (T)Convert.ChangeType(mainTexture, typeof(T));
+            return changeType;
         }
         
         private static Texture2D GetTextureFromGifByteStream(byte[] bytes)
