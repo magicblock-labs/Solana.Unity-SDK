@@ -100,7 +100,6 @@ namespace Solana.Unity.SDK.Nft
         /// <summary>
         /// Load the texture of the NFT
         /// </summary>
-        /// <param name="nft"></param>
         /// <param name="imageHeightAndWidth"></param>
         public async Task LoadTexture(int imageHeightAndWidth = 256)
         {

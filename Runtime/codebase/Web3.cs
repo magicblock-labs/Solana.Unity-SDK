@@ -319,17 +319,18 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="loadTexture"></param>
         /// <param name="notifyRegisteredListeners">If true, notify the register listeners</param>
+        /// <param name="requestsMillisecondsDelay">Add a delay between requests</param>
         /// <param name="commitment"></param>
         public static async UniTask<List<Nft.Nft>> LoadNFTs(
             bool loadTexture = true, 
             bool notifyRegisteredListeners = true,
+            int requestsMillisecondsDelay = 0,
             Commitment commitment = Commitment.Confirmed)
         {
             loadTexture = LoadNftsTextureByDefault ?? loadTexture;
             if(Wallet == null) return null;
             var tokens = (await Wallet.GetTokenAccounts(commitment))?
-                .ToList()
-                .FindAll(m => m.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1);
+                .ToList();
             if(tokens == null) return null;
             
             // Remove tokens not owned anymore
@@ -360,13 +361,19 @@ namespace Solana.Unity.SDK
             if (tokens is {Count: > 0})
             {
                 var toFetch = tokens
-                    .Where(item => item.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1)
                     .Where(item => nfts
                         .All(t => t.metaplexData.data.mint!= item.Account.Data.Parsed.Info.Mint)).ToArray();
                 total = nfts.Count + toFetch.Length;
                 
                 foreach (var item in toFetch)
                 {
+                    if (Application.platform == RuntimePlatform.WebGLPlayer)
+                    {
+                        // If we are on WebGL, we need to add a min delay between requests
+                        requestsMillisecondsDelay = Mathf.Max(requestsMillisecondsDelay, 300);
+                    }
+                    if (requestsMillisecondsDelay > 0) await UniTask.Delay(requestsMillisecondsDelay);
+
                     var tNft = Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, Rpc, loadTexture: loadTexture).AsUniTask();
                     loadingTasks.Add(tNft);
                     tNft.ContinueWith(nft =>
