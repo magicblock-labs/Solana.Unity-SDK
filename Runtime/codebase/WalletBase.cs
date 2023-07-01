@@ -35,7 +35,7 @@ namespace Solana.Unity.SDK
             { 1, Cluster.DevNet },
             { 2, Cluster.TestNet }
         };
-        
+
         protected readonly Dictionary<int, string> RPCNameMap = new ()
         {
             { 0, "mainnet-beta" },
@@ -98,7 +98,7 @@ namespace Solana.Unity.SDK
             Account = await _CreateAccount(mnemonic, password);
             return Account;
         }
-        
+
         /// <summary>
         /// Create a new account
         /// </summary>
@@ -106,14 +106,14 @@ namespace Solana.Unity.SDK
         /// <param name="password"></param>
         /// <returns></returns>
         protected abstract Task<Account> _CreateAccount(string mnemonic = null, string password = null);
-        
+
         /// <inheritdoc />
         public async Task<double> GetBalance(PublicKey publicKey, Commitment commitment = Commitment.Finalized)
         {
             var balance= await ActiveRpcClient.GetBalanceAsync(publicKey, commitment);
             return (double)(balance.Result?.Value ?? 0) / SolLamports;
         }
-        
+
         /// <inheritdoc />
         public async Task<double> GetBalance(Commitment commitment = Commitment.Finalized)
         {
@@ -122,13 +122,13 @@ namespace Solana.Unity.SDK
 
         /// <inheritdoc />
         public async Task<RequestResult<string>> Transfer(
-            PublicKey destination, 
-            PublicKey tokenMint, 
-            ulong amount, 
+            PublicKey destination,
+            PublicKey tokenMint,
+            ulong amount,
             Commitment commitment = Commitment.Finalized)
         {
             var sta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
-                Account.PublicKey, 
+                Account.PublicKey,
                 tokenMint);
             var ata = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
             var tokenAccounts = await ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint, null);
@@ -141,7 +141,7 @@ namespace Solana.Unity.SDK
             };
             if (tokenAccounts.Result == null || tokenAccounts.Result.Value.Count == 0)
             {
-                transaction.Instructions.Add( 
+                transaction.Instructions.Add(
                     AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
                     Account,
                     destination,
@@ -156,9 +156,9 @@ namespace Solana.Unity.SDK
             ));
             return await SignAndSendTransaction(transaction, commitment: commitment);
         }
-        
+
         /// <inheritdoc />
-        public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, 
+        public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount,
             Commitment commitment = Commitment.Finalized)
         {
             var transaction = new Transaction
@@ -166,10 +166,10 @@ namespace Solana.Unity.SDK
                 RecentBlockHash = await GetBlockHash(),
                 FeePayer = Account.PublicKey,
                 Instructions = new List<TransactionInstruction>
-                { 
+                {
                     SystemProgram.Transfer(
-                        Account.PublicKey, 
-                        destination, 
+                        Account.PublicKey,
+                        destination,
                         amount)
                 },
                 Signatures = new List<SignaturePubKeyPair>()
@@ -181,22 +181,22 @@ namespace Solana.Unity.SDK
         public async Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey)
         {
             var rpc = ActiveRpcClient;
-            var result = await 
+            var result = await
                 rpc.GetTokenAccountsByOwnerAsync(
-                    Account.PublicKey, 
-                    tokenMint, 
+                    Account.PublicKey,
+                    tokenMint,
                     tokenProgramPublicKey);
             return result.Result?.Value?.ToArray();
         }
-        
+
         /// <inheritdoc />
         public async Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Finalized)
         {
             var rpc = ActiveRpcClient;
-            var result = await 
+            var result = await
                 rpc.GetTokenAccountsByOwnerAsync(
-                    Account.PublicKey, 
-                    null, 
+                    Account.PublicKey,
+                    null,
                     TokenProgram.ProgramIdKey,
                     commitment);
             return result.Result?.Value?.ToArray();
@@ -226,7 +226,7 @@ namespace Solana.Unity.SDK
         /// <param name="transactions"></param>
         /// <returns></returns>
         protected abstract Task<Transaction[]> _SignAllTransactions(Transaction[] transactions);
-        
+
         /// <inheritdoc />
         public virtual async Task<Transaction[]> SignAllTransactions(Transaction[] transactions)
         {
@@ -246,7 +246,7 @@ namespace Solana.Unity.SDK
         /// <inheritdoc />
         public virtual async Task<RequestResult<string>> SignAndSendTransaction
         (
-            Transaction transaction, 
+            Transaction transaction,
             bool skipPreflight = false,
             Commitment commitment = Commitment.Finalized)
         {
@@ -305,11 +305,11 @@ namespace Solana.Unity.SDK
         }
 
         #endregion
-        
 
-        
+
+
         /// <summary>
-        /// Start RPC connection and return new RPC Client 
+        /// Start RPC connection and return new RPC Client
         /// </summary>
         /// <returns></returns>
         private IRpcClient StartConnection()
@@ -332,9 +332,9 @@ namespace Solana.Unity.SDK
                 return null;
             }
         }
-        
+
         /// <summary>
-        /// Start streaming RPC connection and return a new streaming RPC Client 
+        /// Start streaming RPC connection and return a new streaming RPC Client
         /// </summary>
         /// <returns></returns>
         private IStreamingRpcClient StartStreamingConnection()
