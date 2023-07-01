@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
@@ -85,20 +84,13 @@ namespace Solana.Unity.SDK.Utility
                     return await LoadTexture<T>(path);
                 }
             }
-            else
-            {
-#if UNITY_WEBGL && !UNITY_EDITOR
-                return await LoadJsonWebRequest<T>(path);
-#else
-                return await LoadJson<T>(path);
-#endif
-            }
+            throw new NotImplementedException();
         }
 
         private static async Task<T> LoadTexture<T>(string filePath, CancellationToken token = default)
         {
             using var uwr = UnityWebRequestTexture.GetTexture(filePath);
-            uwr.SendWebRequest();
+            await uwr.SendWebRequest();
 
             while (!uwr.isDone && !token.IsCancellationRequested)
             {
@@ -111,14 +103,15 @@ namespace Solana.Unity.SDK.Utility
                 return default;
             }
             var texture = DownloadHandlerTexture.GetContent(uwr);
-            Object.Destroy(((DownloadHandlerTexture) uwr.downloadHandler).texture);
+            DestroyTexture(((DownloadHandlerTexture)uwr.downloadHandler).texture);
             return (T)Convert.ChangeType(texture, typeof(T));
         }
-        
+
         private static async UniTask<T> LoadGif<T>(string path, CancellationToken token = default)
         {
             using UnityWebRequest uwr = UnityWebRequest.Get(path);
-            uwr.SendWebRequest();
+            await uwr.SendWebRequest();
+            
             while (!uwr.isDone && !token.IsCancellationRequested)
             {
                 await Task.Yield();
@@ -172,56 +165,6 @@ namespace Solana.Unity.SDK.Utility
             }
 
             return null;
-        }
-
-        private static async Task<T> LoadJsonWebRequest<T>(string path)
-        {
-            using var uwr = UnityWebRequest.Get(path);
-            uwr.downloadHandler = new DownloadHandlerBuffer();
-            uwr.SendWebRequest();
-
-            while (!uwr.isDone)
-            {
-                await Task.Yield();
-            }
-
-            var json = uwr.downloadHandler.text;
-            if (uwr.result is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError)
-            {
-                Debug.Log(uwr.error);
-                return default;
-            }
-
-            Debug.Log(json);
-            try
-            {
-                var data = JsonConvert.DeserializeObject<T>(json);
-                return data;
-            }
-            catch
-            {
-                return default;
-            }
-        }
-
-        private static async Task<T> LoadJson<T>(string path)
-        {            
-            var client = new HttpClient();
-            
-            try
-            {
-                var response = await client.GetAsync(path);
-                response.EnsureSuccessStatusCode();
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
-                client.Dispose();
-                return data;
-            }
-            catch
-            {
-                client.Dispose();
-                return default;
-            }
         }
 
         public static T LoadFileFromLocalPath<T>(string path)
@@ -298,7 +241,20 @@ namespace Solana.Unity.SDK.Utility
             Texture2D result = new Texture2D(targetX, targetY);
             result.ReadPixels(new Rect(0, 0, targetX, targetY), 0, 0);
             result.Apply();
+            DestroyTexture(texture2D);
             return result;
+        }
+        
+        private static void DestroyTexture(Texture texture)
+        {
+            if (Application.isPlaying)
+            {
+                Object.Destroy(texture);
+            }
+            else
+            {
+                Object.DestroyImmediate(texture);
+            }
         }
 
     }
