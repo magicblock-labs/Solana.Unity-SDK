@@ -370,7 +370,7 @@ namespace Solana.Unity.SDK
                     if (Application.platform == RuntimePlatform.WebGLPlayer)
                     {
                         // If we are on WebGL, we need to add a min delay between requests
-                        requestsMillisecondsDelay = Mathf.Max(requestsMillisecondsDelay, 300);
+                        requestsMillisecondsDelay = Mathf.Max(requestsMillisecondsDelay, 100);
                     }
                     if (requestsMillisecondsDelay > 0) await UniTask.Delay(requestsMillisecondsDelay);
 
