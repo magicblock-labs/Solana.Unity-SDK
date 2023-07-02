@@ -330,7 +330,8 @@ namespace Solana.Unity.SDK
             loadTexture = LoadNftsTextureByDefault ?? loadTexture;
             if(Wallet == null) return null;
             var tokens = (await Wallet.GetTokenAccounts(commitment))?
-                .ToList();
+                .ToList()
+                .FindAll(m => m.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1);
             if(tokens == null) return null;
             
             // Remove tokens not owned anymore
@@ -361,6 +362,7 @@ namespace Solana.Unity.SDK
             if (tokens is {Count: > 0})
             {
                 var toFetch = tokens
+                    .Where(item => item.Account.Data.Parsed.Info.TokenAmount.AmountUlong == 1)
                     .Where(item => nfts
                         .All(t => t.metaplexData.data.mint!= item.Account.Data.Parsed.Info.Mint)).ToArray();
                 total = nfts.Count + toFetch.Length;
