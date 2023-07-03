@@ -1,4 +1,7 @@
+using Newtonsoft.Json;
+using Solana.Unity.Wallet;
 using System;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -127,14 +130,14 @@ namespace Solana.Unity.SDK.Editor
             EditorGUILayout.BeginVertical();
             {
                 
-                if (cache?.Info.CandyMachine != null && cache?.Info.CandyMachine != string.Empty) 
+                if (cache?.Info.CandyMachineKey != null) 
                 {
                     CandyMachineControlGrid(
                         state,
                         config,
                         cache,
-                        cache.Info.CandyMachine, 
-                        cache.Info.CandyGuard, 
+                        cache.Info.CandyMachineKey, 
+                        cache.Info.CandyGuardKey, 
                         keyPair, 
                         rpcUrl
                     );
@@ -152,8 +155,8 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineState state,
             CandyMachineConfiguration config,
             CandyMachineCache cache,
-            string candyMachineKey, 
-            string candyGuardKey, 
+            PublicKey candyMachineKey, 
+            PublicKey candyGuardKey, 
             string keypair,
             string rpcUrl
         ) 
@@ -162,6 +165,15 @@ namespace Solana.Unity.SDK.Editor
             if (groups != null) 
             {
                 state.guardGroup = SolanaEditorUtility.DropdownField("Mint Guard Group", state.guardGroup, groups);
+            }
+            if (GUILayout.Button("Re-Deploy", settingsButtonStyle)) {
+
+                CandyMachineController.InitializeCandyMachine(
+                    config,
+                    cache,
+                    keypair,
+                    rpcUrl
+                );
             }
             EditorGUILayout.BeginHorizontal();
             {
@@ -174,8 +186,8 @@ namespace Solana.Unity.SDK.Editor
                     if (GUILayout.Button("Update Guards", settingsButtonStyle)) 
                     {
                         CandyMachineController.UpdateGuards(
-                            new(candyGuardKey),
-                            new(candyMachineKey),
+                            candyGuardKey,
+                            candyMachineKey,
                             config,
                             cache,
                             keypair,
@@ -189,8 +201,8 @@ namespace Solana.Unity.SDK.Editor
                     if (GUILayout.Button("Withdraw", settingsButtonStyle)) 
                     {
                         CandyMachineController.Withdraw(
-                            new(candyMachineKey),
-                            new(candyGuardKey),
+                            candyMachineKey,
+                            candyGuardKey,
                             keypair,
                             rpcUrl
                         );
@@ -198,7 +210,7 @@ namespace Solana.Unity.SDK.Editor
                     if (GUILayout.Button("Sign", settingsButtonStyle)) 
                     {
                         CandyMachineController.Sign(
-                            new (candyMachineKey),
+                            candyMachineKey,
                             keypair,
                             rpcUrl
                         );
@@ -210,8 +222,8 @@ namespace Solana.Unity.SDK.Editor
                     if (GUILayout.Button("Mint", settingsButtonStyle)) 
                     {
                         CandyMachineController.MintToken(
-                            new(candyMachineKey), 
-                            new(candyGuardKey),
+                            candyMachineKey, 
+                            candyGuardKey,
                             config,
                             keypair,
                             rpcUrl,
@@ -223,7 +235,7 @@ namespace Solana.Unity.SDK.Editor
                         CandyMachineController.Reveal(
                             cache,
                             config.hiddenSettings.ToCandyMachineHiddenSettings(),
-                            new(candyMachineKey),
+                            candyMachineKey,
                             keypair,
                             rpcUrl
                         );
@@ -271,11 +283,27 @@ namespace Solana.Unity.SDK.Editor
                         rpcUrl
                     );
                 }
-                // TODO: Enable once Bundlr uploader is fixed.
-                /*if (GUILayout.Button("Upload", settingsButtonStyle)) 
-                {
-                    CandyMachineController.UploadCandyMachineAssets(cache, config, keyPair, rpcUrl);
-                }*/
+                if (GUILayout.Button("Upload", settingsButtonStyle)) {
+                    if (cache == null) 
+                    {
+                        var newCache = new CandyMachineCache();
+                        var cachePath = EditorUtility.SaveFilePanel(
+                            "Save the CandyMachine cache.", 
+                            Application.dataPath, 
+                            "cache", 
+                            "json"
+                        );
+                        var cacheJson = JsonConvert.SerializeObject(newCache);
+                        File.WriteAllText(cachePath, cacheJson);
+                        config.cacheFilePath = cachePath;
+                        AssetDatabase.SaveAssets();
+                        CandyMachineController.UploadCandyMachineAssets(newCache, config, keyPair, rpcUrl);
+                    }
+                    else 
+                    {
+                        CandyMachineController.UploadCandyMachineAssets(cache, config, keyPair, rpcUrl);
+                    }
+                }
             }
             EditorGUILayout.EndHorizontal();
         }

@@ -165,6 +165,10 @@ namespace Solana.Unity.SDK.Editor
             };
             var tx = new BundlrUploadTransaction(data, asset.ContentType);
             var assetID = await bundlrClient.SendTransaction(tx);
+            if (assetID == null) 
+            {
+                return (asset.AssetId, null);
+            }
             var assetLink = string.Format(ARWEAVE_URI_FORMAT, assetID);
             var extension = asset.Type switch {
                 LocalMetaplexAsset.AssetType.Metadata => string.Empty,

@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.Candymachine.Types;
+using Solana.Unity.Wallet;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -89,6 +90,7 @@ namespace Solana.Unity.SDK.Editor
             #endregion
         }
 
+        [JsonObject(MemberSerialization.OptIn)]
         public class CacheInfo
         {
 
@@ -105,6 +107,33 @@ namespace Solana.Unity.SDK.Editor
 
             [JsonProperty("collectionMint")]
             public string CollectionMint { get; set; }
+
+            public PublicKey CandyGuardKey {
+                get {
+                    if (CandyGuard == null || CandyGuard == string.Empty) {
+                        return null;
+                    }
+                    return new(CandyGuard);
+                }
+            }
+
+            public PublicKey CandyMachineKey {
+                get {
+                    if (CandyMachine == null || CandyMachine == string.Empty) {
+                        return null;
+                    }
+                    return new(CandyMachine);
+                }
+            }
+
+            public PublicKey CollectionMintKey {
+                get {
+                    if (CollectionMint == null || CollectionMint == string.Empty) {
+                        return null;
+                    }
+                    return new(CollectionMint);
+                }
+            }
 
             #endregion
 

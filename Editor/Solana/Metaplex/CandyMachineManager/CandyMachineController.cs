@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Solana.Unity.Extensions;
 using Solana.Unity.Metaplex.Candymachine.Types;
+using Solana.Unity.Metaplex.NFT;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities;
 using Solana.Unity.Metaplex.Utilities.Json;
@@ -37,11 +38,40 @@ namespace Solana.Unity.SDK.Editor
 
         #region Constants
 
+        /// <summary>
+        /// The size of a config line string.
+        /// </summary>
+        private const int STRING_LEN_SIZE = 4;
+
+        /// <summary>
+        /// The maximum config line bytes per transaction.
+        /// </summary>
+        private const int MAX_TRANSACTION_BYTES = 1000;
+
+        /// <summary>
+        /// The maximum number of config lines per transaction.
+        /// </summary>
+        private const int MAX_TRANSACTION_LINES = 17;
+
+        /// <summary>
+        /// Name pattern for hidden settings starting with a 0 index.
+        /// </summary>
         private const string ZERO_INDEX_NAME_PATTERN = "ID";
+
+        /// <summary>
+        /// Name pattern for hidden settings starting with a 1 index.
+        /// </summary>
         private const string ONE_INDEX_NAME_PATTERN = "ID+1";
+
+        /// <summary>
+        /// Designator character for a hidden settings naming pattern.
+        /// </summary>
         private const char NAME_PATTERN_DESIGNATOR = '$';
 
         private const string DEFAULT_COLLECTION_NAME = "Collection NFT";
+
+        private const int MAX_RETRIES = 10;
+        private const int RETRY_TIME = 6000;
 
         #endregion
 
@@ -56,50 +86,176 @@ namespace Solana.Unity.SDK.Editor
         {
             Debug.Log("Initializing CandyMachine...");
             var configData = config.ToCandyMachineData(cache);
-            var candyMachineAccount = new Account();
             var rpcClient = ClientFactory.GetClient(rpcUrl);
             var keyPairJson = File.ReadAllText(keypair);
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
             var wallet = new Wallet.Wallet(keyPairBytes, "", SeedMode.Bip39);
 
+            var collectionMint = cache.Info.CollectionMintKey;
             // Create collection NFT if one wasn't provided during upload.
-            Account collectionMint = new();
-            Metadata collectionMetadata = collectionMetadata = new() {
-                symbol = config.symbol,
-                sellerFeeBasisPoints = 0,
-                creators = config.creators.Select(c => new Unity.Metaplex.NFT.Library.Creator(new(c.address), c.share, true)).ToList(),
-            };
-            if (cache.Items.TryGetValue(-1, out var collectionItem)) 
+            if (collectionMint == null) 
             {
-                collectionMetadata.name = collectionItem.name;
-                collectionMetadata.uri = collectionItem.metadataLink;
+                Account collectionMintAccount = new();
+                Metadata collectionMetadata = collectionMetadata = new() {
+                    symbol = config.symbol,
+                    sellerFeeBasisPoints = 0,
+                    creators = config.creators.Select(c => new Unity.Metaplex.NFT.Library.Creator(new(c.address), c.share, true)).ToList(),
+                };
+                if (cache.Items.TryGetValue(-1, out var collectionItem)) 
+                {
+                    collectionMetadata.name = collectionItem.name;
+                    collectionMetadata.uri = collectionItem.metadataLink;
+                }
+                else 
+                {
+                    collectionMetadata.name = DEFAULT_COLLECTION_NAME;
+                }
+                var collectionTxId = await CandyMachineCommands.CreateCollection(
+                    wallet.Account,
+                    collectionMintAccount,
+                    collectionMetadata,
+                    rpcClient
+                );
+                if (cache.Items.ContainsKey(-1)) 
+                {
+                    cache.Items[-1].onChain = true;
+                    cache.SyncFile(config.cacheFilePath);
+                }
+                Debug.LogFormat("Minted Collection NFT - Transaction ID: {0}", collectionTxId);
+                collectionMint = collectionMintAccount;
+                cache.Info.CollectionMint = collectionMint;
             }
-            else 
+
+            var candyMachineKey = cache.Info.CandyMachineKey;
+            if (candyMachineKey == null) 
             {
-                collectionMetadata.name = DEFAULT_COLLECTION_NAME;
+                var metadataClient = new MetadataClient(rpcClient);
+                MetadataAccount collectionAccount = null;
+                var tries = 0;
+                Debug.Log("Verifying collection metadata...");
+                while (collectionAccount == null && tries < MAX_RETRIES) 
+                {
+                    collectionAccount = await metadataClient.RetrieveTokenMetadata(collectionMint);
+                    if (collectionAccount == null) 
+                    {
+                        await Task.Delay(RETRY_TIME);
+                        tries++;
+                    }
+                }
+                Debug.Log("Collection metadata found!");
+                Debug.Log("Deploying CandyMachine...");
+                // Initialize CandyMachine account.
+                var candyMachineAccount = new Account();
+                var initTx = await CandyMachineCommands.InitializeCandyMachine(
+                    wallet.Account,
+                    candyMachineAccount,
+                    collectionMint,
+                    configData,
+                    rpcClient
+                );
+                if (initTx == null) 
+                {
+                    Debug.LogError("An error occurred, please re-run the deploy command");
+                    return;
+                }
+                Debug.LogFormat("Initialized CandyMachine - Transaction ID: {0}", initTx);
+                cache.Info.CandyMachine = candyMachineAccount.PublicKey;
+                cache.Info.Creator = CandyMachineCommands.GetCandyMachineCreator(candyMachineAccount);
+                candyMachineKey = candyMachineAccount;
+                cache.SyncFile(config.cacheFilePath);
+                Debug.LogFormat("Initialized CandyMachine: {0}", candyMachineAccount.PublicKey);
             }
-            var collectionTxId = await CandyMachineCommands.CreateCollection(
-                wallet.Account,
-                collectionMint,
-                collectionMetadata,
-                rpcClient
-            );
-            Debug.LogFormat("Minted Collection NFT - Transaction ID: {0}", collectionTxId);
             
-            // Initialize CandyMachine account.
-            var initTx = await CandyMachineCommands.InitializeCandyMachine(
-                wallet.Account,
-                candyMachineAccount,
-                collectionMint,
-                configData,
-                rpcClient
-            );
-            Debug.LogFormat("Initializing CandyMachine - Transaction ID: {0}", initTx);
-            cache.Info.CandyMachine = candyMachineAccount.PublicKey;
-            cache.Info.CollectionMint = collectionMint.PublicKey;
-            cache.Info.Creator = wallet.Account.PublicKey;
-            cache.SyncFile(config.cacheFilePath);
-            Debug.LogFormat("Initialized CandyMachine: {0}", candyMachineAccount.PublicKey);
+            if (configData.HiddenSettings == null) 
+            {
+                // Hidden settings are disabled, upload config lines.
+                var stepNum = 2 + (cache.Items.ContainsKey(-1) ? 1 : 0);
+                var configLines = GenerateConfigLines(cache.Items, configData);
+                if (configLines.Count > 0) 
+                {
+                    var isErrors = await UploadConfigLines(
+                        wallet.Account,
+                        candyMachineKey,
+                        configLines,
+                        rpcClient
+                    );
+                    if (isErrors) {
+                        Debug.LogError("Not all config lines deployed, run deploy command again.");
+                        return;
+                    }
+                }
+                Debug.Log("All config lines deployed, Get minting!");
+            }
+        }
+
+        private static async Task<bool> UploadConfigLines(
+            Account payer,
+            PublicKey candyMachineAccount,
+            List<ConfigLine[]> configLines,
+            IRpcClient rpcClient
+        )
+        {
+            Debug.LogFormat("Sending config lines in {0} transactions...", configLines.Count);
+            var isErrors = false;
+            for (int i = 0; i < configLines.Count; i++) 
+            {
+                var txId = await CandyMachineCommands.AddConfigLines(
+                   payer,
+                   candyMachineAccount,
+                   configLines[i],
+                   (uint)i,
+                   rpcClient
+                );
+                if (txId == null) 
+                {
+                    isErrors = true;
+                }
+            }
+            return isErrors;
+        }
+
+        private static List<ConfigLine[]> GenerateConfigLines(
+            Dictionary<int, CandyMachineCache.CacheItem> items,
+            CandyMachineData configData    
+        )
+        {
+            var configLines = new List<ConfigLine[]>();
+            var current = new List<ConfigLine>();
+            uint txSize = 0;
+            foreach (var (index, item) in items) 
+            {
+                if (index == -1) continue;
+                if (item.onChain) 
+                {
+                    if (current.Count > 0) 
+                    {
+                        configLines.Add(current.ToArray());
+                        current = new();
+                        txSize = 0;
+                    }
+                    continue;
+                }
+                var configLine = new ConfigLine() {
+                    Name = item.name.Substring(configData.ConfigLineSettings.PrefixName.Length),
+                    Uri = item.metadataLink.Substring(configData.ConfigLineSettings.PrefixUri.Length),
+                };
+                var size = (2 * STRING_LEN_SIZE) + configData.ConfigLineSettings.UriLength + configData.ConfigLineSettings.NameLength;
+                if (txSize + size > MAX_TRANSACTION_BYTES || current.Count > MAX_TRANSACTION_LINES) 
+                {
+                    configLines.Add(current.ToArray());
+                    current = new();
+                    txSize = 0;
+                }
+
+                txSize += size;
+                current.Add(configLine);
+            }
+
+            if (current.Count > 0) 
+            {
+                configLines.Add(current.ToArray());
+            }
+            return configLines;
         }
 
         #endregion
@@ -900,6 +1056,7 @@ namespace Solana.Unity.SDK.Editor
             var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
             var rpcClient = ClientFactory.GetClient(rpcUrl);
 
+            Debug.Log("Beginning signing...");
             var creator = CandyMachineCommands.GetCandyMachineCreator(candyMachineKey);
             var metadataKeys = await GetCreatorMetadataAccounts(creator, 0, rpcClient);
             if (metadataKeys == null || metadataKeys.Count == 0) 
@@ -929,7 +1086,13 @@ namespace Solana.Unity.SDK.Editor
                 }
             }
             EditorUtility.ClearProgressBar();
-            if (isErrors) Debug.LogError("Failed to sign some mint accounts, re-run command.");
+            if (isErrors) {
+                Debug.LogError("Failed to sign some mint accounts, re-run command.");
+            } 
+            else 
+            {
+                Debug.Log("Mint accounts signed!");
+            }
         }
 
         private static async Task<string> SignMintAccount(

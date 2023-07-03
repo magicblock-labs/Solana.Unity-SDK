@@ -42,11 +42,10 @@ namespace Solana.Unity.SDK.Editor
             {
                 var completed = await Task.WhenAny(uploads);
                 uploads.Remove(completed);
-                if (completed.IsCompletedSuccessfully) 
+                var (id, link) = completed.Result;
+                if (link != null) 
                 {
-                    var (id, link) = completed.Result;
-                    switch (assetType) 
-                    {
+                    switch (assetType) {
                         case LocalMetaplexAsset.AssetType.Metadata:
                             cache.Items[id].metadataLink = link;
                             break;
@@ -58,6 +57,10 @@ namespace Solana.Unity.SDK.Editor
                             break;
                     }
                     Debug.Log("Asset uploaded.");
+                } 
+                else 
+                {
+                    Debug.LogErrorFormat("Asset {0} failed to upload.", id);
                 }
 
                 if (assets.Count > 0 && PARALLEL_LIMIT - uploads.Count > PARALLEL_LIMIT / 2) 

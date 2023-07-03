@@ -125,7 +125,8 @@ namespace Solana.Unity.SDK.Metaplex
                 CollectionDelegateRecord = collectionDelegateRecord,
                 TokenMetadataProgram = MetadataProgram.ProgramIdKey,
                 SystemProgram = SystemProgram.ProgramIdKey,
-                SysvarInstructions = SysVars.InstructionAccount
+                SysvarInstructions = SysVars.InstructionAccount,
+                AuthorizationRulesProgram = MetadataAuthProgram.ProgramIdKey
             };
             var candyMachineInstruction = CandyMachineProgram.InitializeV2(
                 initializeCandyMachineAccounts,
@@ -150,6 +151,35 @@ namespace Solana.Unity.SDK.Metaplex
                 )
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { account, candyMachineAccount });
+            var txId = await rpcClient.SendAndConfirmTransactionAsync(transaction);
+            return txId.Result;
+        }
+
+        public static async Task<string> AddConfigLines(
+            Account account,
+            PublicKey candyMachineAccount,
+            ConfigLine[] configLines,
+            uint index,
+            IRpcClient rpcClient,
+            bool skipPreflight = false
+        )
+        {
+            var addConfigLinesAccounts = new AddConfigLinesAccounts() {
+                Authority = account,
+                CandyMachine = candyMachineAccount
+            };
+            var addConfigLinesInstruction = CandyMachineProgram.AddConfigLines(
+                addConfigLinesAccounts,
+                index,
+                configLines,
+                CandyMachineProgramId
+            );
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(account)
+                .AddInstruction(addConfigLinesInstruction)
+                .Build(new List<Account> { account });
             var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
@@ -320,10 +350,10 @@ namespace Solana.Unity.SDK.Metaplex
             var guardDataBytes = new byte[3600];
             var offset = guardData.Serialize(guardDataBytes, 0);
             var resultData = new byte[offset];
-            guardDataBytes.CopyTo(resultData, 0);
+            Array.Copy(guardDataBytes, resultData, offset);
             var baseAccount = new Account();
             if (PublicKey.TryFindProgramAddress(
-                new List<byte[]> { baseAccount.PublicKey.KeyBytes }, 
+                new List<byte[]> { Encoding.UTF8.GetBytes("candy_guard"), baseAccount.PublicKey.KeyBytes }, 
                 CandyGuardProgramId, 
                 out var guardAccount, 
                 out var _
@@ -345,8 +375,8 @@ namespace Solana.Unity.SDK.Metaplex
                     .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                     .SetFeePayer(account)
                     .AddInstruction(candyGuardInstruction)
-                    .Build(new List<Account> { baseAccount });
-                var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+                    .Build(new List<Account> { account, baseAccount });
+                var txId = await rpcClient.SendAndConfirmTransactionAsync(transaction, skipPreflight);
                 return (txId.Result, guardAccount);
             }
             Debug.LogError("Failed to create CandyGuard account.");
@@ -381,7 +411,7 @@ namespace Solana.Unity.SDK.Metaplex
                 .SetFeePayer(account)
                 .AddInstruction(candyGuardInstruction)
                 .Build(new List<Account> { account });
-            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendAndConfirmTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 

@@ -1,18 +1,18 @@
+using Avro;
+using Avro.IO;
+using Avro.Specific;
 using Chaos.NaCl;
 using Solana.Unity.Programs.Utilities;
 using Solana.Unity.Wallet;
 using System;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-
-#pragma warning disable IDE0052 // Remove unread private members
 
 namespace Solana.Unity.SDK.Editor
 {
 
-    // TODO: Fix serialization.
     internal class BundlrUploadTransaction
     {
 
@@ -21,7 +21,10 @@ namespace Solana.Unity.SDK.Editor
         /// <summary>
         /// The enumeration index of the Solana signature type in Bundlr.
         /// </summary>
-        private const int SOLANA_SIG_TYPE_INDEX = 4;
+        private const int SOLANA_SIG_TYPE_INDEX = 2;
+        private const string DATA_ITEM_BUMP = "dataitem";
+        private const string LIST_BUMP = "list";
+        private const string BLOB_BUMP = "blob";
 
         #endregion
 
@@ -29,28 +32,16 @@ namespace Solana.Unity.SDK.Editor
 
         private const string CONTENT_TYPE_TAG = "Content-Type";
 
-        [Serializable]
-        private struct Tag {
-            private readonly string name;
-            private readonly string value;
-
-            internal Tag(string name, string value)
-            {
-                this.name = name;
-                this.value = value;
-            }
-        }
-
         #endregion
 
         #region Properties
 
         private byte[] EncodedTags {
             get {
-                var bf = new BinaryFormatter();
-                using var ms = new MemoryStream();
-                bf.Serialize(ms, tags);
-                return ms.ToArray();
+                var avroWriter = new SpecificDefaultWriter(ArraySchema.Create(Tag._SCHEMA));
+                using var stream = new MemoryStream();
+                avroWriter.Write(tags, new BinaryEncoder(stream));
+                return stream.ToArray();
             }
         }
 
@@ -71,7 +62,7 @@ namespace Solana.Unity.SDK.Editor
         internal BundlrUploadTransaction(byte[] data, string contentType)
         {
             this.data = data;
-            tags = new[] { new Tag(CONTENT_TYPE_TAG, contentType) };
+            tags = new Tag[] { new() { name = CONTENT_TYPE_TAG, value = contentType } };
             var anchorGenerator = RandomNumberGenerator.Create();
             anchorGenerator.GetBytes(anchor);
         }
@@ -90,35 +81,40 @@ namespace Solana.Unity.SDK.Editor
         internal byte[] Serialize()
         {
             var encodedTags = EncodedTags;
-            var length = 2 +
+            var length = 2 + // SOLANA_SIG_TYPE_INDEX offset
                 (ulong)Ed25519.SignatureSizeInBytes +
                 (ulong)Ed25519.PublicKeySizeInBytes +
-                34 +
-                16 +
+                2 + // Indicators for target & anchor.
+                (ulong)anchor.Length +
+                16 + // Tags + Encoded Tags length indicators.
                 (ulong)encodedTags.Length +
                 (ulong)data.Length;
             var bytes = new byte[length];
             var offset = 0;
+            // Signature + Keys
             bytes.WriteU16(SOLANA_SIG_TYPE_INDEX, offset);
             offset += 2;
             bytes.WriteSpan(signature, offset);
             offset += Ed25519.SignatureSizeInBytes;
             bytes.WriteSpan(owner, offset);
             offset += owner.Length;
+            // Indicator for target - not required for upload.
             bytes.WriteU8(0, offset);
             offset++;
+            // Indicator for anchor + anchor bytes.
             bytes.WriteU8(1, offset);
             offset++;
             bytes.WriteSpan(anchor, offset);
             offset += anchor.Length;
+            // Tags
             bytes.WriteU64((ulong)tags.Length, offset);
             offset += 8;
             bytes.WriteU64((ulong)encodedTags.Length, offset);
             offset += 8;
             bytes.WriteSpan(encodedTags, offset);
             offset += encodedTags.Length;
+            // Data
             bytes.WriteSpan(data, offset);
-
             return bytes;
         }
 
@@ -129,11 +125,11 @@ namespace Solana.Unity.SDK.Editor
         private byte[] GetMessage()
         {
             return DeepHashChunk(new byte[][] {
-                Encoding.ASCII.GetBytes("dataitem"),
-                Encoding.ASCII.GetBytes("1"),
-                BitConverter.GetBytes(SOLANA_SIG_TYPE_INDEX),
+                Encoding.UTF8.GetBytes(DATA_ITEM_BUMP),
+                Encoding.UTF8.GetBytes("1"),
+                Encoding.UTF8.GetBytes(SOLANA_SIG_TYPE_INDEX.ToString()),
                 owner,
-                new byte[] {},
+                new byte[0], // target not required for upload transactions.
                 anchor,
                 EncodedTags,
                 data
@@ -142,8 +138,8 @@ namespace Solana.Unity.SDK.Editor
 
         private byte[] DeepHashChunk(byte[][] chunks)
         {
-            var tagKey = Encoding.ASCII.GetBytes("list");
-            var tagValue = Encoding.ASCII.GetBytes(chunks.Length.ToString());
+            var tagKey = Encoding.UTF8.GetBytes(LIST_BUMP);
+            var tagValue = Encoding.UTF8.GetBytes(chunks.Length.ToString());
             var tag = new byte[tagKey.Length + tagValue.Length];
             tagKey.CopyTo(tag, 0);
             tagValue.CopyTo(tag, tagKey.Length);
@@ -152,11 +148,20 @@ namespace Solana.Unity.SDK.Editor
             return DeepHashChunksSync(chunks, acc);
         }
 
+        private byte[] DeepHashChunk(byte[] chunk)
+        {
+            var tagKey = Encoding.UTF8.GetBytes(BLOB_BUMP);
+            var tagValue = Encoding.UTF8.GetBytes(chunk.Length.ToString());
+            var tagBuffer = Sha384Hash(tagKey.Concat(tagValue).ToArray());
+            var taggedHash = tagBuffer.Concat(Sha384Hash(chunk)).ToArray();
+            return Sha384Hash(taggedHash);
+        }
+
         private byte[] DeepHashChunksSync(byte[][] chunks, byte[] acc)
         {
             if (chunks.Length == 0) { return acc; }
             var newChunks = new ArraySegment<byte[]>(chunks, 1, chunks.Length - 1).ToArray();
-            var deepHash = DeepHashChunk(newChunks);
+            var deepHash = DeepHashChunk(chunks[0]);
             var hashPair = new byte[deepHash.Length + acc.Length];
             acc.CopyTo(hashPair, 0);
             deepHash.CopyTo(hashPair, acc.Length);
