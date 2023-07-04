@@ -326,4 +326,53 @@ namespace Solana.Unity.SDK.Editor
             } : null;
         }
     }
+
+    [Serializable]
+    internal class FreezeSolPaymentGuard: CandyMachineGuard
+    {
+        [ShowWhen("enabled"), SerializeField, JsonProperty]
+        private int value;
+
+        [ShowWhen("enabled"), SerializeField, JsonProperty]
+        private string destination;
+
+        internal FreezeSolPayment CandyGuardParam => enabled ? new() {
+            Destination = new(destination),
+            Lamports = SolHelper.ConvertToLamports(value)
+        } : null;
+
+        internal FreezeSolPaymentMintSettings GetMintSettings()
+        {
+            return enabled ? new() {
+                Destination = new(destination)
+            } : null;
+        }
+    }
+
+    [Serializable]
+    internal class FreezeTokenPaymentGuard : CandyMachineGuard
+    {
+        [ShowWhen("enabled"), SerializeField, JsonProperty]
+        private int amount;
+
+        [ShowWhen("enabled"), SerializeField, JsonProperty]
+        private string mint;
+
+        [ShowWhen("enabled"), SerializeField, JsonProperty]
+        private string destinationAta;
+
+        internal FreezeTokenPayment CandyGuardParam => enabled ? new() {
+            DestinationAta = new(destinationAta),
+            Amount = (ulong)amount,
+            Mint = new(mint)
+        } : null;
+
+        internal FreezeTokenPaymentMintSettings GetMintSettings()
+        {
+            return enabled ? new() {
+                Mint = new(mint),
+                DestinationAta = new(destinationAta)
+            } : null;
+        }
+    }
 }

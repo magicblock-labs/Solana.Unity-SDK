@@ -1,7 +1,7 @@
+using Solana.Unity.Metaplex.CandyGuard;
 using Solana.Unity.Metaplex.CandyGuard.Program;
 using Solana.Unity.Metaplex.Candymachine;
 using Solana.Unity.Metaplex.Candymachine.Types;
-using Solana.Unity.Metaplex.NFT;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities;
 using Solana.Unity.Programs;
@@ -74,25 +74,6 @@ namespace Solana.Unity.SDK.Metaplex
                 throw new InvalidProgramException();
             }
             return candyMachineCreator;
-        }
-
-        public static async Task<string> CreateCollection(
-            Account payer,
-            Account collectionMint,
-            Metadata metadata,
-            IRpcClient rpcClient
-        )
-        {
-            var metadataClient = new MetadataClient(rpcClient);
-            var request = await metadataClient.CreateNFT(
-                payer,
-                collectionMint,
-                TokenStandard.NonFungible,
-                metadata,
-                true,
-                true
-            );
-            return request.Result;
         }
 
         public static async Task<string> InitializeCandyMachine(
@@ -303,7 +284,7 @@ namespace Solana.Unity.SDK.Metaplex
                 CandyGuard = candyGuardKey,
                 CandyMachineProgram = CandyMachineProgramId
             };
-            var mintSettingsAccounts = mintSettings.GetMintArgs(payer, candyMachineKey, candyGuardKey);
+            var mintSettingsAccounts = mintSettings.GetMintArgs(payer, mint, candyMachineKey, candyGuardKey);
             var candyMachineInstruction = CandyGuardProgram.MintV2(
                 mintNftAccounts,
                 new byte[0],

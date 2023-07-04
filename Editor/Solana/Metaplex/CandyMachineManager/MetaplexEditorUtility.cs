@@ -1,4 +1,6 @@
 using Newtonsoft.Json;
+using Solana.Unity.Rpc;
+using Solana.Unity.SDK.Metaplex;
 using Solana.Unity.Wallet;
 using System;
 using System.IO;
@@ -69,6 +71,7 @@ namespace Solana.Unity.SDK.Editor
         internal class CandyMachineState
         {
             internal int guardGroup;
+            internal int freezePeriod;
         }
 
         #endregion
@@ -164,42 +167,23 @@ namespace Solana.Unity.SDK.Editor
             var groups = config.guards?.groups?.Select(group => group.label).ToArray();
             if (groups != null) 
             {
-                state.guardGroup = SolanaEditorUtility.DropdownField("Mint Guard Group", state.guardGroup, groups);
+                state.guardGroup = SolanaEditorUtility.DropdownField("Control Guard Group", state.guardGroup, groups);
             }
-            if (GUILayout.Button("Re-Deploy", settingsButtonStyle)) {
-
-                CandyMachineController.InitializeCandyMachine(
-                    config,
-                    cache,
-                    keypair,
-                    rpcUrl
-                );
-            }
+            state.freezePeriod = SolanaEditorUtility.RangeField("Freeze Period Seconds", state.freezePeriod, 0, 30 * 24 * 60 * 60); // Freeze can be a max of 30 days.
             EditorGUILayout.BeginHorizontal();
             {
                 EditorGUILayout.BeginVertical();
                 {
-                    if (GUILayout.Button("Freeze", settingsButtonStyle)) 
-                    {
-                        Debug.Log("Settings Clicked");
-                    }
-                    if (GUILayout.Button("Update Guards", settingsButtonStyle)) 
-                    {
-                        CandyMachineController.UpdateGuards(
-                            candyGuardKey,
-                            candyMachineKey,
+                    if (GUILayout.Button("Re-Deploy", settingsButtonStyle)) {
+
+                        CandyMachineController.InitializeCandyMachine(
                             config,
                             cache,
                             keypair,
                             rpcUrl
                         );
                     }
-                }
-                EditorGUILayout.EndVertical();
-                EditorGUILayout.BeginVertical();
-                {
-                    if (GUILayout.Button("Withdraw", settingsButtonStyle)) 
-                    {
+                    if (GUILayout.Button("Withdraw", settingsButtonStyle)) {
                         CandyMachineController.Withdraw(
                             candyMachineKey,
                             candyGuardKey,
@@ -207,8 +191,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl
                         );
                     }
-                    if (GUILayout.Button("Sign", settingsButtonStyle)) 
-                    {
+                    if (GUILayout.Button("Sign", settingsButtonStyle)) {
                         CandyMachineController.Sign(
                             candyMachineKey,
                             keypair,
@@ -219,10 +202,19 @@ namespace Solana.Unity.SDK.Editor
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.BeginVertical();
                 {
-                    if (GUILayout.Button("Mint", settingsButtonStyle)) 
-                    {
+                    if (GUILayout.Button("Update Guards", settingsButtonStyle)) {
+                        CandyMachineController.UpdateGuards(
+                            candyGuardKey,
+                            candyMachineKey,
+                            config,
+                            cache,
+                            keypair,
+                            rpcUrl
+                        );
+                    }
+                    if (GUILayout.Button("Mint", settingsButtonStyle)) {
                         CandyMachineController.MintToken(
-                            candyMachineKey, 
+                            candyMachineKey,
                             candyGuardKey,
                             config,
                             keypair,
@@ -230,14 +222,45 @@ namespace Solana.Unity.SDK.Editor
                             groups?[state.guardGroup]
                         );
                     }
-                    if (GUILayout.Button("Reveal", settingsButtonStyle)) 
-                    {
+                    if (GUILayout.Button("Reveal", settingsButtonStyle)) {
                         CandyMachineController.Reveal(
                             cache,
                             config.hiddenSettings.ToCandyMachineHiddenSettings(),
                             candyMachineKey,
                             keypair,
                             rpcUrl
+                        );
+                    }
+                }
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.BeginVertical();
+                {
+                    if (GUILayout.Button("Freeze", settingsButtonStyle)) {
+                        CandyMachineController.Freeze(
+                            keypair,
+                            rpcUrl,
+                            candyGuardKey,
+                            candyMachineKey,
+                            groups?[state.guardGroup],
+                            state.freezePeriod
+                        );
+                    }
+                    if (GUILayout.Button("Thaw", settingsButtonStyle)) {
+                        CandyMachineController.Thaw(
+                            keypair,
+                            rpcUrl,
+                            candyGuardKey,
+                            candyMachineKey,
+                            groups?[state.guardGroup]
+                        );
+                    }
+                    if (GUILayout.Button("Unlock Funds", settingsButtonStyle)) {
+                        CandyMachineController.UnlockFunds(
+                            keypair,
+                            rpcUrl,
+                            candyGuardKey,
+                            candyMachineKey,
+                            groups?[state.guardGroup]
                         );
                     }
                 }

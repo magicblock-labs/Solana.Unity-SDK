@@ -1,6 +1,7 @@
 using Solana.Unity.Metaplex.CandyGuard;
 using Solana.Unity.Programs.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Solana.Unity.SDK.Metaplex
@@ -11,6 +12,11 @@ namespace Solana.Unity.SDK.Metaplex
         #region Constants
 
         private const int MAX_LABEL_LENGTH = 6;
+        private const int ACCOUNT_DATA_OFFSET =
+            8     //     8 (discriminator)
+            + 32  //  + 32 (base)
+            + 1   //  +  1 (bump)
+            + 32; //  + 32 (authority)
 
         #endregion
 
@@ -43,6 +49,30 @@ namespace Solana.Unity.SDK.Metaplex
                 }
             }
             return offset;
+        }
+
+        public static GuardData Deserialize(ReadOnlySpan<byte> _data, int initialOffset)
+        {
+            var result = new GuardData();
+            var offset = initialOffset + ACCOUNT_DATA_OFFSET;
+            offset += GuardSet.Deserialize(_data, offset, out var defaultSet);
+            result.Default = defaultSet;
+            var groupCount = _data.GetU32(offset);
+            offset += 4;
+            var groups = new List<Group>();
+            for (int i = 0; i < groupCount; i++) 
+            {
+                var labelBytes = _data.GetSpan(offset, MAX_LABEL_LENGTH);
+                var label = Encoding.UTF8.GetString(labelBytes);
+                offset += MAX_LABEL_LENGTH;
+                offset += GuardSet.Deserialize(_data, offset, out var guardGroup);
+                groups.Add(new() {
+                    Guards = guardGroup,
+                    Label = label
+                });
+            }
+            result.Groups = groups.ToArray();
+            return result;
         }
 
         #endregion

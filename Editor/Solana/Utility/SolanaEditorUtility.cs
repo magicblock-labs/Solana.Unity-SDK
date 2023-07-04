@@ -144,6 +144,23 @@ namespace Solana.Unity.SDK.Editor
             return index;
         }
 
+        public static int RangeField(
+            string label,
+            int value,
+            int lowerBound,
+            int upperBound
+        )
+        {
+            int newValue;
+            EditorGUILayout.BeginHorizontal();
+            {
+                GUILayout.Label(label, propLabelStyle);
+                newValue = EditorGUILayout.IntSlider(value, lowerBound, upperBound);
+            }
+            EditorGUILayout.EndHorizontal();
+            return newValue;
+        }
+
         public static void Heading(string text, TextAnchor alignment)
         {
             var style = headingLabelStyle;

@@ -74,6 +74,17 @@ namespace Solana.Unity.SDK.Metaplex
             public PublicKey DestinationAta { get; set; }
         }
 
+        public class FreezeTokenPaymentMintSettings
+        {
+            public PublicKey Mint { get; set; }
+            public PublicKey DestinationAta { get; set; }
+        }
+
+        public class FreezeSolPaymentMintSettings
+        {
+            public PublicKey Destination { get; set; }
+        }
+
         #endregion
 
         #region Constants
@@ -96,6 +107,8 @@ namespace Solana.Unity.SDK.Metaplex
         public TokenBurnMintSettings TokenBurn { get; set; }
         public TokenGateMintSettings TokenGate { get; set; }
         public TokenPaymentMintSettings TokenPayment { get; set; }
+        public FreezeSolPaymentMintSettings FreezeSolPayment { get; set; }
+        public FreezeTokenPaymentMintSettings FreezeTokenPayment { get; set; }
 
         #endregion
 
@@ -103,6 +116,7 @@ namespace Solana.Unity.SDK.Metaplex
 
         public List<AccountMeta> GetMintArgs(
             Account payer,
+            Account mint,
             PublicKey candyMachineKey,
             PublicKey candyGuardKey
         )
@@ -238,6 +252,47 @@ namespace Solana.Unity.SDK.Metaplex
                 remainingAccounts.Add(AccountMeta.Writable(TokenPayment.DestinationAta, false));
             }
 
+            if (FreezeSolPayment != null) {
+                if (PublicKey.TryFindProgramAddress(
+                    new List<byte[]>() {
+                        Encoding.UTF8.GetBytes("freeze_escrow"),
+                        FreezeSolPayment.Destination.KeyBytes,
+                        candyGuardKey.KeyBytes,
+                        candyMachineKey.KeyBytes
+                    },
+                    CandyMachineCommands.CandyGuardProgramId,
+                    out var freezePda,
+                    out var _
+                )) 
+                {
+                    remainingAccounts.Add(AccountMeta.Writable(freezePda, false));
+                    var nftAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, mint);
+                    remainingAccounts.Add(AccountMeta.ReadOnly(nftAta, false));
+                }
+            }
+
+            if (FreezeTokenPayment != null) {
+                if (PublicKey.TryFindProgramAddress(
+                    new List<byte[]>() {
+                        Encoding.UTF8.GetBytes("freeze_escrow"),
+                        FreezeTokenPayment.DestinationAta.KeyBytes,
+                        candyGuardKey.KeyBytes,
+                        candyMachineKey.KeyBytes
+                    },
+                    CandyMachineCommands.CandyGuardProgramId,
+                    out var freezePda,
+                    out var _
+                )) {
+                    remainingAccounts.Add(AccountMeta.Writable(freezePda, false));
+                    var nftAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, mint);
+                    remainingAccounts.Add(AccountMeta.ReadOnly(nftAta, false));
+                    var tokenAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(payer, FreezeTokenPayment.Mint);
+                    remainingAccounts.Add(AccountMeta.Writable(tokenAta, false));
+                    var freezeAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(freezePda, mint);
+                    remainingAccounts.Add(AccountMeta.Writable(freezeAta, false));
+                }
+            }
+
             return remainingAccounts;
         }
 
@@ -297,6 +352,16 @@ namespace Solana.Unity.SDK.Metaplex
             if (overrides.TokenPayment != null)
             {
                 TokenPayment = overrides.TokenPayment;
+            }
+
+            if (overrides.FreezeSolPayment != null) 
+            {
+                FreezeSolPayment = overrides.FreezeSolPayment;
+            }
+
+            if (overrides.FreezeTokenPayment != null) 
+            {
+                FreezeTokenPayment = overrides.FreezeTokenPayment;
             }
         }
 

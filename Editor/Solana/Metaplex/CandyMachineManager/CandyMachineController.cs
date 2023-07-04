@@ -1,10 +1,13 @@
 using Newtonsoft.Json;
 using Solana.Unity.Extensions;
+using Solana.Unity.Metaplex.CandyGuard;
+using Solana.Unity.Metaplex.CandyGuard.Program;
 using Solana.Unity.Metaplex.Candymachine.Types;
 using Solana.Unity.Metaplex.NFT;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Metaplex.Utilities;
 using Solana.Unity.Metaplex.Utilities.Json;
+using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Builders;
 using Solana.Unity.Rpc.Models;
@@ -32,6 +35,13 @@ namespace Solana.Unity.SDK.Editor
             internal List<int> imagesToUpload;
             internal List<int> animationsToUpload;
             internal List<int> metadataToUpload;
+        }
+
+        private enum FreezeInstruction : byte
+        {
+            Initialize,
+            Thaw,
+            UnlockFunds
         }
 
         #endregion
@@ -69,6 +79,8 @@ namespace Solana.Unity.SDK.Editor
         private const char NAME_PATTERN_DESIGNATOR = '$';
 
         private const string DEFAULT_COLLECTION_NAME = "Collection NFT";
+
+        private const string METAPLEX_PROGRAM_ID = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
 
         private const int MAX_RETRIES = 10;
         private const int RETRY_TIME = 6000;
@@ -110,7 +122,7 @@ namespace Solana.Unity.SDK.Editor
                 {
                     collectionMetadata.name = DEFAULT_COLLECTION_NAME;
                 }
-                var collectionTxId = await CandyMachineCommands.CreateCollection(
+                var collectionTxId = await CreateCollection(
                     wallet.Account,
                     collectionMintAccount,
                     collectionMetadata,
@@ -256,6 +268,25 @@ namespace Solana.Unity.SDK.Editor
                 configLines.Add(current.ToArray());
             }
             return configLines;
+        }
+
+        private static async Task<string> CreateCollection(
+            Account payer,
+            Account collectionMint,
+            Metadata metadata,
+            IRpcClient rpcClient
+        )
+        {
+            var metadataClient = new MetadataClient(rpcClient);
+            var request = await metadataClient.CreateNFT(
+                payer,
+                collectionMint,
+                TokenStandard.NonFungible,
+                metadata,
+                true,
+                true
+            );
+            return request.Result;
         }
 
         #endregion
@@ -1111,6 +1142,402 @@ namespace Solana.Unity.SDK.Editor
                 .Build(signer);
             var result = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
             return result.Result;
+        }
+
+        #endregion
+
+        #region Freeze
+
+        public static async void Freeze(
+            string keypair,
+            string rpcUrl,
+            PublicKey candyGuardKey,
+            PublicKey candyMachineKey,
+            string groupLabel,
+            int period,
+            bool skipPreflight = false
+        )
+        {
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            Debug.Log("Loading Freeze guard info...");
+            var (destination, mint) = await GetDestination(candyGuardKey, groupLabel, rpcClient);
+            if (destination == null) {
+                Debug.LogError("No freeze guard configuration found.");
+                return;
+            }
+            Debug.Log("Freeze guard configuration found!");
+            Debug.Log("Initializing freeze escrow...");
+            var remainingAccounts = new List<AccountMeta>();
+            if (PublicKey.TryFindProgramAddress(
+                new List<byte[]>() {
+                    Encoding.UTF8.GetBytes("freeze_escrow"),
+                    destination.KeyBytes,
+                    candyGuardKey.KeyBytes,
+                    candyMachineKey.KeyBytes
+                },
+                CandyMachineCommands.CandyGuardProgramId,
+                out var freezePda,
+                out var _
+            )) {
+                remainingAccounts.Add(AccountMeta.Writable(freezePda, false));
+                remainingAccounts.Add(AccountMeta.ReadOnly(wallet.Account, true));
+                remainingAccounts.Add(AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false));
+                if (mint != null) {
+                    var tokenAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(freezePda, mint);
+                    remainingAccounts.Add(AccountMeta.Writable(tokenAta, false));
+                    remainingAccounts.Add(AccountMeta.ReadOnly(mint, false));
+                    remainingAccounts.Add(AccountMeta.ReadOnly(TokenProgram.ProgramIdKey, false));
+                    remainingAccounts.Add(AccountMeta.ReadOnly(AssociatedTokenAccountProgram.ProgramIdKey, false));
+                    remainingAccounts.Add(AccountMeta.ReadOnly(destination, false));
+                }
+                var routeAccounts = new RouteAccounts() {
+                    CandyGuard = candyGuardKey,
+                    CandyMachine = candyMachineKey,
+                    Payer = wallet.Account
+                };
+                var data = new byte[] { (byte)FreezeInstruction.Initialize };
+                var periodBytes = BitConverter.GetBytes((ulong)period);
+                data = data.Concat(periodBytes).ToArray();
+                var routeInstruction = CandyGuardProgram.Route(
+                    routeAccounts,
+                    new() {
+                        Data = data,
+                        Guard = mint == null ? GuardType.FreezeSolPayment : GuardType.FreezeTokenPayment
+                    },
+                    groupLabel,
+                    CandyMachineCommands.CandyGuardProgramId
+                );
+                routeInstruction = new() {
+                    Data = routeInstruction.Data,
+                    ProgramId = routeInstruction.ProgramId,
+                    Keys = routeInstruction.Keys.Concat(remainingAccounts).ToArray()
+                };
+                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var transaction = new TransactionBuilder()
+                    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                    .SetFeePayer(wallet.Account)
+                    .AddInstruction(routeInstruction)
+                    .Build(wallet.Account);
+                var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+                if (txId.Result == null) 
+                {
+                    Debug.LogError("Freeze failed! Re-run command.");
+                }
+                else 
+                {
+                    Debug.Log("Freeze successful!");
+                }
+            }
+        }
+
+        public static async void Thaw(
+            string keypair,
+            string rpcUrl,
+            PublicKey candyGuardKey,
+            PublicKey candyMachineKey,
+            string groupLabel
+        )
+        {
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            Debug.Log("Loading Freeze guard info...");
+            var (destination, mint) = await GetDestination(candyGuardKey, groupLabel, rpcClient);
+            if (destination == null) 
+            {
+                Debug.LogError("No freeze guard configuration found.");
+                return;
+            }
+            Debug.Log("Freeze guard configuration found!");
+            Debug.Log("Getting freeze escrow account data...");
+            GuardType freezeType;
+            if (mint == null) 
+            {
+                freezeType = GuardType.FreezeSolPayment;
+            }
+            else 
+            {
+                freezeType = GuardType.FreezeTokenPayment;
+            }
+            if (PublicKey.TryFindProgramAddress(
+                new List<byte[]>() {
+                    Encoding.UTF8.GetBytes("freeze_escrow"),
+                    destination.KeyBytes,
+                    candyGuardKey.KeyBytes,
+                    candyMachineKey.KeyBytes
+                },
+                CandyMachineCommands.CandyGuardProgramId,
+                out var freezePda,
+                out var _
+            )) 
+            {
+                var accountData = await rpcClient.GetAccountInfoAsync(freezePda);
+                var freezeEscrowData = accountData.Result.Value.Data;
+                if (freezeEscrowData.Count == 0) 
+                {
+                    Debug.LogError("Freeze escrow not found!");
+                    return;
+                }
+                Debug.Log("Freeze escrow found! Beginning thaw...");
+                Debug.Log("Getting minted NFTs for CandyMachine...");
+                var creator = CandyMachineCommands.GetCandyMachineCreator(candyMachineKey);
+                var metadataKeys = await GetCreatorMetadataAccounts(creator, 0, rpcClient);
+                if (metadataKeys == null || metadataKeys.Count == 0) 
+                {
+                    Debug.LogErrorFormat("No minted NFTs found for CandyMachine {0}", candyMachineKey);
+                    return;
+                }
+                Debug.LogFormat("Found {0} metadata accounts.", metadataKeys.Count);
+                var isErrors = false;
+                foreach (var key in metadataKeys) 
+                {
+                    var largestAccounts = await rpcClient.GetTokenLargestAccountsAsync(key.PublicKey);
+                    var tokenAccounts = largestAccounts.Result.Value.Where(account => account.AmountUlong == 1).ToArray();
+                    if (tokenAccounts.Length != 1) 
+                    {
+                        Debug.LogErrorFormat("Mint account {0} had more than one token account with 1 token.", key.PublicKey);
+                        continue;
+                    }
+                    var tokenAccount = tokenAccounts.First();
+                    var tokenAccountInfo = await rpcClient.GetAccountInfoAsync(tokenAccount.Address);
+                    var splAccountInfo = Programs.Models.TokenProgram.TokenAccount.Deserialize(
+                        Convert.FromBase64String(tokenAccountInfo.Result.Value.Data[0])
+                    );
+                    var owner = splAccountInfo.Owner;
+                    if (splAccountInfo.State == Programs.Models.TokenProgram.TokenAccount.AccountState.Frozen) 
+                    {
+                        var txId = await ThawNft(
+                            wallet.Account,
+                            freezePda,
+                            candyGuardKey,
+                            candyMachineKey,
+                            new(key.PublicKey),
+                            tokenAccount,
+                            owner,
+                            groupLabel,
+                            freezeType,
+                            rpcClient
+                        );
+                        if (txId == null) 
+                        {
+                            Debug.LogError("Thaw failed!");
+                            isErrors = true;
+                        }
+                        else
+                        {
+                            Debug.Log("Thaw successful!");
+                        }
+                    }
+                }
+                if (isErrors) Debug.LogError("Not all thaws were successful, re-run command to continue thaw.");
+            }
+        }
+
+        private static async Task<string> ThawNft(
+            Account payer,
+            PublicKey freezePda,
+            PublicKey candyGuardKey,
+            PublicKey candyMachineKey,
+            PublicKey mint,
+            LargeTokenAccount tokenAccount,
+            PublicKey owner,
+            string guardLabel,
+            GuardType freezeType,
+            IRpcClient rpcClient
+        )
+        {
+            var remainingAccounts = new List<AccountMeta>();
+            remainingAccounts.Add(AccountMeta.Writable(freezePda, false));
+            remainingAccounts.Add(AccountMeta.ReadOnly(mint, false));
+            remainingAccounts.Add(AccountMeta.ReadOnly(owner, false));
+            remainingAccounts.Add(AccountMeta.Writable(new(tokenAccount.Address), false));
+            var masterEdition = PDALookup.FindMasterEditionPDA(mint);
+            remainingAccounts.Add(AccountMeta.ReadOnly(masterEdition, false));
+            remainingAccounts.Add(AccountMeta.ReadOnly(TokenProgram.ProgramIdKey, false));
+            remainingAccounts.Add(AccountMeta.ReadOnly(new(METAPLEX_PROGRAM_ID), false));
+            var routeAccounts = new RouteAccounts() {
+                CandyGuard = candyGuardKey,
+                CandyMachine = candyMachineKey,
+                Payer = payer
+            };
+            var data = new byte[] { (byte)FreezeInstruction.Thaw };
+            var routeInstruction = CandyGuardProgram.Route(
+                routeAccounts,
+                new() {
+                    Data = data,
+                    Guard = freezeType
+                },
+                guardLabel,
+                CandyMachineCommands.CandyGuardProgramId
+            );
+            routeInstruction = new() {
+                Data = routeInstruction.Data,
+                ProgramId = routeInstruction.ProgramId,
+                Keys = routeInstruction.Keys.Concat(remainingAccounts).ToArray()
+            };
+            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(payer)
+                .AddInstruction(routeInstruction)
+                .Build(payer);
+            var txId = await rpcClient.SendTransactionAsync(transaction);
+            return txId.Result;
+        }
+
+        public static async void UnlockFunds(
+            string keypair,
+            string rpcUrl,
+            PublicKey candyGuardKey,
+            PublicKey candyMachineKey,
+            string groupLabel,
+            bool skipPreflight = false
+        )
+        {
+            var keyPairJson = File.ReadAllText(keypair);
+            var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
+            var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
+            var rpcClient = ClientFactory.GetClient(rpcUrl);
+            Debug.Log("Loading Freeze guard info...");
+            var (destination, mint) = await GetDestination(candyGuardKey, groupLabel, rpcClient);
+            if (destination == null) {
+                Debug.LogError("No freeze guard configuration found.");
+                return;
+            }
+            Debug.Log("Freeze guard configuration found!");
+            Debug.Log("Getting freeze escrow account data...");
+            GuardType freezeType;
+            if (mint == null) {
+                freezeType = GuardType.FreezeSolPayment;
+            }
+            else {
+                freezeType = GuardType.FreezeTokenPayment;
+            }
+            if (PublicKey.TryFindProgramAddress(
+                new List<byte[]>() {
+                    Encoding.UTF8.GetBytes("freeze_escrow"),
+                    destination.KeyBytes,
+                    candyGuardKey.KeyBytes,
+                    candyMachineKey.KeyBytes
+                },
+                CandyMachineCommands.CandyGuardProgramId,
+                out var freezePda,
+                out var _
+            )) {
+                var accountData = await rpcClient.GetAccountInfoAsync(freezePda);
+                var freezeEscrowData = accountData.Result.Value.Data;
+                if (freezeEscrowData.Count == 0) {
+                    Debug.LogError("Freeze escrow not found!");
+                    return;
+                }
+                Debug.Log("Freeze escrow found! Unlocking funds...");
+                var remainingAccounts = new List<AccountMeta>();
+                remainingAccounts.Add(AccountMeta.Writable(freezePda, false));
+                remainingAccounts.Add(AccountMeta.ReadOnly(wallet.Account, true));
+
+                switch (freezeType) {
+                    case GuardType.FreezeSolPayment:
+                        remainingAccounts.Add(AccountMeta.Writable(destination, false));
+                        remainingAccounts.Add(AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false));
+                        break;
+                    case GuardType.FreezeTokenPayment:
+                        var destinationAta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(freezePda, mint);
+                        remainingAccounts.Add(AccountMeta.Writable(destinationAta, false));
+                        remainingAccounts.Add(AccountMeta.Writable(destination, false));
+                        remainingAccounts.Add(AccountMeta.ReadOnly(TokenProgram.ProgramIdKey, false));
+                        remainingAccounts.Add(AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false));
+                        break;
+                    default:
+                        Debug.LogError("Invalid freeze type.");
+                        return;
+                }
+
+                var routeAccounts = new RouteAccounts() {
+                    CandyGuard = candyGuardKey,
+                    CandyMachine = candyMachineKey,
+                    Payer = wallet.Account
+                };
+                var data = new byte[] { (byte)FreezeInstruction.UnlockFunds };
+                var routeInstruction = CandyGuardProgram.Route(
+                    routeAccounts,
+                    new() {
+                        Data = data,
+                        Guard = freezeType
+                    },
+                    groupLabel,
+                    CandyMachineCommands.CandyGuardProgramId
+                );
+                routeInstruction = new() {
+                    Data = routeInstruction.Data,
+                    ProgramId = routeInstruction.ProgramId,
+                    Keys = routeInstruction.Keys.Concat(remainingAccounts).ToArray()
+                };
+                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var transaction = new TransactionBuilder()
+                    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                    .SetFeePayer(wallet.Account)
+                    .AddInstruction(routeInstruction)
+                    .Build(wallet.Account);
+                var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+                if (txId.Result == null) 
+                {
+                    Debug.LogError("Unlock failed! Re-run command");
+                }
+                else 
+                {
+                    Debug.Log("Unlock successful!");
+                }
+            }
+        }
+
+        private static async Task<(PublicKey destination, PublicKey mint)> GetDestination(
+            PublicKey candyGuardKey,
+            string groupLabel,
+            IRpcClient rpcClient
+        )
+        {
+            Debug.Log("Getting guard data...");
+            var accountData = await rpcClient.GetAccountInfoAsync(candyGuardKey);
+            Debug.Log("Found guard account!");
+            var guardDataBytes = Convert.FromBase64String(accountData.Result.Value.Data[0]);
+            var guardData = GuardData.Deserialize(guardDataBytes, 0);
+            if (groupLabel == null) 
+            {
+                var freezeSol = guardData.Default.FreezeSolPayment;
+                if (freezeSol != null) 
+                {
+                    return (freezeSol.Destination, null);
+                }
+                var freezeToken = guardData.Default.FreezeTokenPayment;
+                if (freezeToken != null) 
+                {
+                    return (freezeToken.DestinationAta, freezeToken.Mint);
+                }
+            }
+            else if (guardData.Groups != null) 
+            {
+                foreach (var group in guardData.Groups) 
+                {
+                    if (group.Label.Replace("\0", "") == groupLabel)
+                    {
+                        var freezeSol = group.Guards.FreezeSolPayment;
+                        if (freezeSol != null) 
+                        {
+                            return (freezeSol.Destination, null);
+                        }
+                        var freezeToken = group.Guards.FreezeTokenPayment;
+                        if (freezeToken != null) 
+                        {
+                            return (freezeToken.DestinationAta, freezeToken.Mint);
+                        }
+                    }
+                }
+            }
+            return (null, null);
         }
 
         #endregion

@@ -63,7 +63,9 @@ namespace Solana.Unity.SDK.Editor
             ThirdPartySigner = thirdPartySigner.CandyGuardParam,
             TokenBurn = tokenBurn.CandyGuardParam,
             TokenGate = tokenGate.CandyGuardParam,
-            TokenPayment = tokenPayment.CandyGuardParam
+            TokenPayment = tokenPayment.CandyGuardParam,
+            FreezeSolPayment = freezeSolPayment.CandyGuardParam,
+            FreezeTokenPayment = freezeTokenPayment.CandyGuardParam
         };
 
         #endregion
@@ -117,6 +119,12 @@ namespace Solana.Unity.SDK.Editor
 
         [SerializeField, JsonProperty]
         private TokenPaymentGuard tokenPayment;
+
+        [SerializeField, JsonProperty]
+        private FreezeSolPaymentGuard freezeSolPayment;
+
+        [SerializeField, JsonProperty]
+        private FreezeTokenPaymentGuard freezeTokenPayment;
 
         #endregion
 
@@ -192,7 +200,9 @@ namespace Solana.Unity.SDK.Editor
                 NftBurn = nftBurn.GetMintSettings(tokenAccounts),
                 TokenBurn = tokenBurn.GetMintSettings(),
                 TokenGate = tokenGate.GetMintSettings(),
-                TokenPayment = tokenPayment.GetMintSettings()
+                TokenPayment = tokenPayment.GetMintSettings(),
+                FreezeSolPayment = freezeSolPayment.GetMintSettings(),
+                FreezeTokenPayment = freezeTokenPayment.GetMintSettings()
             };
         }
 
