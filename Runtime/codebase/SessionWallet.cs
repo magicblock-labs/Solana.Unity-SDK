@@ -68,11 +68,11 @@ namespace Solana.Unity.SDK
             string customRpcUri = null, string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false)
         {
-            Debug.Log("Found Session Wallet");
             SessionWallet sessionWallet = new SessionWallet(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             sessionWallet.TargetProgram = targetProgram;
             if (HasSessionWallet())
             {
+                Debug.Log("Found Session Wallet");
                 sessionWallet.Account = await sessionWallet.Login(password);
                 sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
 
@@ -90,6 +90,7 @@ namespace Solana.Unity.SDK
                 else
                 {
                     Debug.Log("Session Token is invalid");
+                    await sessionWallet.PrepareLogout();
                     sessionWallet.Logout();
                     return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
                 }
@@ -127,9 +128,8 @@ namespace Solana.Unity.SDK
             return Task.FromResult(account);
         }
 
-        /// <inheritdoc />
-        public override async void Logout()
-        {
+        public async Task PrepareLogout(){
+            Debug.Log("Preparing Logout");
             // Revoke Session
             var tx = new Transaction()
             {
@@ -139,10 +139,10 @@ namespace Solana.Unity.SDK
             };
 
             // Get balance and calculate refund
-            var balance = await GetBalance(Account.PublicKey);
+            var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
             var estimatedFees = await ActiveRpcClient.GetFeeCalculatorForBlockhashAsync(tx.RecentBlockHash);
-            //var refund = balance - (estimatedFees.LamportsPerSignature * 2);
-            var refund = balance - 1000000;
+            var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1);
+            Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
 
             tx.Add(RevokeSessionIX());
             // Issue Refund
@@ -150,7 +150,6 @@ namespace Solana.Unity.SDK
             await SignAndSendTransaction(tx);
             // Purge Keystore
             PlayerPrefs.DeleteKey(EncryptedKeystoreKey);
-            base.Logout();
         }
 
         /// <inheritdoc />
@@ -220,7 +219,8 @@ namespace Solana.Unity.SDK
             RevokeSessionAccounts revokeSessionAccounts = new RevokeSessionAccounts()
             {
                 SessionToken = SessionTokenPDA,
-                Authority = Account,
+                // Only the authority of the session token can receive the refund
+                Authority = Web3.Account,
                 SystemProgram = SystemProgram.ProgramIdKey,
             };
 
