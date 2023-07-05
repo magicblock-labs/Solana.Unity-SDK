@@ -284,10 +284,10 @@ namespace Solana.Unity.SDK
         public async Task<string> GetBlockHash(
             Commitment commitment = Commitment.Finalized,
             bool useCache = true,
-            int maxSeconds = 15)
+            int maxSeconds = 0)
         {
             if(ActiveRpcClient == null) return null;
-            if (useCache)
+            if (useCache && maxSeconds > 0)
             {
                 var exists = _commitmentCache.TryGetValue(commitment.ToString(), out var cacheEntry);
                 switch (exists)
