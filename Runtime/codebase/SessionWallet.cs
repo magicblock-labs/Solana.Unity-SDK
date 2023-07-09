@@ -128,7 +128,13 @@ namespace Solana.Unity.SDK
             return Task.FromResult(account);
         }
 
-        public async Task PrepareLogout(){
+        /// <summary>
+        /// Prepares the session wallet for logout by revoking the session, issuing a refund, and purging the keystore.
+        /// NOTE: You must call PrepareLogout before calling Logout to ensure that the session token account is revoked and the refund is issued.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task PrepareLogout()
+        {
             Debug.Log("Preparing Logout");
             // Revoke Session
             var tx = new Transaction()
