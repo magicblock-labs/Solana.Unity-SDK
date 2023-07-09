@@ -108,7 +108,7 @@ namespace Solana.Unity.SDK
             byte[] decryptedKeystore;
             try
             {
-                if (string.IsNullOrEmpty(encryptedKeystoreJson))
+                if (string.IsNullOrEmpty(encryptedKeystoreJson) || string.IsNullOrEmpty(password))
                     return Task.FromResult<Account>(null);
                 decryptedKeystore = keystoreService.DecryptKeyStoreFromJson(password, encryptedKeystoreJson);
             }
