@@ -77,13 +77,15 @@ namespace Solana.Unity.SDK
                 sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
 
                 // If it is not uninitialized, return the session wallet
-                if(!(await sessionWallet.IsSessionTokenInitialized())) {
+                if (!(await sessionWallet.IsSessionTokenInitialized()))
+                {
                     Debug.Log("Session Token is not initialized");
                     return sessionWallet;
                 }
 
                 // Otherwise check for a valid session token
-                if ((await sessionWallet.IsSessionTokenValid())) {
+                if ((await sessionWallet.IsSessionTokenValid()))
+                {
                     Debug.Log("Session Token is valid");
                     return sessionWallet;
                 }
@@ -95,7 +97,7 @@ namespace Solana.Unity.SDK
                     return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
                 }
             }
-            sessionWallet.Account = await sessionWallet.CreateAccount(password:password);
+            sessionWallet.Account = await sessionWallet.CreateAccount(password: password);
             sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
             return sessionWallet;
         }
