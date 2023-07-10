@@ -287,19 +287,21 @@ namespace Solana.Unity.SDK
             int maxSeconds = 0)
         {
             if(ActiveRpcClient == null) return null;
+            var exists = _commitmentCache.TryGetValue(commitment.ToString(), out var cacheEntry);
             if (useCache && maxSeconds > 0)
             {
-                var exists = _commitmentCache.TryGetValue(commitment.ToString(), out var cacheEntry);
                 switch (exists)
                 {
                     case true when (DateTime.Now - cacheEntry.Item1).TotalSeconds < maxSeconds:
                         return cacheEntry.Item2;
                     case true:
                         _commitmentCache.Remove(commitment.ToString());
+                        exists = false;
                         break;
                 }
             }
             var blockhash = (await ActiveRpcClient.GetRecentBlockHashAsync()).Result?.Value?.Blockhash;
+            if(exists) _commitmentCache.Remove(commitment.ToString());
             if(blockhash != null)_commitmentCache.Add(commitment.ToString(), (DateTime.Now, blockhash));
             return blockhash;
         }
