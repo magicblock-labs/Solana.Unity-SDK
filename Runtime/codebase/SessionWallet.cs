@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 using Solana.Unity.KeyStore.Exceptions;
 using Solana.Unity.KeyStore.Services;
 using Solana.Unity.Rpc.Models;
@@ -71,6 +72,7 @@ namespace Solana.Unity.SDK
             SessionWallet sessionWallet = new SessionWallet(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             sessionWallet.TargetProgram = targetProgram;
             sessionWallet.EncryptedKeystoreKey = $"{Web3.Account.PublicKey}_SessionKeyStore";
+            password = deriveSessionPassword(password);
             if (sessionWallet.HasSessionWallet())
             {
                 Debug.Log("Found Session Wallet");
@@ -257,6 +259,16 @@ namespace Solana.Unity.SDK
             var sessionTokenData = (await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA)).Result.Value.Data[0];
             if (sessionTokenData == null) return false;
             return SessionToken.Deserialize(Convert.FromBase64String(sessionTokenData)).ValidUntil > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
+
+        private static string deriveSessionPassword(string password) {
+            string rawData = Web3.Account.PublicKey.Key + password + Application.platform;
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                // ComputeHash - returns byte array
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+                return Encoding.UTF8.GetString(bytes);
+            }
         }
 
     }
