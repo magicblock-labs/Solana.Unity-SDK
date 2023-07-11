@@ -20,7 +20,7 @@ namespace Solana.Unity.SDK
 {
     public class SessionWallet : InGameWallet
     {
-        private const string EncryptedKeystoreKey = "SessionKeystore";
+        private string EncryptedKeystoreKey { get; set; }
 
         public PublicKey TargetProgram { get; protected set; }
         public PublicKey SessionTokenPDA { get; protected set; }
@@ -35,7 +35,7 @@ namespace Solana.Unity.SDK
         /// Checks if a session wallet exists by checking if the encrypted keystore key is present in the player preferences.
         /// </summary>
         /// <returns>True if a session wallet exists, false otherwise.</returns>
-        public static bool HasSessionWallet()
+        public bool HasSessionWallet()
         {
             var prefs = LoadPlayerPrefs(EncryptedKeystoreKey);
             return !string.IsNullOrEmpty(prefs);
@@ -70,7 +70,8 @@ namespace Solana.Unity.SDK
         {
             SessionWallet sessionWallet = new SessionWallet(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             sessionWallet.TargetProgram = targetProgram;
-            if (HasSessionWallet())
+            sessionWallet.EncryptedKeystoreKey = $"{Web3.Account.PublicKey}_SessionKeyStore";
+            if (sessionWallet.HasSessionWallet())
             {
                 Debug.Log("Found Session Wallet");
                 sessionWallet.Account = await sessionWallet.Login(password);
