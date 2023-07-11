@@ -77,13 +77,15 @@ namespace Solana.Unity.SDK
                 sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
 
                 // If it is not uninitialized, return the session wallet
-                if(!(await sessionWallet.IsSessionTokenInitialized())) {
+                if (!(await sessionWallet.IsSessionTokenInitialized()))
+                {
                     Debug.Log("Session Token is not initialized");
                     return sessionWallet;
                 }
 
                 // Otherwise check for a valid session token
-                if ((await sessionWallet.IsSessionTokenValid())) {
+                if ((await sessionWallet.IsSessionTokenValid()))
+                {
                     Debug.Log("Session Token is valid");
                     return sessionWallet;
                 }
@@ -95,7 +97,7 @@ namespace Solana.Unity.SDK
                     return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
                 }
             }
-            sessionWallet.Account = await sessionWallet.CreateAccount(password:password);
+            sessionWallet.Account = await sessionWallet.CreateAccount(password: password);
             sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
             return sessionWallet;
         }
@@ -108,7 +110,7 @@ namespace Solana.Unity.SDK
             byte[] decryptedKeystore;
             try
             {
-                if (string.IsNullOrEmpty(encryptedKeystoreJson))
+                if (string.IsNullOrEmpty(encryptedKeystoreJson) || string.IsNullOrEmpty(password))
                     return Task.FromResult<Account>(null);
                 decryptedKeystore = keystoreService.DecryptKeyStoreFromJson(password, encryptedKeystoreJson);
             }
@@ -128,7 +130,13 @@ namespace Solana.Unity.SDK
             return Task.FromResult(account);
         }
 
-        public async Task PrepareLogout(){
+        /// <summary>
+        /// Prepares the session wallet for logout by revoking the session, issuing a refund, and purging the keystore.
+        /// NOTE: You must call PrepareLogout before calling Logout to ensure that the session token account is revoked and the refund is issued.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task PrepareLogout()
+        {
             Debug.Log("Preparing Logout");
             // Revoke Session
             var tx = new Transaction()
