@@ -1,16 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
-using Solana.Unity.KeyStore.Exceptions;
-using Solana.Unity.KeyStore.Services;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Programs;
-using Solana.Unity.Wallet.Bip39;
-using Solana.Unity.Gum.GplSession;
 using Solana.Unity.Gum.GplSession.Accounts;
 using Solana.Unity.Gum.GplSession.Program;
 using UnityEngine;
@@ -21,15 +16,23 @@ namespace Solana.Unity.SDK
 {
     public class SessionWallet : InGameWallet
     {
-        private string EncryptedKeystoreKey { get; set; }
-
         public PublicKey TargetProgram { get; protected set; }
         public PublicKey SessionTokenPDA { get; protected set; }
+        
+        public static SessionWallet Instance;
 
-        public SessionWallet(RpcCluster rpcCluster = RpcCluster.DevNet,
+        private SessionWallet(RpcCluster rpcCluster = RpcCluster.DevNet,
             string customRpcUri = null, string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                throw new Exception("SessionWallet already exists");
+            }
         }
 
         /// <summary>
@@ -69,133 +72,51 @@ namespace Solana.Unity.SDK
             string customRpcUri = null, string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false)
         {
+            if(Instance != null) return Instance;
             SessionWallet sessionWallet = new SessionWallet(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             sessionWallet.TargetProgram = targetProgram;
             sessionWallet.EncryptedKeystoreKey = $"{Web3.Account.PublicKey}_SessionKeyStore";
-            password = deriveSessionPassword(password);
+            var derivedPassword = DeriveSessionPassword(password);
+
             if (sessionWallet.HasSessionWallet())
             {
                 Debug.Log("Found Session Wallet");
-                sessionWallet.Account = await sessionWallet.Login(password);
+                sessionWallet.Account = await sessionWallet.Login(derivedPassword);
+                if (sessionWallet.Account == null)
+                {
+                    Debug.Log("Session Token is corrupted, deleting and creating a new one");
+                    sessionWallet.DeleteSessionWallet();
+                    sessionWallet.Logout();
+                    return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+                }
+                
                 sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
+                
+                Debug.Log(sessionWallet.SessionTokenPDA);
 
-                // If it is not uninitialized, return the session wallet
-                if (!(await sessionWallet.IsSessionTokenInitialized()))
+                if (!await sessionWallet.IsSessionTokenInitialized())
                 {
                     Debug.Log("Session Token is not initialized");
                     return sessionWallet;
                 }
 
-                // Otherwise check for a valid session token
-                if ((await sessionWallet.IsSessionTokenValid()))
+                if (await sessionWallet.IsSessionTokenValid())
                 {
                     Debug.Log("Session Token is valid");
                     return sessionWallet;
                 }
-                else
-                {
-                    Debug.Log("Session Token is invalid");
-                    await sessionWallet.PrepareLogout();
-                    sessionWallet.Logout();
-                    return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
-                }
+
+                Debug.Log("Session Token is invalid");
+                await sessionWallet.PrepareLogout();
+                sessionWallet.Logout();
+                return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             }
-            sessionWallet.Account = await sessionWallet.CreateAccount(password: password);
+
+            sessionWallet.Account = await sessionWallet.CreateAccount(password: derivedPassword);
             sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
             return sessionWallet;
         }
-
-        /// <inheritdoc />
-        protected override Task<Account> _Login(string password = "")
-        {
-            var keystoreService = new KeyStorePbkdf2Service();
-            var encryptedKeystoreJson = LoadPlayerPrefs(EncryptedKeystoreKey);
-            byte[] decryptedKeystore;
-            try
-            {
-                if (string.IsNullOrEmpty(encryptedKeystoreJson) || string.IsNullOrEmpty(password))
-                    return Task.FromResult<Account>(null);
-                decryptedKeystore = keystoreService.DecryptKeyStoreFromJson(password, encryptedKeystoreJson);
-            }
-            catch (DecryptionException e)
-            {
-                Debug.LogException(e);
-                return Task.FromResult<Account>(null);
-            }
-
-            var secret = Encoding.UTF8.GetString(decryptedKeystore);
-            var account = FromSecret(secret);
-            if (IsMnemonic(secret))
-            {
-                var restoredMnemonic = new Mnemonic(secret);
-                Mnemonic = restoredMnemonic;
-            }
-            return Task.FromResult(account);
-        }
-
-        /// <summary>
-        /// Prepares the session wallet for logout by revoking the session, issuing a refund, and purging the keystore.
-        /// NOTE: You must call PrepareLogout before calling Logout to ensure that the session token account is revoked and the refund is issued.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        public async Task PrepareLogout()
-        {
-            Debug.Log("Preparing Logout");
-            // Revoke Session
-            var tx = new Transaction()
-            {
-                FeePayer = Account,
-                Instructions = new List<TransactionInstruction>(),
-                RecentBlockHash = await Web3.BlockHash()
-            };
-
-            // Get balance and calculate refund
-            var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
-            var estimatedFees = await ActiveRpcClient.GetFeeCalculatorForBlockhashAsync(tx.RecentBlockHash);
-            var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1);
-            Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
-
-            tx.Add(RevokeSessionIX());
-            // Issue Refund
-            tx.Add(SystemProgram.Transfer(Account.PublicKey, Web3.Account.PublicKey, (ulong)refund));
-            await SignAndSendTransaction(tx);
-            // Purge Keystore
-            PlayerPrefs.DeleteKey(EncryptedKeystoreKey);
-        }
-
-        /// <inheritdoc />
-        protected override Task<Account> _CreateAccount(string secret = null, string password = null)
-        {
-            Account account;
-            Mnemonic mnem = null;
-            if (secret != null)
-            {
-                account = FromSecret(secret);
-                if (IsMnemonic(secret))
-                {
-                    mnem = new Mnemonic(secret);
-                }
-            }
-            else
-            {
-                mnem = new Mnemonic(WordList.English, WordCount.Twelve);
-                var wallet = new Wallet.Wallet(mnem);
-                account = wallet.Account;
-                secret = mnem.ToString();
-            }
-            if (account == null) return Task.FromResult<Account>(null);
-
-            password ??= "";
-
-            var keystoreService = new KeyStorePbkdf2Service();
-            var stringByteArray = Encoding.UTF8.GetBytes(secret);
-            var encryptedKeystoreJson = keystoreService.EncryptAndGenerateKeyStoreAsJson(
-                password, stringByteArray, account.PublicKey.Key);
-
-            SavePlayerPrefs(EncryptedKeystoreKey, encryptedKeystoreJson);
-            Mnemonic = mnem;
-            return Task.FromResult(account);
-        }
+        
 
         /// <summary>
         /// Creates a transaction instruction to create a new session token account and initialize it with the provided session signer and target program.
@@ -261,15 +182,50 @@ namespace Solana.Unity.SDK
             return SessionToken.Deserialize(Convert.FromBase64String(sessionTokenData)).ValidUntil > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
 
-        private static string deriveSessionPassword(string password) {
-            string rawData = Web3.Account.PublicKey.Key + password + Application.platform;
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                // ComputeHash - returns byte array
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-                return Encoding.UTF8.GetString(bytes);
-            }
+        private static string DeriveSessionPassword(string password) {
+            var rawData = Web3.Account.PublicKey.Key + password + Application.platform;
+            using SHA256 sha256Hash = SHA256.Create();
+            // ComputeHash - returns byte array
+            var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+            return Encoding.UTF8.GetString(bytes);
         }
 
+
+        private void DeleteSessionWallet()
+        {
+            // Purge Keystore
+            PlayerPrefs.DeleteKey(EncryptedKeystoreKey);
+            PlayerPrefs.Save();
+        }
+        
+        
+        /// <summary>
+        /// Prepares the session wallet for logout by revoking the session, issuing a refund, and purging the keystore.
+        /// NOTE: You must call PrepareLogout before calling Logout to ensure that the session token account is revoked and the refund is issued.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task PrepareLogout()
+        {
+            Debug.Log("Preparing Logout");
+            // Revoke Session
+            var tx = new Transaction()
+            {
+                FeePayer = Account,
+                Instructions = new List<TransactionInstruction>(),
+                RecentBlockHash = await Web3.BlockHash()
+            };
+
+            // Get balance and calculate refund
+            var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
+            var estimatedFees = await ActiveRpcClient.GetFeeCalculatorForBlockhashAsync(tx.RecentBlockHash);
+            var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1);
+            Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
+
+            tx.Add(RevokeSessionIX());
+            // Issue Refund
+            tx.Add(SystemProgram.Transfer(Account.PublicKey, Web3.Account.PublicKey, (ulong)refund));
+            await SignAndSendTransaction(tx);
+            DeleteSessionWallet();
+        }
     }
 }
