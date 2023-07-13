@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Solana.Unity.KeyStore.Exceptions;
+using Solana.Unity.KeyStore.Model;
 using Solana.Unity.KeyStore.Services;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
@@ -15,7 +17,7 @@ namespace Solana.Unity.SDK
 {
     public class InGameWallet : WalletBase
     {
-        private const string EncryptedKeystoreKey = "EncryptedKeystore";
+        protected string EncryptedKeystoreKey = "EncryptedKeystore";
 
         public InGameWallet(RpcCluster rpcCluster = RpcCluster.DevNet,
             string customRpcUri = null, string customStreamingRpcUri = null,
@@ -68,20 +70,32 @@ namespace Solana.Unity.SDK
                 mnem = new Mnemonic(WordList.English, WordCount.Twelve);
                 var wallet = new Wallet.Wallet(mnem);
                 account = wallet.Account;
-                secret = mnem.ToString();
             }
             if(account == null) return Task.FromResult<Account>(null);
+            
+            MainThreadDispatcher.Instance().Enqueue(SaveEncryptedAccount(password, mnem, account.PublicKey));
 
-            password ??= "";
-
-            var keystoreService = new KeyStorePbkdf2Service();
-            var stringByteArray = Encoding.UTF8.GetBytes(secret);
-            var encryptedKeystoreJson = keystoreService.EncryptAndGenerateKeyStoreAsJson(
-                password, stringByteArray, account.PublicKey.Key);
-
-            SavePlayerPrefs(EncryptedKeystoreKey, encryptedKeystoreJson);
             Mnemonic = mnem;
             return Task.FromResult(account);
+        }
+
+
+        private IEnumerator SaveEncryptedAccount(string password, Mnemonic mnemonic, PublicKey account)
+        {
+            yield return new WaitForSeconds(.1f);
+            password ??= "";
+            var secret = mnemonic.ToString();
+            
+            var keystoreService = new KeyStorePbkdf2Service();
+            var stringByteArray = Encoding.UTF8.GetBytes(secret);
+            var pbkdf2Params = new Pbkdf2Params()
+            {
+                Dklen = 32, Count = 10000, Prf = "hmac-sha256"
+            };
+            var encryptedKeystoreJson = keystoreService.EncryptAndGenerateKeyStoreAsJson(
+                password, stringByteArray, account.Key, pbkdf2Params);
+
+            SavePlayerPrefs(EncryptedKeystoreKey, encryptedKeystoreJson);
         }
 
         /// <inheritdoc />
