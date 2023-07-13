@@ -73,18 +73,18 @@ namespace Solana.Unity.SDK
             }
             if(account == null) return Task.FromResult<Account>(null);
             
-            MainThreadDispatcher.Instance().Enqueue(SaveEncryptedAccount(password, mnem, account.PublicKey));
+            MainThreadDispatcher.Instance().Enqueue(SaveEncryptedAccount(password,
+                mnem != null ? mnem.ToString() : secret, account.PublicKey));
 
             Mnemonic = mnem;
             return Task.FromResult(account);
         }
 
 
-        private IEnumerator SaveEncryptedAccount(string password, Mnemonic mnemonic, PublicKey account)
+        private IEnumerator SaveEncryptedAccount(string password, string secret, PublicKey account)
         {
             yield return new WaitForSeconds(.1f);
             password ??= "";
-            var secret = mnemonic.ToString();
             
             var keystoreService = new KeyStorePbkdf2Service();
             var stringByteArray = Encoding.UTF8.GetBytes(secret);
