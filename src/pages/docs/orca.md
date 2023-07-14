@@ -77,36 +77,41 @@ An example of adding 5 ORCA and 5 USDC to the liquidity of the pool, minting a m
 
 ```csharp
 OrcaDex dex = new OrcaDex(
-    WalletH.Account, 
-    WalletH.Rpc
+    Web3.Account, 
+    Web3.Rpc
 );
 
 var orcaToken = await dex.GetTokenBySymbol("ORCA");
 var usdcToken = await dex.GetTokenBySymbol("USDC");
 
+Debug.Log($"Token A: {orcaToken}");
+Debug.Log($"Token A: {usdcToken}");
+
 var whirlpool = await dex.FindWhirlpoolAddress(
-  usdcToken.MintAddress, 
-  orcaToken.MintAddress
+    usdcToken.MintAddress, 
+    orcaToken.MintAddress
 );
+
+Debug.Log($"Whirlpool: {whirlpool.Address}");
 
 Account mint = new Account();
 
 Transaction tx = await dex.OpenPositionWithLiquidity(
-    whirlpool,
+    whirlpool.Address,
     mint,
-    -1792,
-    1152,
-    DecimalUtil.ToUlong(5, tokenA.Decimals),
-    DecimalUtil.ToUlong(5, tokenB.Decimals),
+    -3712,
+    -256,
+    DecimalUtil.ToUlong(0.5, orcaToken.Decimals),
+    DecimalUtil.ToUlong(0.9, usdcToken.Decimals),
+    withMetadata: true,
     commitment: Commitment.Confirmed
 );
 
-var txSer = tx.Build(new List<Account>() {
-  WalletH.Account, 
-  mint
-});
+tx.PartialSign(Web3.Account);
+tx.PartialSign(mint);
 
-await WalletH.Base.SignAndSendTransaction(tx);
+var res = await Web3.Wallet.SignAndSendTransaction(tx, commitment: Commitment.Confirmed);
+Debug.Log(res.Result);
 ```
 
 
