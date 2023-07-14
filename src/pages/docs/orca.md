@@ -19,8 +19,8 @@ Orca is the easiest place to trade cryptocurrency on the Solana blockchain. For 
 
 ```csharp
 IDex dex = new OrcaDex(
-    WalletH.Account, 
-    WalletH.Rpc
+    Web3.Account, 
+    Web3.Rpc
 )
 ```
 
@@ -65,7 +65,7 @@ Transaction tx = await dex.SwapWithQuote(
 - Sign and send the swap transaction:
 
 ```csharp
-await WalletH.Base.SignAndSendTransaction(tx);
+await Webs.Wallet.SignAndSendTransaction(tx);
 ```
 
 
