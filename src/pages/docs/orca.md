@@ -103,6 +103,7 @@ Transaction tx = await dex.OpenPositionWithLiquidity(
     -256,
     DecimalUtil.ToUlong(0.5, orcaToken.Decimals),
     DecimalUtil.ToUlong(0.9, usdcToken.Decimals),
+    slippageTolerance: 0.3,
     withMetadata: true,
     commitment: Commitment.Confirmed
 );
