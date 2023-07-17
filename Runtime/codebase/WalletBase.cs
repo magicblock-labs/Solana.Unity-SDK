@@ -282,7 +282,7 @@ namespace Solana.Unity.SDK
         /// <param name="maxSeconds"></param>
         /// <returns></returns>
         public async Task<string> GetBlockHash(
-            Commitment commitment = Commitment.Finalized,
+            Commitment commitment = Commitment.Confirmed,
             bool useCache = true,
             int maxSeconds = 0)
         {
@@ -300,9 +300,9 @@ namespace Solana.Unity.SDK
                         break;
                 }
             }
-            var blockhash = (await ActiveRpcClient.GetRecentBlockHashAsync()).Result?.Value?.Blockhash;
+            var blockhash = (await ActiveRpcClient.GetRecentBlockHashAsync(commitment)).Result?.Value?.Blockhash;
             if(exists) _commitmentCache.Remove(commitment.ToString());
-            if(blockhash != null)_commitmentCache.Add(commitment.ToString(), (DateTime.Now, blockhash));
+            if(blockhash != null && useCache)_commitmentCache.Add(commitment.ToString(), (DateTime.Now, blockhash));
             return blockhash;
         }
 

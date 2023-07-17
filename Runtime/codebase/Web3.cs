@@ -279,9 +279,9 @@ namespace Solana.Unity.SDK
         /// https://docs.solana.com/developing/transaction_confirmation#how-does-transaction-expiration-work</param>
         /// <returns></returns>
         public static Task<string> BlockHash(
-            Commitment commitment = Commitment.Finalized,
+            Commitment commitment = Commitment.Confirmed,
             bool useCache = true,
-            int maxSeconds = 15) =>
+            int maxSeconds = 0) =>
             Instance != null ? Instance.WalletBase.GetBlockHash(commitment, useCache, maxSeconds) : null;
 
         
