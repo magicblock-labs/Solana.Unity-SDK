@@ -300,7 +300,7 @@ namespace Solana.Unity.SDK
                         break;
                 }
             }
-            var blockhash = (await ActiveRpcClient.GetRecentBlockHashAsync(commitment)).Result?.Value?.Blockhash;
+            var blockhash = (await ActiveRpcClient.GetLatestBlockHashAsync(commitment)).Result?.Value?.Blockhash;
             if(exists) _commitmentCache.Remove(commitment.ToString());
             if(blockhash != null && useCache)_commitmentCache.Add(commitment.ToString(), (DateTime.Now, blockhash));
             return blockhash;
