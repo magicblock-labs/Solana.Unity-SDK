@@ -99,6 +99,7 @@ namespace Solana.Unity.SDK
         
         private static List<Nft.Nft> _nfts = new();
         private static bool _isLoadingNfts;
+        public static int NftLoadingRequestsDelay { get; set; } = 0;
 
         public delegate void NFTsUpdate(List<Nft.Nft> nfts, int total);
         private static event NFTsUpdate OnNFTsUpdateInternal;
@@ -372,7 +373,7 @@ namespace Solana.Unity.SDK
                     if (Application.platform == RuntimePlatform.WebGLPlayer)
                     {
                         // If we are on WebGL, we need to add a min delay between requests
-                        requestsMillisecondsDelay = Mathf.Max(requestsMillisecondsDelay, 100);
+                        requestsMillisecondsDelay = Mathf.Max(requestsMillisecondsDelay, 100, NftLoadingRequestsDelay);
                     }
                     if (requestsMillisecondsDelay > 0) await UniTask.Delay(requestsMillisecondsDelay);
 
@@ -395,7 +396,7 @@ namespace Solana.Unity.SDK
             _nfts = nfts;
             return nfts;
         }
-        
+
         private static async UniTask SubscribeToWalletEvents(Commitment commitment = Commitment.Confirmed)
         {
             if(WsRpc == null) return;
