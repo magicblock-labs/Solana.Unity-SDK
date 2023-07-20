@@ -18,7 +18,7 @@ namespace Solana.Unity.SDK
     {
         public PublicKey TargetProgram { get; protected set; }
         public PublicKey SessionTokenPDA { get; protected set; }
-        
+
         public static SessionWallet Instance;
 
         private SessionWallet(RpcCluster rpcCluster = RpcCluster.DevNet,
@@ -89,9 +89,9 @@ namespace Solana.Unity.SDK
                     sessionWallet.Logout();
                     return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
                 }
-                
+
                 sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
-                
+
                 Debug.Log(sessionWallet.SessionTokenPDA);
 
                 if (!await sessionWallet.IsSessionTokenInitialized())
@@ -116,7 +116,7 @@ namespace Solana.Unity.SDK
             sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
             return sessionWallet;
         }
-        
+
 
         /// <summary>
         /// Creates a transaction instruction to create a new session token account and initialize it with the provided session signer and target program.
@@ -197,8 +197,8 @@ namespace Solana.Unity.SDK
             PlayerPrefs.DeleteKey(EncryptedKeystoreKey);
             PlayerPrefs.Save();
         }
-        
-        
+
+
         /// <summary>
         /// Prepares the session wallet for logout by revoking the session, issuing a refund, and purging the keystore.
         /// NOTE: You must call PrepareLogout before calling Logout to ensure that the session token account is revoked and the refund is issued.
@@ -217,7 +217,7 @@ namespace Solana.Unity.SDK
 
             // Get balance and calculate refund
             var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
-            var estimatedFees = await ActiveRpcClient.GetFeeCalculatorForBlockhashAsync(tx.RecentBlockHash);
+            var estimatedFees = await ActiveRpcClient.GetFeesAsync();
             var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1);
             Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
 
