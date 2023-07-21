@@ -71,7 +71,7 @@ mergeInto(LibraryManager.library, {
                  if(walletName === 'XNFT'){  
                   const messageBytes = Uint8Array.from(atob(base64Message), (c) => c.charCodeAt(0));
                   const signedMessage = await window.xnft.solana.signMessage(messageBytes);
-                  signatureStr = signedMessage.toString('base64');
+                  signatureStr = btoa(String.fromCharCode(...signedMessage));
                 } else {
                     var signature = await window.walletAdapterLib.signMessage(walletName, atob(base64Message));
                     signatureStr =  signature.toString('base64');
