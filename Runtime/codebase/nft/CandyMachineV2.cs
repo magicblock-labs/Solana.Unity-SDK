@@ -770,7 +770,7 @@ namespace CandyMachineV2
 
             var candyMachineInstruction = CandyMachineProgram.MintNft(mintNftAccounts, creatorBump);
 
-            var blockHash = await rpc.GetRecentBlockHashAsync();
+            var blockHash = await rpc.GetLatestBlockHashAsync();
             var minimumRent = await rpc.GetMinimumBalanceForRentExemptionAsync(TokenProgram.MintAccountDataSize);
 
             var transaction = new TransactionBuilder()
