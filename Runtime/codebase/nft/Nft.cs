@@ -107,6 +107,11 @@ namespace Solana.Unity.SDK.Nft
             if (metaplexData.nftImage != null) return;
             var nftImage = new NftImage();
             var texture = await FileLoader.LoadFile<Texture2D>(metaplexData.data.offchainData.default_image);
+            if (texture == null)
+            {
+                Debug.LogWarning($"Unable to load: {metaplexData?.data?.offchainData?.default_image}");
+                return;
+            }
             var compressedTexture = FileLoader.Resize(texture, imageHeightAndWidth, imageHeightAndWidth);
             if (compressedTexture)
             {

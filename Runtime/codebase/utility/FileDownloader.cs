@@ -75,16 +75,23 @@ namespace Solana.Unity.SDK.Utility
 
             if (typeof(T) == typeof(Texture2D))
             {
-                if (path.ToLower().EndsWith(".gif") || path.ToLower().EndsWith("ext=gif"))
+                try
                 {
-                    return await LoadGif<T>(path);
+                    if (path.ToLower().EndsWith(".gif") || path.ToLower().EndsWith("ext=gif"))
+                    {
+                        return await LoadGif<T>(path);
+                    }
+                    else
+                    {
+                        return await LoadTexture<T>(path);
+                    }
                 }
-                else
+                catch (UnityWebRequestException)
                 {
-                    return await LoadTexture<T>(path);
+                    return default;
                 }
             }
-            throw new NotImplementedException();
+            return default;
         }
 
         private static async Task<T> LoadTexture<T>(string filePath, CancellationToken token = default)

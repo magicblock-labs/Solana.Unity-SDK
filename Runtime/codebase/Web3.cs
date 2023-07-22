@@ -97,7 +97,7 @@ namespace Solana.Unity.SDK
             remove => OnBalanceChangeInternal -= value;
         }
         
-        private static List<Nft.Nft> _nfts = new();
+        private static List<Nft.Nft> _nfts;
         private static bool _isLoadingNfts;
         public static int NftLoadingRequestsDelay { get; set; } = 0;
 
@@ -109,7 +109,7 @@ namespace Solana.Unity.SDK
             {
                 OnNFTsUpdateInternal += value;
                 if(Wallet == null) return;
-                OnNFTsUpdateInternal?.Invoke(_nfts, _nfts.Count);
+                if(_nfts != null) OnNFTsUpdateInternal?.Invoke(_nfts, _nfts.Count);
                 if(AutoLoadNfts) UpdateNFTs().Forget();
             }
             remove => OnNFTsUpdateInternal -= value;
@@ -337,6 +337,7 @@ namespace Solana.Unity.SDK
             
             // Remove tokens not owned anymore
             var tkToRemove = new List<Nft.Nft>();
+            _nfts ??= new List<Nft.Nft>();
             _nfts.ForEach(tk =>
             {
                 var match = tokens.Where(t =>
