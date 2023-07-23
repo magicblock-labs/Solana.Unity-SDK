@@ -108,14 +108,14 @@ namespace Solana.Unity.SDK
         protected abstract Task<Account> _CreateAccount(string mnemonic = null, string password = null);
 
         /// <inheritdoc />
-        public async Task<double> GetBalance(PublicKey publicKey, Commitment commitment = Commitment.Finalized)
+        public async Task<double> GetBalance(PublicKey publicKey, Commitment commitment = Commitment.Confirmed)
         {
             var balance= await ActiveRpcClient.GetBalanceAsync(publicKey, commitment);
             return (double)(balance.Result?.Value ?? 0) / SolLamports;
         }
 
         /// <inheritdoc />
-        public async Task<double> GetBalance(Commitment commitment = Commitment.Finalized)
+        public async Task<double> GetBalance(Commitment commitment = Commitment.Confirmed)
         {
             return await GetBalance(Account.PublicKey, commitment);
         }
@@ -125,7 +125,7 @@ namespace Solana.Unity.SDK
             PublicKey destination,
             PublicKey tokenMint,
             ulong amount,
-            Commitment commitment = Commitment.Finalized)
+            Commitment commitment = Commitment.Confirmed)
         {
             var sta = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
                 Account.PublicKey,
@@ -159,7 +159,7 @@ namespace Solana.Unity.SDK
 
         /// <inheritdoc />
         public async Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount,
-            Commitment commitment = Commitment.Finalized)
+            Commitment commitment = Commitment.Confirmed)
         {
             var transaction = new Transaction
             {
@@ -190,7 +190,7 @@ namespace Solana.Unity.SDK
         }
 
         /// <inheritdoc />
-        public async Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Finalized)
+        public async Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Confirmed)
         {
             var rpc = ActiveRpcClient;
             var result = await
@@ -248,7 +248,7 @@ namespace Solana.Unity.SDK
         (
             Transaction transaction,
             bool skipPreflight = false,
-            Commitment commitment = Commitment.Finalized)
+            Commitment commitment = Commitment.Confirmed)
         {
             var signedTransaction = await SignTransaction(transaction);
             return await ActiveRpcClient.SendTransactionAsync(
@@ -265,7 +265,7 @@ namespace Solana.Unity.SDK
         /// <param name="amount">Amount of sol</param>
         /// <param name="commitment"></param>
         /// <returns>Amount of sol</returns>
-        public async Task<RequestResult<string>> RequestAirdrop(ulong amount = SolLamports, Commitment commitment = Commitment.Finalized)
+        public async Task<RequestResult<string>> RequestAirdrop(ulong amount = SolLamports, Commitment commitment = Commitment.Confirmed)
         {
             return await ActiveRpcClient.RequestAirdropAsync(Account.PublicKey, amount, commitment); ;
         }
