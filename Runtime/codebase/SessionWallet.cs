@@ -8,6 +8,7 @@ using Solana.Unity.Wallet;
 using Solana.Unity.Programs;
 using Solana.Unity.Gum.GplSession.Accounts;
 using Solana.Unity.Gum.GplSession.Program;
+using Solana.Unity.Rpc.Types;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
@@ -87,6 +88,7 @@ namespace Solana.Unity.SDK
                     Debug.Log("Session Token is corrupted, deleting and creating a new one");
                     sessionWallet.DeleteSessionWallet();
                     sessionWallet.Logout();
+                    Instance = null;
                     return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
                 }
 
@@ -109,6 +111,7 @@ namespace Solana.Unity.SDK
                 Debug.Log("Session Token is invalid");
                 await sessionWallet.PrepareLogout();
                 sessionWallet.Logout();
+                Instance = null;
                 return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             }
 
@@ -217,14 +220,15 @@ namespace Solana.Unity.SDK
 
             // Get balance and calculate refund
             var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
-            var estimatedFees = await ActiveRpcClient.GetFeesAsync();
-            var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1);
+            var estimatedFees = await ActiveRpcClient.GetFeesAsync(Commitment.Confirmed);
+            var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1) - 5000;
             Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
 
             tx.Add(RevokeSessionIX());
             // Issue Refund
             tx.Add(SystemProgram.Transfer(Account.PublicKey, Web3.Account.PublicKey, (ulong)refund));
-            await SignAndSendTransaction(tx);
+            var rest = await SignAndSendTransaction(tx);
+            Debug.Log("Session refund transaction: " + rest.RawRpcResponse);
             DeleteSessionWallet();
         }
     }

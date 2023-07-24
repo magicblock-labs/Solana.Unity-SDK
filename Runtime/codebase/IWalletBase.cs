@@ -82,7 +82,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="commitment"></param>
         /// <returns></returns>
-        Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Finalized);
+        Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Confirmed);
 
         /// <summary>
         /// Sign a transaction
