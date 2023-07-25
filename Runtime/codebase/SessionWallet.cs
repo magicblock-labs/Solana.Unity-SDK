@@ -221,7 +221,7 @@ namespace Solana.Unity.SDK
             // Get balance and calculate refund
             var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
             var estimatedFees = await ActiveRpcClient.GetFeesAsync(Commitment.Confirmed);
-            var refund = balance - (estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1) - 5000;
+            var refund = balance - estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1;
             Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
 
             tx.Add(RevokeSessionIX());
