@@ -266,7 +266,7 @@ namespace Solana.Unity.SDK
             Wallet?.Logout();
             WalletBase = null;
             _solAmount = 0;
-            _nfts.Clear();
+            if(_nfts != null) _nfts.Clear();
         }
         
         #region Helpers
