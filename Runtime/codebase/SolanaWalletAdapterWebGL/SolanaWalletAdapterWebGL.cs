@@ -5,6 +5,7 @@ using AOT;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using UnityEngine;
+using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
@@ -191,9 +192,15 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         private static void OnWalletConnected(string walletPubKey)
         {
+            if (walletPubKey.IsNullOrEmpty())
+            {
+                _loginTaskCompletionSource.TrySetException(new Exception("Login cancelled"));
+                _loginTaskCompletionSource.TrySetResult(null);
+                return;
+            }
             Debug.Log($"Wallet {walletPubKey} connected!");
             _account = new Account("", walletPubKey);
-            _loginTaskCompletionSource.SetResult(_account);
+            _loginTaskCompletionSource.TrySetResult(_account);
         }
 
         /// <summary>
@@ -203,6 +210,12 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnTransactionSigned(string transaction)
         {
+            if (transaction.IsNullOrEmpty())
+            {
+                _signedTransactionTaskCompletionSource.TrySetException(new Exception("Transaction signing cancelled"));
+                _signedTransactionTaskCompletionSource.TrySetResult(null);
+                return;
+            }
             var tx = Transaction.Deserialize(Convert.FromBase64String(transaction));
             _signedTransactionTaskCompletionSource.SetResult(tx);
         }
@@ -214,6 +227,12 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnAllTransactionsSigned(string signatures)
         {
+            if (signatures.IsNullOrEmpty())
+            {
+                _signedAllTransactionsTaskCompletionSource.TrySetException(new Exception("Transactions signing cancelled"));
+                _signedAllTransactionsTaskCompletionSource.TrySetResult(null);
+                return;
+            }
             string[] signaturesList = signatures.Split(',');
             for (int i = 0; i < signaturesList.Length; i++)
             {
@@ -234,6 +253,12 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnMessageSigned(string signature)
         {
+            if (signature.IsNullOrEmpty())
+            {
+                _signedMessageTaskCompletionSource.TrySetException(new Exception("Message signing cancelled"));
+                _signedMessageTaskCompletionSource.TrySetResult(null);
+                return;
+            }
             _signedMessageTaskCompletionSource.SetResult(Convert.FromBase64String(signature));
         }
 
