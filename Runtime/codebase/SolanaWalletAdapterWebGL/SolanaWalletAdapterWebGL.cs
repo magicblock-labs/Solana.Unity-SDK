@@ -5,7 +5,6 @@ using AOT;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using UnityEngine;
-using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
 
@@ -192,7 +191,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         private static void OnWalletConnected(string walletPubKey)
         {
-            if (walletPubKey.IsNullOrEmpty())
+            if (walletPubKey == null)
             {
                 _loginTaskCompletionSource.TrySetException(new Exception("Login cancelled"));
                 _loginTaskCompletionSource.TrySetResult(null);
@@ -210,7 +209,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnTransactionSigned(string transaction)
         {
-            if (transaction.IsNullOrEmpty())
+            if (transaction == null)
             {
                 _signedTransactionTaskCompletionSource.TrySetException(new Exception("Transaction signing cancelled"));
                 _signedTransactionTaskCompletionSource.TrySetResult(null);
@@ -227,7 +226,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnAllTransactionsSigned(string signatures)
         {
-            if (signatures.IsNullOrEmpty())
+            if (signatures == null)
             {
                 _signedAllTransactionsTaskCompletionSource.TrySetException(new Exception("Transactions signing cancelled"));
                 _signedAllTransactionsTaskCompletionSource.TrySetResult(null);
@@ -253,7 +252,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnMessageSigned(string signature)
         {
-            if (signature.IsNullOrEmpty())
+            if (signature == null)
             {
                 _signedMessageTaskCompletionSource.TrySetException(new Exception("Message signing cancelled"));
                 _signedMessageTaskCompletionSource.TrySetResult(null);
