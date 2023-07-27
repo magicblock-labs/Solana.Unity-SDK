@@ -38,6 +38,8 @@ namespace Solana.Unity.SDK
                 _wallet = value;
                 if (currentWallet == null && value?.Account != null)
                 {
+                    value.RpcMaxHits = RpcMaxHits;
+                    value.RpcMaxHitsPerSeconds = RpcMaxHitsPerSeconds;
                     OnLogin?.Invoke(value.Account);
                     UpdateBalance().Forget();
                     if(OnNFTsUpdateInternal != null && AutoLoadNfts) UpdateNFTs().Forget();
@@ -52,6 +54,30 @@ namespace Solana.Unity.SDK
         private static WalletBase _wallet;
         private Web3AuthWallet _web3AuthWallet;
         
+        private int _defaultRpcMaxHits = 20;
+        public int RpcMaxHits
+        {
+
+            get => _wallet?.RpcMaxHits ?? _defaultRpcMaxHits;
+            set
+            {
+                if (_wallet != null) _wallet.RpcMaxHits = value;
+                else _defaultRpcMaxHits = value;
+            }
+        }
+        
+        private int _defaultRpcMaxHitsPerSeconds = 1;
+        public int RpcMaxHitsPerSeconds
+        {
+
+            get => _wallet?.RpcMaxHitsPerSeconds ?? _defaultRpcMaxHitsPerSeconds;
+            set
+            {
+                if (_wallet != null) _wallet.RpcMaxHitsPerSeconds = value;
+                else _defaultRpcMaxHitsPerSeconds = value;
+            }
+        }
+
         #endregion
 
         #region Wallet Options
