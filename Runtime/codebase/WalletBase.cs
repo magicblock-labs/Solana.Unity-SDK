@@ -29,7 +29,7 @@ namespace Solana.Unity.SDK
         public const long SolLamports = 1000000000;
         public RpcCluster RpcCluster  { get; }
         
-        public int RpcMaxHits = 20;
+        public int RpcMaxHits = 30;
         public int RpcMaxHitsPerSeconds = 1;
 
         private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
@@ -334,7 +334,7 @@ namespace Solana.Unity.SDK
                     _activeRpcClient = ClientFactory.GetClient(
                         CustomRpcUri,
                         null,
-                        rateLimiter: UnityRateLimiter.Create().AllowHits(2).PerSeconds(1));
+                        rateLimiter: UnityRateLimiter.Create().AllowHits(RpcMaxHits).PerSeconds(RpcMaxHitsPerSeconds));
                 }
 
                 return _activeRpcClient;

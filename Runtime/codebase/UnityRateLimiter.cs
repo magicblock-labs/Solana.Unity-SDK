@@ -20,7 +20,7 @@ namespace Solana.Unity.SDK
           _hitList = new Queue<DateTime>();
         }
     
-        public static UnityRateLimiter Create() => new UnityRateLimiter(1, 0);
+        public static UnityRateLimiter Create() => new UnityRateLimiter(30, 1000);
     
         public bool CanFire()
         {

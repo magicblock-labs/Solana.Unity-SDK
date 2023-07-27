@@ -54,7 +54,7 @@ namespace Solana.Unity.SDK
         private static WalletBase _wallet;
         private Web3AuthWallet _web3AuthWallet;
         
-        private int _defaultRpcMaxHits = 20;
+        private int _defaultRpcMaxHits = 30;
         public int RpcMaxHits
         {
 
