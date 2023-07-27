@@ -24,6 +24,7 @@ mergeInto(LibraryManager.library, {
             Module.dynCall_vi(callback, walletsPtr);
         } catch (err) {
             console.error(err.message);
+            Module.dynCall_vi(callback, null);
         }
     },
     ExternConnectWallet: async function (walletNamePtr, callback) {
@@ -41,6 +42,7 @@ mergeInto(LibraryManager.library, {
                 Module.dynCall_vi(callback, pubKeyPtr);
          } catch (err) {
             console.error(err.message);
+            Module.dynCall_vi(callback, null);
          }
     },
     ExternSignTransactionWallet: async function (walletNamePtr, transactionPtr, callback) {
@@ -61,6 +63,7 @@ mergeInto(LibraryManager.library, {
                 Module.dynCall_vi(callback, txPtr);          
          } catch (err) {
             console.error(err.message);
+            Module.dynCall_vi(callback, null);
          }
     },
     ExternSignMessageWallet: async function (walletNamePtr, messagePtr, callback) {
@@ -82,6 +85,7 @@ mergeInto(LibraryManager.library, {
                 Module.dynCall_vi(callback, signaturePtr);          
          } catch (err) {
             console.error(err.message);
+            Module.dynCall_vi(callback, null);
          }
     },
      ExternSignAllTransactionsWallet: async function (walletNamePtr, transactionsPtr, callback) {
@@ -113,6 +117,7 @@ mergeInto(LibraryManager.library, {
                 Module.dynCall_vi(callback, txsPtr);
         } catch (err) {
             console.error(err.message);
+            Module.dynCall_vi(callback, null);
         }
     },
 } );
