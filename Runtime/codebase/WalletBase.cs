@@ -28,6 +28,9 @@ namespace Solana.Unity.SDK
     {
         public const long SolLamports = 1000000000;
         public RpcCluster RpcCluster  { get; }
+        
+        public int RpcMaxHits = 30;
+        public int RpcMaxHitsPerSeconds = 1;
 
         private readonly Dictionary<int, Cluster> _rpcClusterMap = new ()
         {
@@ -320,11 +323,18 @@ namespace Solana.Unity.SDK
             {
                 if (_activeRpcClient == null && CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(_rpcClusterMap[(int)RpcCluster]);
+                    _activeRpcClient = ClientFactory.GetClient(
+                        _rpcClusterMap[(int)RpcCluster], 
+                        null, 
+                        rateLimiter: UnityRateLimiter.Create().AllowHits(RpcMaxHits).PerSeconds(RpcMaxHitsPerSeconds)
+                    );
                 }
                 if (_activeRpcClient == null && !CustomRpcUri.IsNullOrEmpty())
                 {
-                    _activeRpcClient = ClientFactory.GetClient(CustomRpcUri);
+                    _activeRpcClient = ClientFactory.GetClient(
+                        CustomRpcUri,
+                        null,
+                        rateLimiter: UnityRateLimiter.Create().AllowHits(RpcMaxHits).PerSeconds(RpcMaxHitsPerSeconds));
                 }
 
                 return _activeRpcClient;
