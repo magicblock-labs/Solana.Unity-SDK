@@ -82,9 +82,9 @@ namespace Solana.Unity.SDK
                 _loginTaskCompletionSource?.SetResult(wallet.Account);
             }
             else
-            {
-                OnLoginNotify?.Invoke(wallet.Account);
+            {   
                 Account = wallet.Account;
+                OnLoginNotify?.Invoke(wallet.Account);
             }
         }
 

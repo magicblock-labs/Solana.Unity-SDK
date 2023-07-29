@@ -180,6 +180,7 @@ namespace Solana.Unity.SDK
                 _web3AuthWallet ??= new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc);
                 _web3AuthWallet.OnLoginNotify += (w) =>
                 { 
+                    Debug.Log("We3Auth session detected");
                     if(w == null) return;
                     WalletBase = _web3AuthWallet;
                 };
