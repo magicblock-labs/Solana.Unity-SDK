@@ -181,8 +181,12 @@ namespace Solana.Unity.SDK
                 _web3AuthWallet.OnLoginNotify += (w) =>
                 { 
                     Debug.Log("We3Auth session detected");
+                    Debug.Log("Wallet address: " + w?.PublicKey);
                     if(w == null) return;
                     WalletBase = _web3AuthWallet;
+                    OnLogin?.Invoke(w);
+                    OnWalletChangeStateInternal?.Invoke();
+                    SubscribeToWalletEvents().Forget();
                 };
             }
             catch (Exception e)
