@@ -1,4 +1,6 @@
 using System;
+using UnityEditor;
+using UnityEngine;
 
 namespace Solana.Unity.SDK.Editor
 {

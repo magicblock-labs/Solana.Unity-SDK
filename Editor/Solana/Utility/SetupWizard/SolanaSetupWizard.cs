@@ -13,6 +13,27 @@ namespace Solana.Unity.SDK.Editor
     internal abstract class SolanaSetupWizard<SetupObject> : EditorWindow where SetupObject : ConfigurableObject
     {
 
+        #region Types
+
+        private class Question 
+        {
+            internal string QuestionId { get; set; }
+            internal string QuestionText { get; set; }
+
+            internal void Render(SerializedObject target)
+            {
+                SolanaEditorUtility.Heading(QuestionText, TextAnchor.UpperCenter);
+                EditorGUILayout.BeginVertical(MetaplexEditorUtility.answerFieldStyle);
+                {
+                    var serializedProperty = target.FindProperty(QuestionId);
+                    EditorGUILayout.PropertyField(serializedProperty);
+                }
+                EditorGUILayout.EndVertical();
+            }
+        }
+
+        #endregion
+
         #region Properties
 
         protected abstract string SavePath { get; }
@@ -31,7 +52,7 @@ namespace Solana.Unity.SDK.Editor
         /// <summary>
         /// The questions to display during setup.
         /// </summary>
-        private FieldInfo[] questions;
+        private Question[] questions;
 
         private Vector2 scrollPosition;
 
@@ -44,7 +65,13 @@ namespace Solana.Unity.SDK.Editor
             var targetInstance = CreateInstance<SetupObject>();
             target = new(targetInstance);
             TypeInfo typeInfo = typeof(SetupObject).GetTypeInfo();
-            questions = typeInfo.DeclaredFields.ToArray();
+            questions = typeInfo.DeclaredFields.Select<FieldInfo, Question>(fieldInfo => {
+                var question = fieldInfo.GetCustomAttribute<SetupQuestionAttribute>()?.question;
+                if (question == null) return null;
+                var questionId = fieldInfo.Name;
+                return new() { QuestionId = questionId, QuestionText = question };
+            }
+            ).Where(question => question != null).ToArray();
         }
 
         protected void OnGUI()
@@ -64,15 +91,9 @@ namespace Solana.Unity.SDK.Editor
         {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             {
-                var questionName = questions[questionIndex];
-                var question = questionName.GetCustomAttribute<SetupQuestionAttribute>();
-                SolanaEditorUtility.Heading(question.question, TextAnchor.UpperCenter);
-                EditorGUILayout.BeginVertical(MetaplexEditorUtility.answerFieldStyle);
-                {
-                    var serializedProperty = target.FindProperty(questionName.Name);
-                    EditorGUILayout.PropertyField(serializedProperty);
-                }
-                EditorGUILayout.EndVertical();
+                var question = questions[questionIndex];
+                question.Render(target);
+                
             }
             EditorGUILayout.EndScrollView();
         }
