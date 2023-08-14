@@ -623,6 +623,7 @@ namespace Solana.Unity.SDK.Editor
             foreach (var path in filePaths) 
             {
                 EditorUtility.DisplayProgressBar("CandyMachine Manager", "Validating file names...", fileIndex / (float)fileCount);
+                if (Path.GetExtension(path) == ".meta") continue;
                 // Run as task so Unity UI thread remains unblocked.
                 var fileIsValid = await Task.Run(() => {
                     var fileName = Path.GetFileNameWithoutExtension(path);

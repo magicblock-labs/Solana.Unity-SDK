@@ -15,6 +15,14 @@ namespace Solana.Unity.SDK.Editor
     public class CandyMachineManager : EditorWindow 
     {
 
+        #region Static
+
+        private static readonly string DEFAULT_KEYPAIR = "~/.config/solana/id.json";
+        private static readonly string DEFAULT_CONFIG_LOCATION = "Assets/CandyMachine/Configs";
+        private static readonly string DEFAULT_RPC = "https://api.devnet.solana.com";
+
+        #endregion
+
         #region Fields
 
         [SerializeField]
@@ -82,6 +90,24 @@ namespace Solana.Unity.SDK.Editor
         {
             var data = EditorPrefs.GetString(typeof(CandyMachineManager).Name, JsonUtility.ToJson(this, false));
             JsonUtility.FromJsonOverwrite(data, this);
+            if (rpc == null) 
+            {
+                rpc = DEFAULT_RPC;
+            }
+
+            if (configLocation == null) 
+            {
+                var configPath = Path.GetFullPath(DEFAULT_CONFIG_LOCATION, Application.dataPath);
+                if (!Directory.Exists(configPath)) { 
+                    Directory.CreateDirectory(configPath);
+                }
+                configLocation = DEFAULT_CONFIG_LOCATION;
+            }
+
+            if (keypairLocation == null && File.Exists(DEFAULT_KEYPAIR))
+            {
+                keypairLocation = DEFAULT_KEYPAIR;
+            }
             FetchCandyMachines();
         }
 

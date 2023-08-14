@@ -165,7 +165,7 @@ namespace Solana.Unity.SDK.Editor
         ) 
         {
             var groups = config.guards?.groups?.Select(group => group.label).ToArray();
-            if (groups != null) 
+            if (groups != null && groups.Length > 0) 
             {
                 state.guardGroup = SolanaEditorUtility.DropdownField("Control Guard Group", state.guardGroup, groups);
             }
@@ -213,13 +213,14 @@ namespace Solana.Unity.SDK.Editor
                         );
                     }
                     if (GUILayout.Button("Mint", settingsButtonStyle)) {
+                        var guardGroup = groups?.Length > 0 ? groups[state.guardGroup] : null;
                         CandyMachineController.MintToken(
                             candyMachineKey,
                             candyGuardKey,
                             config,
                             keypair,
                             rpcUrl,
-                            groups?[state.guardGroup]
+                            guardGroup
                         );
                     }
                     if (GUILayout.Button("Reveal", settingsButtonStyle)) {
