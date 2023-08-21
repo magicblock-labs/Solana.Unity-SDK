@@ -47,8 +47,9 @@ Debug.Log(quote); // Amount of espected Orca token to receive
 - Display the route path:
 
 ```csharp
-Debug.Log(string.Join(" -> ", swapQuote.RoutePlan.Select(p => p.SwapInfo.Label))); // Lifinity V2 -> Whirlpool
-);
+Debug.Log(string.Join(" -> ", swapQuote.RoutePlan.Select(p => p.SwapInfo.Label)));
+
+// Lifinity V2 -> Whirlpool
 ```
 
 - Create the swap transaction:
