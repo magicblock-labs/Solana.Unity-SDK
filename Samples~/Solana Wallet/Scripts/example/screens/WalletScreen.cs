@@ -66,7 +66,7 @@ namespace Solana.Unity.SDK.Example
             
             swapBtn.onClick.AddListener(() =>
             {
-                manager.ShowScreen(this, "swap_screen");
+                manager.ShowScreen(this, "swap_screen_ag");
             });
 
             logoutBtn.onClick.AddListener(() =>
