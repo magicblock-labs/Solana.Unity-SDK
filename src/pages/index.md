@@ -38,9 +38,9 @@ The project started as a fork of [unity-solana-wallet](https://github.com/allart
 - Basic UI examples
 - NFTs
 - Compile games to xNFTs (Backpack)
-- Native DEX operations (Orca, Jupiter coming soon...)
+- Native DEX operations (Orca, Jupiter, ...)
 
 ## Upcoming:
-- Wallet support for SMS and Seed Vault.
+- Wallet Seed Vault.
 - Methods to trigger / register custom events to easily integrate custom logics (e.g.: server checks/updates or caching)
 - Raindrops

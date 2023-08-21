@@ -47,6 +47,7 @@ const navigation = [
       { title: 'Host your game on Github pages', href: '/docs/gh-pages'},
       { title: 'Publishing a game as Xnft', href: '/docs/xnft'},
       { title: 'DEX integration: Orca', href: '/docs/orca'},
+      { title: 'DEX integration: Jupiter', href: '/docs/jupiter'},
       { title: 'Additional examples', href: '/docs/examples'},
     ],
   },
