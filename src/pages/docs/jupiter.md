@@ -3,7 +3,7 @@ title: DEX integration with Jupiter
 description:
 ---
 
-Jupiter is natively supported in the SDK. Utility methods are provided to easily build the transactions needed to get quotes and perform swaps.
+Jupiter is natively supported in the SDK. Utility methods are provided to easily get swap quotes, build and send the transactions needed to perform swaps.
 
 # Jupiter
 
