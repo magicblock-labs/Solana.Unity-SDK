@@ -26,68 +26,69 @@ using WebSocketSharp;
 
 public class SwapScreen : SimpleScreen
 {
+    public static readonly string NativeMint = "So11111111111111111111111111111111111111112";
     
     [SerializeField]
-    private TMP_Dropdown dropdownTokenA;
+    protected TMP_Dropdown dropdownTokenA;
     [SerializeField]
-    private TMP_Dropdown dropdownTokenB;
+    protected TMP_Dropdown dropdownTokenB;
     
     [SerializeField]
-    private TMP_InputField inputAmountA;
+    protected TMP_InputField inputAmountA;
     [SerializeField]
-    private TMP_InputField inputAmountB;
+    protected TMP_InputField inputAmountB;
     
     [SerializeField]
-    private TMP_Text errorTxt;
+    protected TMP_Text errorTxt;
     
     [SerializeField]
-    private RawImage logoA;
+    protected RawImage logoA;
     
     [SerializeField]
-    private RawImage logoB;
+    protected RawImage logoB;
     
     [SerializeField]
-    private Button swapButton;
+    protected Button swapButton;
 
-    private string _symbol = string.Empty;
-    private string _prevSymbol = string.Empty;
-    private IList<TokenData> _tokens;
-    private bool _doReset;
-    private object _tokenResolver;
-    private TokenData _tokenA;
-    private TokenData _tokenB;
-    private TMP_Dropdown[] _dropdowns;
-    private IDex _dex;
-    private CancellationTokenSource _tokenSource;
+    protected string symbol = string.Empty;
+    protected string prevSymbol = string.Empty;
+    protected IList<TokenData> tokens;
+    protected bool doReset;
+    protected TokenData tokenA;
+    protected TokenData tokenB;
+    protected TMP_Dropdown[] dropdowns;
+    protected IDex dex;
+    protected CancellationTokenSource tokenSource;
+    
     private SwapQuote _swapQuote;
     private Pool _whirlpool;
 
     // Initialize the dropdowns and select USDC and ORCA as default
-    void Start()
+    protected virtual void Start()
     {
-        _dex = new OrcaDex(
+        dex = new OrcaDex(
             Web3.Account, 
             Web3.Rpc,
             commitment: Commitment.Finalized);
         dropdownTokenA.onValueChanged.AddListener(_ => OptionSelected(dropdownTokenA).Forget());
         dropdownTokenB.onValueChanged.AddListener(_ => OptionSelected(dropdownTokenB).Forget());
-        _dropdowns = new[] {dropdownTokenA, dropdownTokenB};
+        dropdowns = new[] {dropdownTokenA, dropdownTokenB};
         inputAmountA.onValueChanged.AddListener(delegate { GetSwapQuote(); });
         InitializeDropDowns().Forget();
         swapButton.onClick.AddListener(StartSwap);
         swapButton.interactable = false;
     }
 
-    private async void StartSwap()
+    protected async void StartSwap()
     {
         Debug.Log("Start swap");
         await Swap();
     }
 
-    private async UniTask Swap()
+    protected virtual async UniTask Swap()
     {
         if(_whirlpool == null || _swapQuote == null) return;
-        var tr = await _dex.SwapWithQuote(_whirlpool.Address, _swapQuote);
+        var tr = await dex.SwapWithQuote(_whirlpool.Address, _swapQuote);
         
         var result = await Web3.Instance.WalletBase.SignAndSendTransaction(tr);
         Loading.StartLoading();
@@ -106,41 +107,42 @@ public class SwapScreen : SimpleScreen
         Loading.StopLoading();
     }
 
-    private void GetSwapQuote()
+    protected void GetSwapQuote()
     {
-        _tokenSource?.Cancel();
-        _tokenSource?.Dispose();
-        _tokenSource = new CancellationTokenSource();
+        tokenSource?.Cancel();
+        tokenSource?.Dispose();
+        tokenSource = new CancellationTokenSource();
         UniTask.Create(async () =>
         {
             await InputAmountAChanged();
-        }).AttachExternalCancellation(_tokenSource.Token);
+        }).AttachExternalCancellation(tokenSource.Token);
     }
 
     /// <summary>
     /// Calculate the swap quote on input change
     /// </summary>
-    private async UniTask InputAmountAChanged()
+    protected virtual async UniTask InputAmountAChanged()
     {
-        if(_tokenA is null || _tokenB is null || inputAmountA.text.IsNullOrEmpty()) return;
+        if(tokenA is null || tokenB is null || inputAmountA.text.IsNullOrEmpty()) return;
         try
         {
             var inputAAmount = float.Parse(inputAmountA.text);
-            _whirlpool = await _dex.FindWhirlpoolAddress(_tokenA.MintAddress, _tokenB.MintAddress);
-            _swapQuote = await _dex
+            _whirlpool = await dex.FindWhirlpoolAddress(tokenA.MintAddress, tokenB.MintAddress);
+            _swapQuote = await dex
                 .GetSwapQuoteFromWhirlpool(_whirlpool.Address, 
-                    DecimalUtil.ToUlong(inputAAmount, _tokenA.Decimals),
-                    _tokenA.MintAddress);
-            var quote = DecimalUtil.FromBigInteger(_swapQuote.EstimatedAmountOut, _tokenB.Decimals);
+                    DecimalUtil.ToUlong(inputAAmount, tokenA.Decimals),
+                    tokenA.MintAddress);
+            var quote = DecimalUtil.FromBigInteger(_swapQuote.EstimatedAmountOut, tokenB.Decimals);
             await MainThreadDispatcher.Instance().EnqueueAsync(() => { 
                 inputAmountB.text = quote.ToString(CultureInfo.InvariantCulture);
                 errorTxt.enabled = false;
             });
             var tokenABalance = await Web3.Rpc.GetTokenBalanceByOwnerAsync(
-                Web3.Account.PublicKey, _tokenA.Mint);
-            if(tokenABalance.Result == null || tokenABalance.Result.Value.AmountUlong < _swapQuote.EstimatedAmountIn)
+                Web3.Account.PublicKey, tokenA.Mint);
+            if((tokenA.Mint != NativeMint && (tokenABalance.Result == null || tokenABalance.Result.Value.AmountUlong < _swapQuote.EstimatedAmountIn)) || 
+               (tokenA.Mint == NativeMint && (await Web3.Rpc.GetBalanceAsync(Web3.Account.PublicKey)).Result.Value < _swapQuote.EstimatedAmountIn))
             {
-                errorTxt.text = $"Not enough {_tokenA.Symbol} to perform this swap";
+                errorTxt.text = $"Not enough {tokenA.Symbol} to perform this swap";
                 errorTxt.enabled = true;
                 swapButton.interactable = false;
             }
@@ -160,30 +162,30 @@ public class SwapScreen : SimpleScreen
         }
     }
     
-    private async UniTask InitializeDropDowns()
+    protected virtual async UniTask InitializeDropDowns()
     {
-        _tokens = await _dex.GetTokens();
-        _tokens.Add(new TokenData { 
+        tokens = await dex.GetTokens();
+        tokens.Add(new TokenData { 
             Symbol = "SOL", 
-            Mint = "So11111111111111111111111111111111111111112", 
+            Mint = NativeMint, 
             Decimals = 9, 
             LogoURI = "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"});
         ResetOptions(dropdownTokenA);
         ResetOptions(dropdownTokenB);
     }
 
-    private async Task TokenASelected(TokenData tokenData)
+    protected async Task TokenASelected(TokenData tokenData)
     {
-        if(_tokenA?.MintAddress == tokenData.MintAddress) return;
-        _tokenA = tokenData;
+        if(tokenA?.MintAddress == tokenData.MintAddress) return;
+        tokenA = tokenData;
         await LoadTokenLogo(tokenData, logoA);
         GetSwapQuote();
     }
     
-    private async Task TokenBSelected(TokenData tokenData)
+    protected async Task TokenBSelected(TokenData tokenData)
     {
-        if(_tokenB?.MintAddress == tokenData.MintAddress) return;
-        _tokenB = tokenData;
+        if(tokenB?.MintAddress == tokenData.MintAddress) return;
+        tokenB = tokenData;
         await LoadTokenLogo(tokenData, logoB);
         GetSwapQuote();
     }
@@ -193,7 +195,7 @@ public class SwapScreen : SimpleScreen
     /// </summary>
     /// <param name="tokenData"></param>
     /// <param name="logo"></param>
-    private async UniTask LoadTokenLogo(TokenData tokenData, RawImage logo)
+    protected async UniTask LoadTokenLogo(TokenData tokenData, RawImage logo)
     {
         await UniTask.SwitchToMainThread();
         if(tokenData is null || logo is null) return;
@@ -221,11 +223,11 @@ public class SwapScreen : SimpleScreen
     
     void Update()
     {
-        foreach (var dropdown in _dropdowns)
+        foreach (var dropdown in dropdowns)
         {
             if(dropdown is null) continue;
             if (!dropdown.IsExpanded) continue;
-            if (_doReset)
+            if (doReset)
             {
                 ResetOptions(dropdown);
             }
@@ -237,10 +239,10 @@ public class SwapScreen : SimpleScreen
         }
     }
 
-    private void RestrictOptions(TMP_Dropdown tmpDropdown)
+    protected virtual void RestrictOptions(TMP_Dropdown tmpDropdown)
     {
-        tmpDropdown.options = _tokens
-            .Where(token => token.Symbol.StartsWith(_symbol, StringComparison.OrdinalIgnoreCase) &&
+        tmpDropdown.options = tokens
+            .Where(token => token.Symbol.StartsWith(symbol, StringComparison.OrdinalIgnoreCase) &&
                             token.Whitelisted && !token.PoolToken)
             .Select(token => new TMP_Dropdown.OptionData(token.Symbol)).ToList();
         tmpDropdown.value = -1;
@@ -250,25 +252,25 @@ public class SwapScreen : SimpleScreen
             OptionSelected(tmpDropdown).Forget();
         }else if(tmpDropdown.options.Count == 0)
         {
-            _symbol = _symbol.Substring(0, Math.Max(_symbol.Length - 1, 0));
+            symbol = symbol.Substring(0, Math.Max(symbol.Length - 1, 0));
         }
         tmpDropdown.Hide();
         tmpDropdown.Show();
         tmpDropdown.RefreshShownValue();
     }
     
-    private void ResetOptions(TMP_Dropdown tmpDropdown)
+    protected virtual void ResetOptions(TMP_Dropdown tmpDropdown)
     {
-        _symbol = string.Empty;
-        _prevSymbol = string.Empty;
+        symbol = string.Empty;
+        prevSymbol = string.Empty;
         MainThreadDispatcher.Instance().Enqueue(() =>
         {
-            tmpDropdown.options = _tokens
-                .Where(token => token.Symbol.StartsWith(_symbol, StringComparison.OrdinalIgnoreCase) &&
+            tmpDropdown.options = tokens
+                .Where(token => token.Symbol.StartsWith(symbol, StringComparison.OrdinalIgnoreCase) &&
                                 token.Whitelisted && !token.PoolToken)
                 .Select(token => new TMP_Dropdown.OptionData(token.Symbol)).ToList();
-            _symbol = string.Empty;
-            _prevSymbol = string.Empty;
+            symbol = string.Empty;
+            prevSymbol = string.Empty;
             if (tmpDropdown == dropdownTokenA)
             {
                 var usdcIndex = dropdownTokenA.options.TakeWhile(t => t.text != "USDC").Count();
@@ -283,10 +285,10 @@ public class SwapScreen : SimpleScreen
     }
     
     
-    private async UniTask OptionSelected(TMP_Dropdown tmpDropdown)
+    protected async UniTask OptionSelected(TMP_Dropdown tmpDropdown)
     {
         var selectedValue = tmpDropdown.options[tmpDropdown.value];
-        var tokenData = _tokens.Where(t => t.Symbol == selectedValue.text).ToList().First();
+        var tokenData = tokens.Where(t => t.Symbol == selectedValue.text).ToList().First();
         if (tmpDropdown == dropdownTokenA)
         {
             await TokenASelected(tokenData);
@@ -297,29 +299,29 @@ public class SwapScreen : SimpleScreen
         }
     }
 
-    private bool InputChanged()
+    protected bool InputChanged()
     {
-        if (_symbol == _prevSymbol) return false;
-        _prevSymbol = _symbol;
+        if (symbol == prevSymbol) return false;
+        prevSymbol = symbol;
         return true;
     }
 
-    private void DetectInput()
+    protected void DetectInput()
     {
         foreach(KeyCode vKey in Enum.GetValues(typeof(KeyCode)))
         {
             if (!Input.GetKeyUp(vKey)) continue;
             var l = vKey.ToString().Replace("Alpha", "");;
             if (!IsValidAlphanumeric(l)) continue;
-            _symbol += l;
+            symbol += l;
         }
-        if (Input.GetKeyUp(KeyCode.Backspace) && _symbol.Length > 0)
+        if (Input.GetKeyUp(KeyCode.Backspace) && symbol.Length > 0)
         {
-            _symbol = _symbol.Substring(0, _symbol.Length - 1);
+            symbol = symbol.Substring(0, symbol.Length - 1);
         }
     }
 
-    private static bool IsValidAlphanumeric(string character)
+    protected static bool IsValidAlphanumeric(string character)
     {
         if(character.Length != 1)
             return false;
