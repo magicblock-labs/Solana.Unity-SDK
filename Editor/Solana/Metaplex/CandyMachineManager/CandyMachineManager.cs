@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Solana.Unity.Metaplex.NFT.Library;
 using Solana.Unity.Rpc;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -17,7 +18,7 @@ namespace Solana.Unity.SDK.Editor
 
         #region Static
 
-        private static readonly string DEFAULT_KEYPAIR = "~/.config/solana/id.json";
+        private static readonly string DEFAULT_KEYPAIR = "/.config/solana/id.json";
         private static readonly string DEFAULT_CONFIG_LOCATION = "Assets/CandyMachine/Configs";
         private static readonly string DEFAULT_RPC = "https://api.devnet.solana.com";
 
@@ -103,10 +104,10 @@ namespace Solana.Unity.SDK.Editor
                 }
                 configLocation = DEFAULT_CONFIG_LOCATION;
             }
-
-            if (keypairLocation == null && File.Exists(DEFAULT_KEYPAIR))
+            if (keypairLocation == null || keypairLocation == string.Empty)
             {
-                keypairLocation = DEFAULT_KEYPAIR;
+                var path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + DEFAULT_KEYPAIR;
+                keypairLocation = path;
             }
             FetchCandyMachines();
         }
