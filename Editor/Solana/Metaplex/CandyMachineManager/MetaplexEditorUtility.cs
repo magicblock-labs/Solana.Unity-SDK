@@ -170,6 +170,7 @@ namespace Solana.Unity.SDK.Editor
                 state.guardGroup = SolanaEditorUtility.DropdownField("Control Guard Group", state.guardGroup, groups);
             }
             state.freezePeriod = SolanaEditorUtility.RangeField("Freeze Period Seconds", state.freezePeriod, 0, 30 * 24 * 60 * 60); // Freeze can be a max of 30 days.
+            var guardGroup = groups?.Length > 0 ? groups[state.guardGroup] : null;
             EditorGUILayout.BeginHorizontal();
             {
                 EditorGUILayout.BeginVertical();
@@ -213,7 +214,6 @@ namespace Solana.Unity.SDK.Editor
                         );
                     }
                     if (GUILayout.Button("Mint", settingsButtonStyle)) {
-                        var guardGroup = groups?.Length > 0 ? groups[state.guardGroup] : null;
                         CandyMachineController.MintToken(
                             candyMachineKey,
                             candyGuardKey,
@@ -242,7 +242,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl,
                             candyGuardKey,
                             candyMachineKey,
-                            groups?[state.guardGroup],
+                            guardGroup,
                             state.freezePeriod
                         );
                     }
@@ -252,7 +252,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl,
                             candyGuardKey,
                             candyMachineKey,
-                            groups?[state.guardGroup]
+                            guardGroup
                         );
                     }
                     if (GUILayout.Button("Unlock Funds", settingsButtonStyle)) {
@@ -261,7 +261,7 @@ namespace Solana.Unity.SDK.Editor
                             rpcUrl,
                             candyGuardKey,
                             candyMachineKey,
-                            groups?[state.guardGroup]
+                            guardGroup
                         );
                     }
                 }

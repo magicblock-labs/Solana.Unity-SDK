@@ -1,4 +1,3 @@
-using Solana.Unity.Metaplex.CandyGuard;
 using Solana.Unity.Metaplex.CandyGuard.Program;
 using Solana.Unity.Metaplex.Candymachine;
 using Solana.Unity.Metaplex.Candymachine.Types;

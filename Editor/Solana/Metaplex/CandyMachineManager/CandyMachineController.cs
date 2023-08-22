@@ -105,7 +105,7 @@ namespace Solana.Unity.SDK.Editor
 
             var collectionMint = cache.Info.CollectionMintKey;
             // Create collection NFT if one wasn't provided during upload.
-            if (collectionMint == null) 
+            if (collectionMint == null)
             {
                 Account collectionMintAccount = new();
                 Metadata collectionMetadata = collectionMetadata = new() {
