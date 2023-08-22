@@ -525,13 +525,17 @@ namespace Solana.Unity.SDK.Editor
                         uploadQueue.metadataToUpload.Add(index);
                         cache.Items.Add(index, assetPair);
                     }
-                    if (metadata.symbol != null && metadata.symbol != config.symbol) 
-                    {
-                        Debug.LogErrorFormat("Symbol for asset {0}, does not match config file.", index);
-                        return false;
-                    } else if (metadata.seller_fee_basis_points != config.sellerFeeBasisPoints) {
-                        Debug.LogErrorFormat("Seller fee basis points for asset {0}, does not match config file.", index);
-                        return false;
+                    if (index != -1) {
+                        if (metadata.symbol != null && metadata.symbol != config.symbol)
+                        {
+                            Debug.LogErrorFormat("Symbol for asset {0}, does not match config file.", index);
+                            return false;
+                        }
+                        else if (metadata.seller_fee_basis_points != config.sellerFeeBasisPoints)
+                        {
+                            Debug.LogErrorFormat("Seller fee basis points for asset {0}, does not match config file.", index);
+                            return false;
+                        }
                     }
                     return true;
                 });
