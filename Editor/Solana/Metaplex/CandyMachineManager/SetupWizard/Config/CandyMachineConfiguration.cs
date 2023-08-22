@@ -49,7 +49,7 @@ namespace Solana.Unity.SDK.Editor
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Do you want your NFTs to remain mutable? We HIGHLY recommend you choose yes."), Tooltip("Whether you will be able to update token metadata after minting.")]
-        internal bool isMutable;
+        internal bool isMutable = true;
 
         [JsonProperty, SerializeField]
         [SetupQuestion("Add your default guards and guard groups below, leave empty for no guards."), Tooltip("The guard groups for this CandyMachine.")]
