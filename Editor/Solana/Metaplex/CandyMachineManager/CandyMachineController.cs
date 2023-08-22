@@ -121,6 +121,7 @@ namespace Solana.Unity.SDK.Editor
                 else 
                 {
                     collectionMetadata.name = DEFAULT_COLLECTION_NAME;
+                    collectionMetadata.uri = string.Empty;
                 }
                 var collectionTxId = await CreateCollection(
                     wallet.Account,
