@@ -554,20 +554,22 @@ namespace Solana.Unity.SDK.Editor
             if (!assetsAreValid) return null;
 
             // Encode assets
-            var metadataFiles = filePaths.Where((path) => path.EndsWith(".json"));
+            var metadataFiles = filePaths.Where((path) => Path.GetExtension(path) == ".json");
             var fileCount = metadataFiles.Count();
             foreach (var metadataFile in metadataFiles) {
                 EditorUtility.DisplayProgressBar("CandyMachine Manager", "Loading assets...", fileIndex / (float)fileCount);
                 // Run as task so Unity UI thread remains unblocked.
+                var fileName = Path.GetFileNameWithoutExtension(metadataFile);
+                int index;
+                if (fileName == "collection")
+                {
+                    index = -1;
+                } 
+                else
+                {
+                    index = int.Parse(fileName);
+                }
                 var valid = await Task.Run(() => {
-                    var fileName = Path.GetFileNameWithoutExtension(metadataFile);
-                    int index;
-                    if (fileName == "collection") 
-                    {
-                        index = -1;
-                    } else {
-                        index = int.Parse(fileName);
-                    }
                     var assetFiles = filePaths.Where(filePath => Path.GetFileNameWithoutExtension(filePath) == fileName);
                     var imageFiles = assetFiles.Where(filePath => validImageTypes.Contains(Path.GetExtension(filePath)));
                     if (imageFiles.Count() != 1) 
@@ -635,7 +637,7 @@ namespace Solana.Unity.SDK.Editor
                 });
                 if (!fileIsValid) 
                 {
-                    Debug.LogErrorFormat("Couldn't parse file {0} as a valid index.", path);
+                    Debug.LogErrorFormat("File {0} has no valid asset index.", path);
                     return false;
                 }
             }
