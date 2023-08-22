@@ -54,8 +54,7 @@ public class SwapScreenAggregator : SwapScreen
             });
             var tokenABalance = await Web3.Rpc.GetTokenBalanceByOwnerAsync(
                 Web3.Account.PublicKey, tokenA.Mint);
-            if((tokenA.Mint != NativeMint && (tokenABalance.Result == null || tokenABalance.Result.Value.AmountUlong < _swapQuoteAg.InputAmount)) || 
-               (tokenA.Mint == NativeMint && (await Web3.Rpc.GetBalanceAsync(Web3.Account.PublicKey)).Result.Value < _swapQuoteAg.InputAmount))
+            if(tokenA.Mint != NativeMint && (tokenABalance.Result == null || tokenABalance.Result.Value.AmountUlong < _swapQuoteAg.InputAmount))
             {
                 errorTxt.text = $"Not enough {tokenA.Symbol} to perform this swap";
                 errorTxt.enabled = true;
