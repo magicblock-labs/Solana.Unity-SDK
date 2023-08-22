@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using UnityEditor;
 
@@ -18,6 +19,7 @@ namespace Solana.Unity.SDK.Editor
         #region Fields
 
         private static string configPath;
+        private static Action onCompleted;
 
         #endregion
 
@@ -29,10 +31,11 @@ namespace Solana.Unity.SDK.Editor
         /// <param name="configPath">
         /// The path to which to save the new config asset.
         /// </param>
-        internal static void OpenNew(string configPath)
+        internal static void OpenNew(string configPath, Action onCompleted)
         {
             GetWindow(typeof(CandyMachineSetupWizard), false, "Candy Machine Setup Wizard");
             CandyMachineSetupWizard.configPath = configPath;
+            CandyMachineSetupWizard.onCompleted = onCompleted;
         }
 
         #endregion
@@ -47,6 +50,7 @@ namespace Solana.Unity.SDK.Editor
             AssetDatabase.CreateAsset(target.targetObject, filePath);
             AssetDatabase.SaveAssets();
             Close();
+            onCompleted?.Invoke();
         }
 
         #endregion

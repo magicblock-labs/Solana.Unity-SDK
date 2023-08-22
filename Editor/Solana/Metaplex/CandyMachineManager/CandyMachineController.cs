@@ -93,7 +93,8 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineConfiguration config,
             CandyMachineCache cache,
             string keypair,
-            string rpcUrl
+            string rpcUrl,
+            Action callback = null
         )
         {
             Debug.Log("Initializing CandyMachine...");
@@ -112,16 +113,13 @@ namespace Solana.Unity.SDK.Editor
                     symbol = config.symbol,
                     sellerFeeBasisPoints = 0,
                     creators = config.creators.Select(c => new Unity.Metaplex.NFT.Library.Creator(new(c.address), c.share, true)).ToList(),
+                    name = DEFAULT_COLLECTION_NAME,
+                    uri = string.Empty
                 };
                 if (cache.Items.TryGetValue(-1, out var collectionItem)) 
                 {
                     collectionMetadata.name = collectionItem.name;
                     collectionMetadata.uri = collectionItem.metadataLink;
-                }
-                else 
-                {
-                    collectionMetadata.name = DEFAULT_COLLECTION_NAME;
-                    collectionMetadata.uri = string.Empty;
                 }
                 var collectionTxId = await CreateCollection(
                     wallet.Account,
@@ -199,6 +197,7 @@ namespace Solana.Unity.SDK.Editor
                 }
                 Debug.Log("All config lines deployed, Get minting!");
             }
+            callback?.Invoke();
         }
 
         private static async Task<bool> UploadConfigLines(
@@ -298,7 +297,8 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineCache cache, 
             CandyMachineConfiguration config,
             string keypair,
-            string rpcUrl
+            string rpcUrl,
+            Action callback = null
         )
         {
             var rpcClient = ClientFactory.GetClient(rpcUrl);
@@ -400,6 +400,7 @@ namespace Solana.Unity.SDK.Editor
                     if (failCount > 0) Debug.LogErrorFormat("Failed to upload {0} files.", failCount);
                 }
             }
+            callback?.Invoke();
         }
 
         private static async Task UploadAssetList(
@@ -643,6 +644,7 @@ namespace Solana.Unity.SDK.Editor
                 if (!fileIsValid) 
                 {
                     Debug.LogErrorFormat("File {0} has no valid asset index.", path);
+                    EditorUtility.ClearProgressBar();
                     return false;
                 }
             }

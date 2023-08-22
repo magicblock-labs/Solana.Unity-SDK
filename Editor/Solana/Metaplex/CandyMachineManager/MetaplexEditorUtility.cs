@@ -295,16 +295,21 @@ namespace Solana.Unity.SDK.Editor
                 AssetDatabase.SaveAssets();
                 refreshCallback?.Invoke();
             }
+            var assetsUploaded = cache?.Items?.Count() ?? 0;
+            GUILayout.Label(
+                string.Format("Uploaded Assets: {0} / {1}", assetsUploaded, config.number),
+                SolanaEditorUtility.propLabelStyle
+            );
             EditorGUILayout.BeginHorizontal();
             {
                 if (GUILayout.Button("Deploy", settingsButtonStyle))
                 {
-
                     CandyMachineController.InitializeCandyMachine(
                         config,
                         cache,
                         keyPair,
-                        rpcUrl
+                        rpcUrl,
+                        refreshCallback
                     );
                 }
                 if (GUILayout.Button("Upload", settingsButtonStyle)) {
@@ -321,11 +326,11 @@ namespace Solana.Unity.SDK.Editor
                         File.WriteAllText(cachePath, cacheJson);
                         config.cacheFilePath = cachePath;
                         AssetDatabase.SaveAssets();
-                        CandyMachineController.UploadCandyMachineAssets(newCache, config, keyPair, rpcUrl);
+                        CandyMachineController.UploadCandyMachineAssets(newCache, config, keyPair, rpcUrl, refreshCallback);
                     }
                     else 
                     {
-                        CandyMachineController.UploadCandyMachineAssets(cache, config, keyPair, rpcUrl);
+                        CandyMachineController.UploadCandyMachineAssets(cache, config, keyPair, rpcUrl, refreshCallback);
                     }
                 }
             }

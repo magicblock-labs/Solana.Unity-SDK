@@ -73,7 +73,7 @@ namespace Solana.Unity.SDK.Editor
             CandyMachineScrollView();
             if (GUILayout.Button("Create new Candy Machine")) 
             {
-                CandyMachineSetupWizard.OpenNew(configLocation);
+                CandyMachineSetupWizard.OpenNew(configLocation, FetchCandyMachines);
             }
             if (GUILayout.Button("Import Candy Machine")) 
             {
@@ -156,6 +156,7 @@ namespace Solana.Unity.SDK.Editor
                 var rpcClient = ClientFactory.GetClient(rpc);
                 var metadata = await MetadataAccount.GetAccount(rpcClient, new(cache.Info.CollectionMint));
                 using var webClient = new WebClient();
+                if (metadata.offchainData?.default_image == null) return null;
                 var imageBytes = await webClient.DownloadDataTaskAsync(metadata.offchainData.default_image);
                 var icon = new Texture2D(124, 124);
                 RenderTexture collectionIcon = new(icon.width, icon.height, 0);
