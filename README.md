@@ -45,7 +45,7 @@ The SDK is also available on the [Unity Asset Store](https://assetstore.unity.co
 - Basic UI examples 
 - NFTs
 - Compile games to xNFTs ([Backpack](https://www.backpack.app/))
-- Native DEX operations (Orca, Jupiter coming soon...)
+- Native DEX operations (Orca, Jupiter)
 - Websockets to register/trigger custom events (account change, signature status, programs, ...)
 - Solana Mobile Stack support
 - Soalna Wallet Adapter
