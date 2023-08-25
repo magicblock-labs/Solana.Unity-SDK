@@ -61,5 +61,5 @@ Transaction tx = await dex.Swap(swapQuote);
 - Sign and send the swap transaction:
 
 ```csharp
-await Webs.Wallet.SignAndSendTransaction(tx);
+await Web3.Wallet.SignAndSendTransaction(tx);
 ```
