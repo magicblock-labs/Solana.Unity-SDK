@@ -26,7 +26,14 @@ var metadata = new Metadata()
 };
 ```
 
-We can now construct the transaction, whichi consists of 5 istructions: 
+Let's obtain the blockhash and the minimum rent for the account that will be used to mint the NFT:
+
+```csharp
+var blockHash = await Web3.Rpc.GetLatestBlockHashAsync();
+var minimumRent = await Web3.Rpc.GetMinimumBalanceForRentExemptionAsync(TokenProgram.MintAccountDataSize);
+```
+
+We can now construct the transaction, which consists of 5 istructions: 
 - Creating the Mint Account
 - Initilizing the Mint Account
 - Creattin the AssociatedTokenAccount
