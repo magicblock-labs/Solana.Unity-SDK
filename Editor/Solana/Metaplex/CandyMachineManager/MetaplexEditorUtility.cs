@@ -169,7 +169,9 @@ namespace Solana.Unity.SDK.Editor
             {
                 state.guardGroup = SolanaEditorUtility.DropdownField("Control Guard Group", state.guardGroup, groups);
             }
+            GUI.enabled = candyGuardKey != null;
             state.freezePeriod = SolanaEditorUtility.RangeField("Freeze Period Seconds", state.freezePeriod, 0, 30 * 24 * 60 * 60); // Freeze can be a max of 30 days.
+            GUI.enabled = true;
             var guardGroup = groups?.Length > 0 ? groups[state.guardGroup] : null;
             EditorGUILayout.BeginHorizontal();
             {
@@ -236,6 +238,7 @@ namespace Solana.Unity.SDK.Editor
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.BeginVertical();
                 {
+                    GUI.enabled = candyGuardKey != null;
                     if (GUILayout.Button("Freeze", settingsButtonStyle)) {
                         CandyMachineController.Freeze(
                             keypair,
@@ -264,6 +267,7 @@ namespace Solana.Unity.SDK.Editor
                             guardGroup
                         );
                     }
+                    GUI.enabled = true;
                 }
                 EditorGUILayout.EndVertical();
             }

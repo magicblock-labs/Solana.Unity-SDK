@@ -1164,6 +1164,11 @@ namespace Solana.Unity.SDK.Editor
             bool skipPreflight = false
         )
         {
+            if (candyGuardKey == null) 
+            {
+                Debug.LogError("No guards configured.");
+                return;
+            }
             var keyPairJson = File.ReadAllText(keypair);
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
             var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
@@ -1247,6 +1252,10 @@ namespace Solana.Unity.SDK.Editor
             string groupLabel
         )
         {
+            if (candyGuardKey == null) {
+                Debug.LogError("No guards configured.");
+                return;
+            }
             var keyPairJson = File.ReadAllText(keypair);
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
             var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
@@ -1404,6 +1413,10 @@ namespace Solana.Unity.SDK.Editor
             bool skipPreflight = false
         )
         {
+            if (candyGuardKey == null) {
+                Debug.LogError("No guards configured.");
+                return;
+            }
             var keyPairJson = File.ReadAllText(keypair);
             var keyPairBytes = JsonConvert.DeserializeObject<byte[]>(keyPairJson);
             var wallet = new Wallet.Wallet(keyPairBytes, string.Empty, SeedMode.Bip39);
