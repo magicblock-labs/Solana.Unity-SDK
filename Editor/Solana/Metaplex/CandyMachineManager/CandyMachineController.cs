@@ -48,6 +48,10 @@ namespace Solana.Unity.SDK.Editor
 
         #region Constants
 
+        private static readonly string[] VALID_IMAGE_TYPES = new string[] { ".jpg", ".jpeg", ".gif", ".png" };
+
+        private static readonly string[] VALID_ANIMATION_TYPES = new string[] { ".mp3", ".mp4", ".mov", ".webm", ".glb" };
+
         /// <summary>
         /// The size of a config line string.
         /// </summary>
@@ -545,8 +549,6 @@ namespace Solana.Unity.SDK.Editor
         private static async Task<Dictionary<int, CandyMachineCache.CacheItem>> GetCandyMachineAssetsAsync()
         {
             var assetPairs = new Dictionary<int, CandyMachineCache.CacheItem>();
-            var validImageTypes = new string[] { ".jpg", ".jpeg", ".gif", ".png" };
-            var validAnimationTypes = new string[] { ".mp3", ".mp4", ".mov", ".webm", ".glb" };
             var assetFolderPath = EditorUtility.OpenFolderPanel("Select asset folder", string.Empty, string.Empty);
 
             var filePaths = Directory.EnumerateFiles(assetFolderPath);
@@ -573,13 +575,13 @@ namespace Solana.Unity.SDK.Editor
                 }
                 var valid = await Task.Run(() => {
                     var assetFiles = filePaths.Where(filePath => Path.GetFileNameWithoutExtension(filePath) == fileName);
-                    var imageFiles = assetFiles.Where(filePath => validImageTypes.Contains(Path.GetExtension(filePath)));
+                    var imageFiles = assetFiles.Where(filePath => VALID_IMAGE_TYPES.Contains(Path.GetExtension(filePath)));
                     if (imageFiles.Count() != 1) 
                     {
                         Debug.LogErrorFormat("Couldn't find image file at index {0}.", index);
                         return false;
                     }
-                    var animationFiles = assetFiles.Where(filePath => validAnimationTypes.Contains(Path.GetExtension(filePath)));
+                    var animationFiles = assetFiles.Where(filePath => VALID_ANIMATION_TYPES.Contains(Path.GetExtension(filePath)));
                     var metadataJson = File.ReadAllText(metadataFile);
                     var metadata = JsonConvert.DeserializeObject<MetaplexTokenStandard>(metadataJson);
 
@@ -627,7 +629,8 @@ namespace Solana.Unity.SDK.Editor
             foreach (var path in filePaths) 
             {
                 EditorUtility.DisplayProgressBar("CandyMachine Manager", "Validating file names...", fileIndex / (float)fileCount);
-                if (Path.GetExtension(path) == ".meta") continue;
+                var extension = Path.GetExtension(path);
+                if (!VALID_IMAGE_TYPES.Contains(extension) && !VALID_ANIMATION_TYPES.Contains(extension) && extension != ".json") continue;
                 // Run as task so Unity UI thread remains unblocked.
                 var fileIsValid = await Task.Run(() => {
                     var fileName = Path.GetFileNameWithoutExtension(path);
