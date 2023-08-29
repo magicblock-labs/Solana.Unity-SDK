@@ -231,7 +231,7 @@ namespace Solana.Unity.SDK.Metaplex
                 .AddInstruction(computeInstruction)
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { payer, mint });
-            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight, Rpc.Types.Commitment.Confirmed);
             return txId.Result;
         }
 
@@ -310,7 +310,7 @@ namespace Solana.Unity.SDK.Metaplex
                 .AddInstruction(computeInstruction)
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { payer, mint });
-            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight);
+            var txId = await rpcClient.SendTransactionAsync(transaction, skipPreflight, Rpc.Types.Commitment.Confirmed);
             return txId.Result;
         }
 

@@ -107,7 +107,7 @@ namespace Solana.Unity.SDK.Editor
             return addresses["solana"].ToString();
         }
 
-        internal async Task FundBundlrAddress(
+        internal async Task<bool> FundBundlrAddress(
             Account payer,
             IRpcClient rpcClient,
             string bundlrAddress,
@@ -129,7 +129,8 @@ namespace Solana.Unity.SDK.Editor
             tx.PartialSign(payer);
 
             Debug.LogFormat("Funding Bundlr address from: {0}", payer.PublicKey);
-            await rpcClient.SendTransactionAsync(tx.Serialize());
+            var response = await rpcClient.SendTransactionAsync(tx.Serialize(), commitment: Rpc.Types.Commitment.Confirmed);
+            return response.Result != null;
         }
 
         #endregion

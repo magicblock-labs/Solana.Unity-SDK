@@ -141,15 +141,12 @@ namespace Solana.Unity.SDK.Editor
                 Debug.Log("Attempting to fund Bundlr address.");
                 var fundsRequired = (ulong)Mathf.CeilToInt(FUND_PADDING * (lamportsFee - balance));
                 Debug.LogFormat("Additonal funds required: {0}", fundsRequired);
-                await bundlrClient.FundBundlrAddress(payer, rpcClient, bundlrAddress, fundsRequired);
-
-                for (int i = 0; i < MAX_RETRY; i++) 
+                var funded = await bundlrClient.FundBundlrAddress(payer, rpcClient, bundlrAddress, fundsRequired);
+                if (!funded) 
                 {
-                    balance = await bundlrClient.GetBundlrBalance(payer);
-                    if (balance >= lamportsFee) break;
-                    await Task.Delay(DELAY_UNTIL_RETRY);
+                    throw new Exception("Insufficient Funds");
                 }
-
+                balance = await bundlrClient.GetBundlrBalance(payer);
                 if (balance < lamportsFee) 
                 {
                     throw new Exception(string.Format("No Bundlr balance found for address: {0}", payer.PublicKey));
