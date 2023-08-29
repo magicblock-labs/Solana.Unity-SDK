@@ -131,7 +131,7 @@ namespace Solana.Unity.SDK.Metaplex
                 )
                 .AddInstruction(candyMachineInstruction)
                 .Build(new List<Account> { account, candyMachineAccount });
-            var txId = await rpcClient.SendAndConfirmTransactionAsync(transaction);
+            var txId = await rpcClient.SendAndConfirmTransactionAsync(transaction, skipPreflight);
             return txId.Result;
         }
 

@@ -130,28 +130,24 @@ namespace Solana.Unity.SDK.Editor
                 if (cache.Items.ContainsKey(-1)) 
                 {
                     cache.Items[-1].onChain = true;
-                    cache.SyncFile(config.cacheFilePath);
                 }
                 Debug.LogFormat("Minted Collection NFT - Transaction ID: {0}", collectionTxId);
                 collectionMint = collectionMintAccount;
                 cache.Info.CollectionMint = collectionMint;
+                cache.SyncFile(config.cacheFilePath);
             }
 
             var candyMachineKey = cache.Info.CandyMachineKey;
             if (candyMachineKey == null) 
             {
+                Debug.Log("Verifying Collection metadata");
                 var metadataClient = new MetadataClient(rpcClient);
-                MetadataAccount collectionAccount = null;
-                var tries = 0;
-                Debug.Log("Verifying collection metadata...");
-                while (collectionAccount == null && tries < MAX_RETRIES) 
+                for (int i = 0; i < MAX_RETRIES; i++) 
                 {
-                    collectionAccount = await metadataClient.RetrieveTokenMetadata(collectionMint);
-                    if (collectionAccount == null) 
-                    {
-                        await Task.Delay(RETRY_TIME);
-                        tries++;
-                    }
+                    var metadata = await metadataClient.RetrieveTokenMetadata(collectionMint, Rpc.Types.Commitment.Finalized);
+                    if (metadata != null) break;
+                    if (i == MAX_RETRIES - 1) throw new Exception("Failed to retrieve Collection Metadatam, please re-run the deploy command");
+                    await Task.Delay(RETRY_TIME);
                 }
                 Debug.Log("Collection metadata found!");
                 Debug.Log("Deploying CandyMachine...");
