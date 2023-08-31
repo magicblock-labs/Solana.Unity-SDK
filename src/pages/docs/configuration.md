@@ -41,12 +41,11 @@ You can attach the [Web3.cs](https://github.com/magicblock-labs/Solana.Unity-SDK
 
 ---
 ## Wallet Adapter
-To configure a wallet following the [Wallet Adapter](https://solana-mobile.github.io/mobile-wallet-adapter/spec/spec.html) standard use the [SolanaWalletAdapterWebGL](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaWalletAdapterWebGL.cs) wallet implementation.
+To configure a wallet following the [Wallet Adapter](https://solana-mobile.github.io/mobile-wallet-adapter/spec/spec.html) standard use the [SolanaWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaWalletAdapter.cs) wallet implementation.
 
 ```csharp
-WalletBase wallet = new SolanaWalletAdapterWebGL(walletAdapterOptions, RpcCluster.DevNet, ...);
+WalletBase wallet = new SolanaWalletAdapter(walletAdapterOptions, RpcCluster.DevNet, ...);
 ``` 
-
 
 ## SMS
 
@@ -54,35 +53,20 @@ Solana Mobile Stack is a set of libraries for wallets and apps, allowing develop
 For more information about SMS check out the official [documentation](https://solanamobile.com/developers). 
 
 ## Mobile Wallet Adapter
-To configure a wallet following the Mobile Wallet Adapter standard use the [SolanaMobileWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaMobileWalletAdapter.cs) wallet implementation.
 
-```csharp
-WalletBase wallet = new SolanaMobileWalletAdapter(solanaMobileWalletOptions, RpcCluster.DevNet, ...);
-``` 
+To establish a wallet configuration in accordance with the Mobile Wallet Adapter standard, employ the [SolanaWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaWalletAdapter.cs) implementation as demonstrated above. This adapter intelligently detects the target platform during development, seamlessly utilizing the appropriate underlying implementation. For example, when targeting WebGL, the [SolanaWalletAdapterWebGL](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaWalletAdapterWebGL/SolanaWalletAdapterWebGL.cs) is employed; likewise, when building for Android/iOS, the [SolanaMobileWalletAdapter](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/SolanaMobileStack/SolanaMobileWalletAdapter.cs) is automatically chosen.
+
 
 ## Configuring Deeplinks
 
-Some of the wallet, e.g. Phantom, are currently implemented using DeepLinks. Deep links are URLs that link to a specific piece of content or functionality within an app, in the context of Solana transactions, deep links can be used to sign a transaction by allowing users to approve a transaction using their Solana wallet.
+Some of the wallet on IOS, e.g. Phantom, are currently implemented using DeepLinks. Deep links are URLs that link to a specific piece of content or functionality within an app, in the context of Solana transactions, deep links can be used to sign a transaction by allowing users to approve a transaction using their Solana wallet.
 
-### Enabling deep linking for Android applications
-
-To enable deep linking for Android applications, use an [intent filter](https://developer.android.com/guide/components/intents-filters). An intent filter overrides the standard Android App [Manifest](https://docs.unity3d.com/Manual/android-manifest.html) to include a specific intent filter section for [Activity](https://developer.android.com/reference/android/app/Activity). 
-
-To set up the wallet intent filter:
-
-1. In the Project window, go to Assets > Plugins > Android.
-2. Create a new file and call it AndroidManifest.xml. Unity automatically processes this file when you build your application.
-3. Copy the [code sample](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Samples~/Solana%20Wallet/Plugins/Android/AndroidManifest.xml) into the new file and save it.
-
-*android:scheme="unitydl" should match the value defined in the wallet configuration* 
-
-See the detailed explanation on the Unity [documentation page](https://docs.unity3d.com/Manual/deep-linking-android.html).
 
 ### Enabling deep linking for IOS applications
 
 See the detailed explanation on the Unity [documentation page](https://docs.unity3d.com/Manual/deep-linking-android.html) .
 
-*the defined schema should match the value defined in the wallet configuration* 
+*the defined schema should match the value defined in the SolanaWalletAdapter wallet configuration* 
 
 
 
