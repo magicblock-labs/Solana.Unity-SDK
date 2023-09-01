@@ -49,6 +49,7 @@ const navigation = [
       { title: 'DEX integration: Orca', href: '/docs/orca'},
       { title: 'DEX integration: Jupiter', href: '/docs/jupiter'},
       { title: 'Additional examples', href: '/docs/examples'},
+      { title: 'CandyMachine', href: '/docs/candy-machine'},
     ],
   },
 ]
