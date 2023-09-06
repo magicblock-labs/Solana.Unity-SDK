@@ -58,6 +58,7 @@ The SDK is also available on the [Unity Asset Store](https://assetstore.unity.co
 - Solana.Unity.Wallet
 - Solana.Unity.Rpc
 - Solana.Unity.Dex
+- Solana.Unity.Gum
 - Solana.Unity.Extensions
 - Soalana.Unity.KeyStore
 - Soalana.Unity.Programs
