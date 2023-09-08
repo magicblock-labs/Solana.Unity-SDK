@@ -21,6 +21,7 @@ namespace Solana.Unity.SDK
         public PublicKey SessionTokenPDA { get; protected set; }
 
         public static SessionWallet Instance;
+        private static WalletBase _externalWallet;
 
         private SessionWallet(RpcCluster rpcCluster = RpcCluster.DevNet,
             string customRpcUri = null, string customStreamingRpcUri = null,
@@ -58,25 +59,28 @@ namespace Solana.Unity.SDK
                 sessionSigner: Account.PublicKey
             );
         }
-
+        
+        public void SignInitSessionTx(Transaction tx)
+        {
+            tx.PartialSign(new[] { _externalWallet.Account, Account });
+        }
+        
+        
         /// <summary>
         /// Creates a new SessionWallet instance and logs in with the provided password if a session wallet exists, otherwise creates a new account and logs in.
         /// </summary>
         /// <param name="targetProgram">The target program to interact with.</param>
         /// <param name="password">The password to decrypt the session keystore.</param>
-        /// <param name="rpcCluster">The Solana RPC cluster to connect to.</param>
-        /// <param name="customRpcUri">A custom URI to connect to the Solana RPC cluster.</param>
-        /// <param name="customStreamingRpcUri">A custom URI to connect to the Solana streaming RPC cluster.</param>
-        /// <param name="autoConnectOnStartup">Whether to automatically connect to the Solana RPC cluster on startup.</param>
+        /// <param name="externalWallet">The external wallet</param>
         /// <returns>A SessionWallet instance.</returns>
-        public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, string password, RpcCluster rpcCluster = RpcCluster.DevNet,
-            string customRpcUri = null, string customStreamingRpcUri = null,
-            bool autoConnectOnStartup = false)
+        public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, string password, WalletBase externalWallet = null)
         {
             if(Instance != null) return Instance;
-            SessionWallet sessionWallet = new SessionWallet(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+            externalWallet ??= Web3.Wallet;
+            _externalWallet = externalWallet;
+            SessionWallet sessionWallet = new SessionWallet(externalWallet.RpcCluster, externalWallet.ActiveRpcClient.NodeAddress.ToString());
             sessionWallet.TargetProgram = targetProgram;
-            sessionWallet.EncryptedKeystoreKey = $"{Web3.Account.PublicKey}_SessionKeyStore";
+            sessionWallet.EncryptedKeystoreKey = $"{_externalWallet.Account.PublicKey}_SessionKeyStore";
             var derivedPassword = DeriveSessionPassword(password);
 
             if (sessionWallet.HasSessionWallet())
@@ -89,10 +93,10 @@ namespace Solana.Unity.SDK
                     sessionWallet.DeleteSessionWallet();
                     sessionWallet.Logout();
                     Instance = null;
-                    return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+                    return await GetSessionWallet(targetProgram, password, externalWallet);
                 }
 
-                sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
+                sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, _externalWallet.Account);
 
                 Debug.Log(sessionWallet.SessionTokenPDA);
 
@@ -109,14 +113,14 @@ namespace Solana.Unity.SDK
                 }
 
                 Debug.Log("Session Token is invalid");
-                await sessionWallet.PrepareLogout();
+                await sessionWallet.CloseSession();
                 sessionWallet.Logout();
                 Instance = null;
-                return await GetSessionWallet(targetProgram, password, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+                return await GetSessionWallet(targetProgram, password, externalWallet);
             }
 
             sessionWallet.Account = await sessionWallet.CreateAccount(password: derivedPassword);
-            sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, Web3.Account);
+            sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, _externalWallet.Account);
             return sessionWallet;
         }
 
@@ -133,7 +137,7 @@ namespace Solana.Unity.SDK
             {
                 SessionToken = SessionTokenPDA,
                 SessionSigner = Account.PublicKey,
-                Authority = Web3.Account,
+                Authority = _externalWallet.Account,
                 TargetProgram = TargetProgram,
                 SystemProgram = SystemProgram.ProgramIdKey,
             };
@@ -155,7 +159,7 @@ namespace Solana.Unity.SDK
             {
                 SessionToken = SessionTokenPDA,
                 // Only the authority of the session token can receive the refund
-                Authority = Web3.Account,
+                Authority = _externalWallet.Account,
                 SystemProgram = SystemProgram.ProgramIdKey,
             };
 
@@ -185,8 +189,15 @@ namespace Solana.Unity.SDK
             return SessionToken.Deserialize(Convert.FromBase64String(sessionTokenData)).ValidUntil > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
 
+        public async Task<PublicKey> Authority()
+        {
+            var sessionTokenData = (await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA)).Result.Value.Data[0];
+            if (sessionTokenData == null) return null;
+            return SessionToken.Deserialize(Convert.FromBase64String(sessionTokenData)).Authority;
+        }
+
         private static string DeriveSessionPassword(string password) {
-            var rawData = Web3.Account.PublicKey.Key + password + Application.platform;
+            var rawData = _externalWallet.Account.PublicKey.Key + password + Application.platform;
             using SHA256 sha256Hash = SHA256.Create();
             // ComputeHash - returns byte array
             var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
@@ -207,7 +218,7 @@ namespace Solana.Unity.SDK
         /// NOTE: You must call PrepareLogout before calling Logout to ensure that the session token account is revoked and the refund is issued.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public async Task PrepareLogout()
+        public async Task CloseSession(Commitment commitment = Commitment.Confirmed)
         {
             Debug.Log("Preparing Logout");
             // Revoke Session
@@ -215,7 +226,7 @@ namespace Solana.Unity.SDK
             {
                 FeePayer = Account,
                 Instructions = new List<TransactionInstruction>(),
-                RecentBlockHash = await Web3.BlockHash()
+                RecentBlockHash = await GetBlockHash(commitment)
             };
 
             // Get balance and calculate refund
@@ -226,9 +237,8 @@ namespace Solana.Unity.SDK
 
             tx.Add(RevokeSessionIX());
             // Issue Refund
-            tx.Add(SystemProgram.Transfer(Account.PublicKey, Web3.Account.PublicKey, (ulong)refund));
-            var rest = await SignAndSendTransaction(tx);
-            Debug.Log("Session refund transaction: " + rest.RawRpcResponse);
+            tx.Add(SystemProgram.Transfer(Account.PublicKey, _externalWallet.Account.PublicKey, (ulong)refund));
+            var rest = await SignAndSendTransaction(tx, commitment: commitment);
             DeleteSessionWallet();
         }
     }
