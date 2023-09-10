@@ -979,7 +979,7 @@ namespace Solana.Unity.SDK.Editor
                     newMetadata,
                     null
                 );
-                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var blockHash = await rpcClient.GetLatestBlockHashAsync();
                 var tx = new TransactionBuilder()
                     .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                     .SetFeePayer(updateAuthority)
@@ -1142,7 +1142,7 @@ namespace Solana.Unity.SDK.Editor
             bool skipPreflight
         )
         {
-            var recentBlockhash = await rpcClient.GetRecentBlockHashAsync();
+            var recentBlockhash = await rpcClient.GetLatestBlockHashAsync();
             var signInstruction = MetadataProgram.SignMetadata(mintAccount, signer);
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(recentBlockhash.Result.Value.Blockhash)
@@ -1229,7 +1229,7 @@ namespace Solana.Unity.SDK.Editor
                     ProgramId = routeInstruction.ProgramId,
                     Keys = routeInstruction.Keys.Concat(remainingAccounts).ToArray()
                 };
-                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var blockHash = await rpcClient.GetLatestBlockHashAsync();
                 var transaction = new TransactionBuilder()
                     .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                     .SetFeePayer(wallet.Account)
@@ -1397,7 +1397,7 @@ namespace Solana.Unity.SDK.Editor
                 ProgramId = routeInstruction.ProgramId,
                 Keys = routeInstruction.Keys.Concat(remainingAccounts).ToArray()
             };
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(payer)
@@ -1498,7 +1498,7 @@ namespace Solana.Unity.SDK.Editor
                     ProgramId = routeInstruction.ProgramId,
                     Keys = routeInstruction.Keys.Concat(remainingAccounts).ToArray()
                 };
-                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var blockHash = await rpcClient.GetLatestBlockHashAsync();
                 var transaction = new TransactionBuilder()
                     .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                     .SetFeePayer(wallet.Account)

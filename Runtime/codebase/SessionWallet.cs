@@ -6,8 +6,8 @@ using System.Security.Cryptography;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Programs;
-using Solana.Unity.Gum.GplSession.Accounts;
-using Solana.Unity.Gum.GplSession.Program;
+using Solana.Unity.SessionKeys.GplSession.Accounts;
+using Solana.Unity.SessionKeys.GplSession.Program;
 using Solana.Unity.Rpc.Types;
 using UnityEngine;
 
