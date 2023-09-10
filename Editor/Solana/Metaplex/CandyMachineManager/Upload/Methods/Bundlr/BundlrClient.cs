@@ -114,7 +114,7 @@ namespace Solana.Unity.SDK.Editor
             ulong amount
         )
         {
-            var recentBlockhash = await rpcClient.GetRecentBlockHashAsync();
+            var recentBlockhash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .AddInstruction(
                     SystemProgram.Transfer(

@@ -114,7 +114,7 @@ namespace Solana.Unity.SDK.Metaplex
                 (byte)TokenStandard.NonFungible,
                 CandyMachineProgramId
             );
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var candyAccountSize = GetSpaceForCandyMachine(candyMachineData);
             var minimumRent = await rpcClient.GetMinimumBalanceForRentExemptionAsync((long)candyAccountSize);
             var transaction = new TransactionBuilder()
@@ -154,7 +154,7 @@ namespace Solana.Unity.SDK.Metaplex
                 configLines,
                 CandyMachineProgramId
             );
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
@@ -213,7 +213,7 @@ namespace Solana.Unity.SDK.Metaplex
                 RecentSlothashes = RECENT_SLOTHASHES
             };
             var candyMachineInstruction = CandyMachineProgram.MintV2(mintNftAccounts, CandyMachineProgramId);
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var computeInstruction = ComputeBudgetProgram.SetComputeUnitLimit(COMPUTE_UNITS);
             candyMachineInstruction = new TransactionInstruction {
                 Data = candyMachineInstruction.Data,
@@ -291,7 +291,7 @@ namespace Solana.Unity.SDK.Metaplex
                 CandyGuardProgramId
             );
 
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var computeInstruction = ComputeBudgetProgram.SetComputeUnitLimit(COMPUTE_UNITS);
             candyMachineInstruction = new TransactionInstruction {
                 Data = candyMachineInstruction.Data,
@@ -350,7 +350,7 @@ namespace Solana.Unity.SDK.Metaplex
                     resultData,
                     CandyGuardProgramId
                 );
-                var blockHash = await rpcClient.GetRecentBlockHashAsync();
+                var blockHash = await rpcClient.GetLatestBlockHashAsync();
                 var transaction = new TransactionBuilder()
                     .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                     .SetFeePayer(account)
@@ -385,7 +385,7 @@ namespace Solana.Unity.SDK.Metaplex
                 resultData,
                 CandyGuardProgramId
             );
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
@@ -414,7 +414,7 @@ namespace Solana.Unity.SDK.Metaplex
                 wrapAccounts,
                 CandyGuardProgramId
             );
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
@@ -436,7 +436,7 @@ namespace Solana.Unity.SDK.Metaplex
                 CandyMachine = candyMachineAccount
             };
             var withdrawInstruction = CandyMachineProgram.Withdraw(withdrawAccounts, CandyMachineProgramId);
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
@@ -458,7 +458,7 @@ namespace Solana.Unity.SDK.Metaplex
                 Authority = account
             };
             var withdrawInstruction = CandyGuardProgram.Withdraw(withdrawAccounts, CandyMachineProgramId);
-            var blockHash = await rpcClient.GetRecentBlockHashAsync();
+            var blockHash = await rpcClient.GetLatestBlockHashAsync();
             var transaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
