@@ -56,15 +56,15 @@ mergeInto(LibraryManager.library, {
                 } else {
                     signedTransaction = await window.walletAdapterLib.signTransaction(walletName, base64transaction);
                 }
-                let txStr = signedTransaction.serialize().toString('base64')
+                let txStr = Buffer.from(signedTransaction.serialize()).toString('base64');
                 var bufferSize = lengthBytesUTF8(txStr) + 1;
                 var txPtr = _malloc(bufferSize);
                 stringToUTF8(txStr, txPtr, bufferSize);
-                Module.dynCall_vi(callback, txPtr);          
+                Module.dynCall_vi(callback, txPtr);     
          } catch (err) {
             console.error(err.message);
             Module.dynCall_vi(callback, null);
-         }
+         } 
     },
     ExternSignMessageWallet: async function (walletNamePtr, messagePtr, callback) {
          try {
