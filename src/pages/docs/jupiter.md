@@ -41,7 +41,7 @@ SwapQuoteAg swapQuote = await dex.GetSwapQuote(
 
 ```csharp
 var quote = DecimalUtil.FromBigInteger(swapQuote.OutputAmount, tokenB.Decimals);
-Debug.Log(quote); // Amount of espected Orca token to receive
+Debug.Log(quote); // Amount of espected USDC token to receive
 ```
 
 - Display the route path:
@@ -50,6 +50,53 @@ Debug.Log(quote); // Amount of espected Orca token to receive
 Debug.Log(string.Join(" -> ", swapQuote.RoutePlan.Select(p => p.SwapInfo.Label)));
 
 // Lifinity V2 -> Whirlpool
+```
+
+- Create the swap transaction:
+
+```csharp
+Transaction tx = await dex.Swap(swapQuote);
+```
+
+- Sign and send the swap transaction:
+
+```csharp
+await Web3.Wallet.SignAndSendTransaction(tx);
+```
+
+
+## Use the Jupiter Payments API
+
+The Jupiter Payments API is also available, enabling you to utilize Jupiter + SolanaPay for facilitating user payments with any SPL token, allowing pricing in USDC or other tokens.
+
+- Create an IDex istance, providing a default account:
+
+```csharp
+IDexAggregator dex = new JupiterDexAg(Web3.Account);
+```
+
+- Create an IDex istance:
+
+```csharp
+TokenData tokenA = await dex.GetTokenBySymbol("SOL");
+TokenData tokenB = await dex.GetTokenBySymbol("USDC");
+```
+
+
+- Get a swap quote for the amount of SOL needed for obtaining 5 UDSC:
+
+```csharp
+SwapQuoteAg swapQuote = await dex.GetSwapQuote(
+    tokenA.MintAddress,
+    tokenB.MintAddress,
+    DecimalUtil.ToUlong(5, tokenB.Decimals),
+    SwapMode.ExactOut
+);
+```
+
+```csharp
+var quote = DecimalUtil.FromBigInteger(swapQuote.InputAmount, tokenA.Decimals);
+Debug.Log(quote); // Amount of espected SOL token to pay
 ```
 
 - Create the swap transaction:
