@@ -1,8 +1,11 @@
 ﻿#if UNITY_WEBGL && UNITY_EDITOR
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 
 /// Inspired by Author: Jonas Hahn, Source: https://github.com/Woody4618/Solana.Unity-SDK/blob/main/Runtime/codebase/WebGLTemplatePostProcessor.cs
 
@@ -16,7 +19,9 @@ using System.IO;
 // So we copy it over if it does not yet exists
 
 
-public class WebGLTemplatesExporter {
+// ReSharper disable once CheckNamespace
+
+public static class WebGLTemplatesExporter {
     [UnityEditor.Callbacks.DidReloadScripts]
     private static void OnScriptsReloaded() {
         var destinationRootFolder = Path.GetFullPath("Assets/WebGLTemplates/");
@@ -43,8 +48,48 @@ public class WebGLTemplatesExporter {
             }
 
         }
+
     }
-    
+
+}
+
+#endif
+
+#if UNITY_EDITOR
+public static class SetDefaultSplashScreen
+{
+    [UnityEditor.Callbacks.DidReloadScripts]
+    private static void OnScriptsReloaded()
+    {
+        // Set Default Splash Screen
+        if(PlayerSettings.SplashScreen.logos.Length == 0)
+        {
+            Texture2D logoTexture = (Texture2D)Resources.Load("magicblock-logo");
+            Texture2D backgroundTexture = (Texture2D)Resources.Load("background");
+            if (logoTexture != null)
+            {
+                var logo = new PlayerSettings.SplashScreenLogo();
+                Sprite logoSprite = Sprite.Create(logoTexture, new Rect(0, 0, logoTexture.width, logoTexture.height), Vector2.zero);
+                logo.logo = logoSprite;
+                logo.duration = 2;
+            
+                var logos = new List<PlayerSettings.SplashScreenLogo>(PlayerSettings.SplashScreen.logos) { logo };
+                PlayerSettings.SplashScreen.logos = logos.ToArray();
+
+                if (backgroundTexture != null && PlayerSettings.SplashScreen.background == null)
+                {
+                    Sprite backgroundSprite = Sprite.Create(backgroundTexture, new Rect(0, 0, logoTexture.width, logoTexture.height),
+                        Vector2.zero);
+                    PlayerSettings.SplashScreen.background = backgroundSprite;
+                }
+                
+
+                // Save the changes
+                EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            }
+        }
+    }
+
 }
 
 #endif
