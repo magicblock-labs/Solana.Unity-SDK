@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
-using UnityEditor.SceneManagement;
-using UnityEngine.SceneManagement;
 
 /// Inspired by Author: Jonas Hahn, Source: https://github.com/Woody4618/Solana.Unity-SDK/blob/main/Runtime/codebase/WebGLTemplatePostProcessor.cs
 
@@ -82,10 +80,6 @@ public static class SetDefaultSplashScreen
                         Vector2.zero);
                     PlayerSettings.SplashScreen.background = backgroundSprite;
                 }
-                
-
-                // Save the changes
-                EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
             }
         }
     }
