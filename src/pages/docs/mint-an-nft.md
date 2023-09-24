@@ -43,7 +43,7 @@ We can now construct the transaction, which consists of 5 istructions:
 
 ```csharp
 var transaction = new TransactionBuilder()
-    .SetRecentBlockHash(blockHash)
+    .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
     .SetFeePayer(Web3.Account)
     .AddInstruction(
         SystemProgram.CreateAccount(
