@@ -1,9 +1,9 @@
-﻿#if UNITY_WEBGL && UNITY_EDITOR
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+
+#if UNITY_WEBGL && UNITY_EDITOR
 
 /// Inspired by Author: Jonas Hahn, Source: https://github.com/Woody4618/Solana.Unity-SDK/blob/main/Runtime/codebase/WebGLTemplatePostProcessor.cs
 
