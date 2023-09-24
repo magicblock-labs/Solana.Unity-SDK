@@ -44,6 +44,7 @@ namespace Solana.Unity.SDK.Example
         private CancellationTokenSource _stopTask;
         private List<TokenItem> _instantiatedTokens = new();
         private static TokenMintResolver _tokenResolver;
+        private bool _isLoadingTokens = false;
 
         public void Start()
         {
@@ -117,6 +118,7 @@ namespace Solana.Unity.SDK.Example
             {
                 lamports.text = $"{sol}";
             });
+            GetOwnedTokenAccounts().AsAsyncUnitUniTask().Forget();
         }
 
         private void OnDisable()
@@ -147,6 +149,8 @@ namespace Solana.Unity.SDK.Example
 
         private async UniTask GetOwnedTokenAccounts()
         {
+            if(_isLoadingTokens) return;
+            _isLoadingTokens = true;
             var tokens = await Web3.Wallet.GetTokenAccounts(Commitment.Confirmed);
             if(tokens == null) return;
             // Remove tokens not owned anymore and update amounts
@@ -172,6 +176,7 @@ namespace Solana.Unity.SDK.Example
                 Destroy(tk.gameObject);
             });
             // Add new tokens
+            List<UniTask> loadingTasks = new List<UniTask>();
             if (tokens is {Length: > 0})
             {
                 var tokenAccounts = tokens.OrderByDescending(
@@ -184,8 +189,10 @@ namespace Solana.Unity.SDK.Example
                         var tk = Instantiate(tokenItem, tokenContainer, true);
                         tk.transform.localScale = Vector3.one;
 
-                        Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
-                            Web3.Instance.WalletBase.ActiveRpcClient).AsUniTask().ContinueWith(nft =>
+                        var loadTask = Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
+                            Web3.Instance.WalletBase.ActiveRpcClient).AsUniTask();
+                        loadingTasks.Add(loadTask);
+                        loadTask.ContinueWith(nft =>
                         {
                             TokenItem tkInstance = tk.GetComponent<TokenItem>();
                             _instantiatedTokens.Add(tkInstance);
@@ -198,6 +205,8 @@ namespace Solana.Unity.SDK.Example
                     }
                 }
             }
+            await UniTask.WhenAll(loadingTasks);
+            _isLoadingTokens = false;
         }
         
         public static async UniTask<TokenMintResolver> GetTokenMintResolver()
