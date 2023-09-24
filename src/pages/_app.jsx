@@ -44,12 +44,13 @@ const navigation = [
     title: 'Guides',
     links: [
       { title: 'Mint an NFT', href: '/docs/mint-an-nft' },
+      { title: 'Mint an NFT with a Candy Machine', href: '/docs/mint-with-candy-machine' },
+      { title: 'Creating a CandyMachine with the Unity tool', href: '/docs/candy-machine'},
       { title: 'Host your game on Github pages', href: '/docs/gh-pages'},
       { title: 'Publishing a game as Xnft', href: '/docs/xnft'},
       { title: 'DEX integration: Orca', href: '/docs/orca'},
       { title: 'DEX integration: Jupiter', href: '/docs/jupiter'},
       { title: 'Additional examples', href: '/docs/examples'},
-      { title: 'CandyMachine', href: '/docs/candy-machine'},
     ],
   },
 ]
