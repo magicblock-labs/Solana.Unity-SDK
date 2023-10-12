@@ -14,7 +14,7 @@ public abstract class HidingAttributeDrawer : PropertyDrawer {
     /// <summary>
     /// Checks if a property is set to be hidden by a HideIfAttribute.
     /// 
-    /// Usefull for other property drawers that should respect the HideIfAttribute
+    /// Useful for other property drawers that should respect the HideIfAttribute
     /// </summary>
     public static bool CheckShouldHide(SerializedProperty property) {
         try {

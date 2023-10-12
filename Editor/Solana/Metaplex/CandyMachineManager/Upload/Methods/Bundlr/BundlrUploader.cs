@@ -140,7 +140,7 @@ namespace Solana.Unity.SDK.Editor
             {
                 Debug.Log("Attempting to fund Bundlr address.");
                 var fundsRequired = (ulong)Mathf.CeilToInt(FUND_PADDING * (lamportsFee - balance));
-                Debug.LogFormat("Additonal funds required: {0}", fundsRequired);
+                Debug.LogFormat("Additional funds required: {0}", fundsRequired);
                 var funded = await bundlrClient.FundBundlrAddress(payer, rpcClient, bundlrAddress, fundsRequired);
                 if (!funded) 
                 {

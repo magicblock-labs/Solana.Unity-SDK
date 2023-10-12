@@ -194,7 +194,7 @@ var LibraryWebSocket = {
 		instance.ws.onerror = function(ev) {
 
 			if (webSocketState.debug)
-				console.log("[JSLIB WebSocket] Error occured.");
+				console.log("[JSLIB WebSocket] Error occurred.");
 
 			if (webSocketState.onError) {
 
