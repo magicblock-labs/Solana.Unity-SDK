@@ -510,7 +510,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pub_txt: {fileID: 6269036518311638642}
-  ammount_txt: {fileID: 6269036518382588404}
+  amount_txt: {fileID: 6269036518382588404}
   logo: {fileID: 0}
   transferButton: {fileID: 4931489023722635100}
 --- !u!114 &4931489023722635100

@@ -18,7 +18,7 @@ namespace Solana.Unity.SDK.Example
     public class TokenItem : MonoBehaviour
     {
         public TextMeshProUGUI pub_txt;
-        public TextMeshProUGUI ammount_txt;
+        public TextMeshProUGUI amount_txt;
 
         public RawImage logo;
 
@@ -47,7 +47,7 @@ namespace Solana.Unity.SDK.Example
             {
                 await UniTask.SwitchToMainThread();
                 _nft = nftData;
-                ammount_txt.text = "";
+                amount_txt.text = "";
                 pub_txt.text = nftData.metaplexData?.data?.offchainData?.name;
 
                 if (logo != null)
@@ -57,7 +57,7 @@ namespace Solana.Unity.SDK.Example
             }
             else
             {
-                ammount_txt.text =
+                amount_txt.text =
                     tokenAccount.Account.Data.Parsed.Info.TokenAmount.AmountDecimal.ToString(CultureInfo
                         .CurrentCulture);
                 pub_txt.text = nftData?.metaplexData?.data?.offchainData?.name ?? tokenAccount.Account.Data.Parsed.Info.Mint;
@@ -105,7 +105,7 @@ namespace Solana.Unity.SDK.Example
 
         public void UpdateAmount(string newAmount)
         {
-            MainThreadDispatcher.Instance().Enqueue(() => { ammount_txt.text = newAmount; });
+            MainThreadDispatcher.Instance().Enqueue(() => { amount_txt.text = newAmount; });
         }
     }
 }
