@@ -172,26 +172,33 @@ namespace Solana.Unity.SDK
         /// Checks if the session token account has been initialized by checking if the account data is present on the blockchain.
         /// </summary>
         /// <returns>True if the session token account has been initialized, false otherwise.</returns>
-        public async Task<bool> IsSessionTokenInitialized()
+        public async Task<bool> IsSessionTokenInitialized(Commitment commitment = Commitment.Confirmed)
         {
-            var sessionTokenData = await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA);
-            return sessionTokenData.Result.Value != null;
+            var sessionTokenData = await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA, commitment);
+            return sessionTokenData?.Result?.Value != null;
         }
 
         /// <summary>
         /// Checks if the session token is still valid by verifying if the session token account exists on the blockchain and if its validity period has not expired.
         /// </summary>
         /// <returns>True if the session token is still valid, false otherwise.</returns>
-        public async Task<bool> IsSessionTokenValid()
+        public async Task<bool> IsSessionTokenValid(Commitment commitment = Commitment.Confirmed)
         {
-            var sessionTokenData = (await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA)).Result.Value.Data[0];
+            var sessionTokenDataResult = await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA, commitment);
+            var sessionTokenData = sessionTokenDataResult.Result?.Value?.Data?[0];
             if (sessionTokenData == null) return false;
             return SessionToken.Deserialize(Convert.FromBase64String(sessionTokenData)).ValidUntil > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
 
-        public async Task<PublicKey> Authority()
+        /// <summary>
+        /// Returns the authority of the session token account.
+        /// </summary>
+        /// <param name="commitment"></param>
+        /// <returns></returns>
+        public async Task<PublicKey> Authority(Commitment commitment = Commitment.Confirmed)
         {
-            var sessionTokenData = (await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA)).Result.Value.Data[0];
+            var sessionTokenDataResult = await ActiveRpcClient.GetAccountInfoAsync(SessionTokenPDA, commitment);
+            var sessionTokenData = sessionTokenDataResult.Result?.Value?.Data?[0];
             if (sessionTokenData == null) return null;
             return SessionToken.Deserialize(Convert.FromBase64String(sessionTokenData)).Authority;
         }
