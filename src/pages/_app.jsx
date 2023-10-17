@@ -33,6 +33,7 @@ const navigation = [
   {
     title: 'Core Concepts',
     links: [
+      { title: 'Events, balance and nfts', href: '/docs/retrieve-balance-and-nfts' },
       { title: 'Associated token account', href: '/docs/associated-token-account' },
       { title: 'Transfer token', href: '/docs/transfer-token' },
       { title: 'Transaction builder', href: '/docs/transaction-builder' },
