@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Merkator.Tools;
-using Newtonsoft.Json;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
-using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
