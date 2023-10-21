@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Merkator.Tools;
+using Newtonsoft.Json;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet.Utilities;
@@ -36,6 +37,7 @@ namespace Solana.Unity.SDK
         private TaskCompletionSource<Web3AuthResponse> _taskCompletionSource;
         
         public event Action<Account> OnLoginNotify;
+        public UserInfo userInfo;
 
         public Web3AuthWallet(Web3AuthWalletOptions web3AuthWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet,
@@ -76,7 +78,6 @@ namespace Solana.Unity.SDK
         {
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
-            
             if (_loginTaskCompletionSource != null)
             {
                 _loginTaskCompletionSource?.SetResult(wallet.Account);
@@ -86,6 +87,7 @@ namespace Solana.Unity.SDK
                 Account = wallet.Account;
                 OnLoginNotify?.Invoke(wallet.Account);
             }
+            userInfo = response.userInfo;
         }
 
         protected override Task<Account> _Login(string password = null)
