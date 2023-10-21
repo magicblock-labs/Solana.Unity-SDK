@@ -73,6 +73,7 @@ namespace Solana.Unity.SDK
 
         private void OnLogin(Web3AuthResponse response)
         {
+            userInfo = response.userInfo;
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
             if (_loginTaskCompletionSource != null)
@@ -84,7 +85,6 @@ namespace Solana.Unity.SDK
                 Account = wallet.Account;
                 OnLoginNotify?.Invoke(wallet.Account);
             }
-            userInfo = response.userInfo;
         }
 
         protected override Task<Account> _Login(string password = null)
