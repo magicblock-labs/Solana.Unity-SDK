@@ -107,6 +107,7 @@ namespace Solana.Unity.SDK
         
         public static Action<Account> OnLogin;
         public static Action OnLogout;
+        public static Action OnWebSocketConnect;
 
         private static double _solAmount = 0;
         public delegate void BalanceChange(double sol);
@@ -441,6 +442,7 @@ namespace Solana.Unity.SDK
         {
             if(WsRpc == null) return;
             await Wallet.AwaitWsRpcConnection();
+            OnWebSocketConnect?.Invoke();
             await WsRpc.SubscribeAccountInfoAsync(
                 Account.PublicKey,
                 (_, accountInfo) =>
