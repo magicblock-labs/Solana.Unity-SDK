@@ -112,6 +112,7 @@ namespace Solana.Unity.SDK
                 RpcCluster.DevNet => RpcCluster.DevNet,
                 RpcCluster.TestNet => RpcCluster.TestNet,
                 RpcCluster.MainNet => RpcCluster.MainNet,
+                RpcCluster.LocalNet => RpcCluster.LocalNet,
                 _ => RpcCluster.MainNet
             };
         }
