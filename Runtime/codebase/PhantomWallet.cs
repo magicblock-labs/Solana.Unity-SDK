@@ -14,6 +14,7 @@ namespace Solana.Unity.SDK
         public string phantomApiVersion = "v1";
         public string appMetaDataUrl = "https://github.com/garbles-labs/Solana.Unity-SDK";
         public string deeplinkUrlScheme = "unitydl";
+        public string sessionEncryptionPassword = "use a strong password";
     }
     
     
