@@ -16,4 +16,15 @@ namespace  Solana.Unity.SDK
             this.session = session;
         }
     }
+    
+    [Serializable]
+    public class DisconnectPayload
+    {
+        public string session;
+
+        public DisconnectPayload(string session)
+        {
+            this.session = session;
+        }
+    }
 }

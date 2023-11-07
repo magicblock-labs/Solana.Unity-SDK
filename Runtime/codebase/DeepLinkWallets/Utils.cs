@@ -26,15 +26,40 @@ namespace Solana.Unity.SDK
         /// <summary>
         /// Create DeepLink URL for logging in to Phantom and redirect to the game
         /// </summary>
-        public static string CreateLoginDeepLink(
-            string redirectScheme, string metadataUrl, string apiVersion,
+        public static string CreateLoginDeepLink(string baseUrl, string redirectScheme, string metadataUrl,
+            string apiVersion,
             string connectionPublicKey, RpcCluster cluster)
         {
             var redirectUri = UnityWebRequest.EscapeURL($"{redirectScheme}://onPhantomConnected");
-            return $"https://phantom.app/ul/{apiVersion}/connect?app_url=" +
+            return $"{baseUrl}/ul/{apiVersion}/connect?app_url=" +
                    $"{metadataUrl}&dapp_encryption_public_key=" +
                    $"{connectionPublicKey}" +
                    $"&redirect_link={redirectUri}&cluster={GetClusterString(cluster)}";
+        }
+        
+        /// <summary>
+        /// Create Disconnect
+        /// </summary>
+        public static string CreateDisconnectDeepLink(
+            byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey, 
+            string sessionId, string baseUrl, string redirectScheme, string apiVersion,
+            string connectionPublicKey, RpcCluster cluster)
+        {
+            
+            var redirectUri = $"{redirectScheme}://disconnect";
+            var disconnectPayload = new DisconnectPayload(sessionId);
+            var disconnectPayloadJson = JsonUtility.ToJson(disconnectPayload);
+            var bytesJson = Encoding.UTF8.GetBytes(disconnectPayloadJson);
+            var randomNonce = GenerateRandomBytes(24);
+            var k = MontgomeryCurve25519.KeyExchange(phantomEncryptionPubKey, phantomConnectionAccountPrivateKey);
+            var encryptedMessage = XSalsa20Poly1305.Encrypt(bytesJson, k, randomNonce);
+            var base58Payload = Encoders.Base58.EncodeData(encryptedMessage);
+            return $"{baseUrl}/ul/{apiVersion}/disconnect?d" +
+                   $"app_encryption_public_key={connectionPublicKey}" +
+                   $"&redirect_link={redirectUri}" +
+                   $"&nonce={Encoders.Base58.EncodeData(randomNonce)}" +
+                   $"&payload={base58Payload}" +
+                   $"&cluster={GetClusterString(cluster)}";
         }
 
         
@@ -44,7 +69,7 @@ namespace Solana.Unity.SDK
         public static string CreateSignTransactionDeepLink(
             Transaction transaction, 
             byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey, 
-            string sessionId, string redirectScheme, string apiVersion,
+            string sessionId, string baseUrl, string redirectScheme, string apiVersion,
             string connectionPublicKey, RpcCluster cluster)
         {
             
@@ -57,7 +82,7 @@ namespace Solana.Unity.SDK
             var k = MontgomeryCurve25519.KeyExchange(phantomEncryptionPubKey, phantomConnectionAccountPrivateKey);
             var encryptedMessage = XSalsa20Poly1305.Encrypt(bytesJson, k, randomNonce);
             var base58Payload = Encoders.Base58.EncodeData(encryptedMessage);
-            return $"https://phantom.app/ul/{apiVersion}/signTransaction?d" +
+            return $"{baseUrl}/ul/{apiVersion}/signTransaction?d" +
                    $"app_encryption_public_key={connectionPublicKey}" +
                    $"&redirect_link={redirectUri}" +
                    $"&nonce={Encoders.Base58.EncodeData(randomNonce)}" +
@@ -71,7 +96,7 @@ namespace Solana.Unity.SDK
         public static string CreateSignMessageDeepLink(
             byte[] message, 
             byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey, 
-            string sessionId, string redirectScheme, string apiVersion,
+            string sessionId, string baseUrl, string redirectScheme, string apiVersion,
             string connectionPublicKey, RpcCluster cluster)
         {
             
@@ -84,7 +109,7 @@ namespace Solana.Unity.SDK
             var k = MontgomeryCurve25519.KeyExchange(phantomEncryptionPubKey, phantomConnectionAccountPrivateKey);
             var encryptedMessage = XSalsa20Poly1305.Encrypt(bytesJson, k, randomNonce);
             var base58Payload = Encoders.Base58.EncodeData(encryptedMessage);
-            return $"https://phantom.app/ul/{apiVersion}/signMessage?d" +
+            return $"{baseUrl}/ul/{apiVersion}/signMessage?d" +
                    $"app_encryption_public_key={connectionPublicKey}" +
                    $"&redirect_link={redirectUri}" +
                    $"&nonce={Encoders.Base58.EncodeData(randomNonce)}" +
