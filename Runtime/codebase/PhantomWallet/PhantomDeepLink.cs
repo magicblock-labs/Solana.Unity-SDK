@@ -1,14 +1,19 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Chaos.NaCl;
+using JetBrains.Annotations;
 using Merkator.Tools;
+using Solana.Unity.KeyStore.Services;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
+using Pbkdf2Params = Solana.Unity.KeyStore.Model.Pbkdf2Params;
 
 // ReSharper disable once CheckNamespace
 
@@ -16,11 +21,16 @@ namespace Solana.Unity.SDK
 {
     public class PhantomDeepLink: WalletBase
     {
+        private const string TempKpPrefEntry = "phantom-kp-session";
+        private const string SessionIdPrefEntry = "phantom-session-id";
+        private const string PhantomEncryptionPubKeyPrefEntry = "phantom-pk-encryption";
+        private const string PhantomPublicKeyPrefEntry = "phantom-pk-session";
+        
         private readonly PhantomWalletOptions _phantomWalletOptions;
         
-        private static readonly Account TmpPhantomConnectionAccount = new();
+        private static Account _tmpPhantomConnectionAccount = new();
         private static byte[] PhantomConnectionAccountPrivateKey 
-            => ArrayHelpers.SubArray(TmpPhantomConnectionAccount.PrivateKey.KeyBytes, 0, 32);
+            => ArrayHelpers.SubArray(_tmpPhantomConnectionAccount.PrivateKey.KeyBytes, 0, 32);
         private static byte[] PhantomConnectionAccountPublicKey =>
             MontgomeryCurve25519.GetPublicKey(PhantomConnectionAccountPrivateKey);
         
@@ -44,6 +54,20 @@ namespace Solana.Unity.SDK
 
         protected override Task<Account> _Login(string password = null)
         {
+            var pk = PlayerPrefs.GetString(PhantomPublicKeyPrefEntry, null);
+            if (pk != null)
+            {
+                try
+                {
+                    LoadSessionInfo(new PublicKey(pk));
+                    return Task.FromResult(new Account(string.Empty, new PublicKey(pk)));
+                }
+                catch (Exception)
+                {
+                    Debug.LogError("Corrupted session info.");
+                    DestroySessionInfo();
+                }
+            }
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             StartLogin();
             return _loginTaskCompletionSource.Task;
@@ -51,6 +75,7 @@ namespace Solana.Unity.SDK
         
         public override void Logout()
         {
+            DestroySessionInfo();
             base.Logout();
             Application.deepLinkActivated -= OnDeepLinkActivated;
         }
@@ -184,7 +209,9 @@ namespace Solana.Unity.SDK
             if (!string.IsNullOrEmpty(connectSuccess.public_key))
             {
                 _sessionId = connectSuccess.session;
-                _loginTaskCompletionSource.SetResult(new Account(string.Empty, connectSuccess.public_key));
+                var account = new Account(string.Empty, connectSuccess.public_key);
+                _loginTaskCompletionSource.SetResult(account);
+                SaveSessionInfo(account.PublicKey);
             }
             else
             {
@@ -242,7 +269,108 @@ namespace Solana.Unity.SDK
                 return new KeyValuePair<string, string>(valuePair[0], valuePair[1]);
             }) .ToDictionary((kvp) => kvp.Key, (kvp) => kvp.Value); 
             return dict;
-        } 
+        }
+
+        #endregion
+
+        #region Utils
+        
+        private void SaveSessionInfo(PublicKey account)
+        {
+            var password = DeriveEncryptionPassword(Web3.Account.PublicKey);
+            
+            MainThreadDispatcher.Instance().Enqueue(
+                SaveEncryptedSecret(
+                    password,
+                    _tmpPhantomConnectionAccount.PrivateKey.Key,
+                    TempKpPrefEntry,
+                    account));
+            PlayerPrefs.SetString(SessionIdPrefEntry, _sessionId);
+            var phantomEncryptionPubKey = Encoders.Base58.EncodeData(_phantomEncryptionPubKey);
+            PlayerPrefs.SetString(PhantomEncryptionPubKeyPrefEntry, phantomEncryptionPubKey);
+            PlayerPrefs.SetString(PhantomPublicKeyPrefEntry, account);
+        }
+        
+        private void LoadSessionInfo(PublicKey account)
+        {
+            var password = DeriveEncryptionPassword(account);
+            var keystoreService = new KeyStorePbkdf2Service();
+            var encryptedKeystoreJson = PlayerPrefs.GetString(TempKpPrefEntry);
+            var decryptedKeystore = keystoreService.DecryptKeyStoreFromJson(password, encryptedKeystoreJson);
+            var secret = Encoding.UTF8.GetString(decryptedKeystore);
+            _tmpPhantomConnectionAccount = FromSecretKey(secret);
+            _sessionId = PlayerPrefs.GetString(SessionIdPrefEntry);
+            var phantomEncryptionPubKey = PlayerPrefs.GetString(PhantomEncryptionPubKeyPrefEntry);
+            _phantomEncryptionPubKey = Encoders.Base58.DecodeData(phantomEncryptionPubKey);
+        }
+        
+        private void DestroySessionInfo()
+        {
+            PlayerPrefs.DeleteKey(TempKpPrefEntry);
+            PlayerPrefs.DeleteKey(SessionIdPrefEntry);
+            PlayerPrefs.DeleteKey(PhantomEncryptionPubKeyPrefEntry);
+            PlayerPrefs.DeleteKey(PhantomPublicKeyPrefEntry);
+        }
+
+        /// <summary>
+        /// Deterministic password derivation, each account has a unique password
+        /// </summary>
+        /// <returns></returns>
+        private string DeriveEncryptionPassword([NotNull] PublicKey account){
+            if (account == null) throw new ArgumentNullException(nameof(account));
+            var rawData = account.Key + _phantomWalletOptions.sessionEncryptionPassword + Application.platform;
+            using SHA256 sha256Hash = SHA256.Create();
+            var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+            return Encoding.UTF8.GetString(bytes);
+        }
+        
+        /// <summary>
+        /// Save an Encrypted Secret in a secure way
+        /// </summary>
+        /// <param name="password">The password used for the encryption</param>
+        /// <param name="secret">The secret</param>
+        /// <param name="prefKey">The key used for the player preference</param>
+        /// <param name="account">The account public key to associated the secret</param>
+        /// <returns></returns>
+        private IEnumerator SaveEncryptedSecret(
+            string password, 
+            string secret, 
+            string prefKey,
+            [NotNull] PublicKey account)
+        {
+            if (account == null) throw new ArgumentNullException(nameof(account));
+            yield return new WaitForSeconds(.1f);
+            password ??= "";
+            
+            var keystoreService = new KeyStorePbkdf2Service();
+            var stringByteArray = Encoding.UTF8.GetBytes(secret);
+            var pbkdf2Params = new Pbkdf2Params()
+            {
+                Dklen = 32, Count = 10000, Prf = "hmac-sha256"
+            };
+            var encryptedKeystoreJson = keystoreService.EncryptAndGenerateKeyStoreAsJson(
+                password, stringByteArray, account.Key, pbkdf2Params);
+
+            PlayerPrefs.SetString(prefKey, encryptedKeystoreJson);
+        }
+        
+        /// <summary>
+        /// Returns an instance of Keypair from a secret key
+        /// </summary>
+        /// <param name="secretKey"></param>
+        /// <returns></returns>
+        private static Account FromSecretKey(string secretKey)
+        {
+            try
+            {
+                var wallet = new Wallet.Wallet(new PrivateKey(secretKey).KeyBytes, "", SeedMode.Bip39);
+                return wallet.Account;
+            }catch (ArgumentException)
+            {
+                return null;
+            }
+
+        }
 
         #endregion
     }
