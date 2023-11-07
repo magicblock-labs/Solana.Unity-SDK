@@ -98,13 +98,20 @@ public class Web3Auth: MonoBehaviour
         if (this.web3AuthOptions.loginConfig != null)
             this.initParams["loginConfig"] = JsonConvert.SerializeObject(this.web3AuthOptions.loginConfig);
 
-        this.initParams["network"] = network.ToString().ToLower();
+        this.initParams["network"] = web3AuthOptions.network.ToString().ToLower();
 
     }
 
     private void onDeepLinkActivated(string url)
     {
-        this.setResultUrl(new Uri(url));
+        try
+        {
+            setResultUrl(new Uri(url));
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning(e.Message);
+        }
     }
 
 #if UNITY_STANDALONE || UNITY_EDITOR

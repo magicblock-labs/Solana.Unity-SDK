@@ -15,7 +15,7 @@ namespace Solana.Unity.SDK
     public class PhantomWebGL: WalletBase
     {
         
-        private readonly PhantomWalletOptions _phantomWalletOptions;
+        private readonly PhantomWalletOptions _deepLinksWalletOptions;
         
         private static TaskCompletionSource<Account> _loginTaskCompletionSource;
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
@@ -24,11 +24,11 @@ namespace Solana.Unity.SDK
         private static Account _account;
 
         public PhantomWebGL(
-            PhantomWalletOptions phantomWalletOptions, 
+            PhantomWalletOptions deepLinksWalletOptions, 
             RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null,  bool autoConnectOnStartup = false) 
             : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
-            _phantomWalletOptions = phantomWalletOptions;
+            _deepLinksWalletOptions = deepLinksWalletOptions;
         }
 
         protected override Task<Account> _Login(string password = null)
