@@ -1,8 +1,5 @@
 ﻿using System;
-using UnityEngine.Scripting;
 
-[Serializable]
-[Preserve]
 public class LoginParams
 {
     public Provider loginProvider { get; set; }
@@ -11,12 +8,6 @@ public class LoginParams
     public Uri redirectUrl { get; set; }
     public string appState { get; set; }
     public MFALevel mfaLevel { get; set; }
-    public int sessionTime { get; set; }
 
     public Curve curve { get; set; }
-
-    [Preserve]
-    public LoginParams()
-    {
-    }
 }

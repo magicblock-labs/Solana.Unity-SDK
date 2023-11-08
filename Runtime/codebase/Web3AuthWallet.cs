@@ -16,13 +16,32 @@ namespace Solana.Unity.SDK
         public string appName = "Web3Auth Sample App";
         public string logoLight;
         public string logoDark;
-        public string defaultLanguage = "en";
-        public bool dark = true;
+        public Web3Auth.Language defaultLanguage = Web3Auth.Language.en;
+        public Web3Auth.ThemeModes mode = Web3Auth.ThemeModes.auto;
         public string themeName = "primary";
         public string themeColor = "#123456";
         public string redirectUrl = "torusapp://com.torus.Web3AuthUnity/auth";
         public string clientId = "BAwFgL-r7wzQKmtcdiz2uHJKNZdK7gzEf2q-m55xfzSZOw8jLOyIi4AVvvzaEQO5nv2dFLEmf9LBkF8kaq3aErg";
         public Web3Auth.Network network = Web3Auth.Network.TESTNET;
+        public List<LoginConfig> loginConfig = null;
+    }
+    
+    [Serializable]
+    public class LoginConfig
+    {
+        public string verifier = "**-google-auth";
+        public TypeOfLogin typeOfLogin = TypeOfLogin.GOOGLE;
+        public string name = "google";
+        public string description;
+        public string clientId = "1243-[...]";
+        public string verifierSubIdentifier;
+        public string logoHover;
+        public string logoLight;
+        public string logoDark;
+        public bool mainOption = false;
+        public bool showOnModal = true;
+        public bool showOnDesktop = true;
+        public bool showOnMobile = true;
     }
     
     public class Web3AuthWallet : WalletBase
@@ -53,20 +72,22 @@ namespace Solana.Unity.SDK
                 network = _web3AuthWalletOptions.network,
                 whiteLabel = new WhiteLabelData()
                 {
-                    name = _web3AuthWalletOptions.appName,
+                    appName = _web3AuthWalletOptions.appName,
                     logoLight = _web3AuthWalletOptions.logoLight,
                     logoDark = _web3AuthWalletOptions.logoDark,
                     defaultLanguage = _web3AuthWalletOptions.defaultLanguage,
-                    dark = _web3AuthWalletOptions.dark,
+                    mode = _web3AuthWalletOptions.mode,
                     theme = new Dictionary<string, string>
                     {
                         {
                             _web3AuthWalletOptions.themeName,
                             _web3AuthWalletOptions.themeColor
                         }
-                    }
+                    },
                 }
             };
+            if(_web3AuthWalletOptions.loginConfig is { Count: > 0 })
+                web3AuthOptions.loginConfig = BuildLoginConfigDictionary(_web3AuthWalletOptions.loginConfig);
             _web3Auth.setOptions(web3AuthOptions);
             _web3Auth.onLogin += OnLogin;
         }
@@ -133,5 +154,36 @@ namespace Solana.Unity.SDK
             _loginProvider = provider;
             return Login();
         }
+
+        #region Utils
+
+        public Dictionary<string, LoginConfigItem> BuildLoginConfigDictionary(List<LoginConfig> loginConfigList) {
+            if (loginConfigList == null) return null;
+            var dictionary = new Dictionary<string, LoginConfigItem>();
+
+            foreach (var config in loginConfigList) {
+                var loginConfigItem = new LoginConfigItem {
+                    verifier = config.verifier,
+                    typeOfLogin = config.typeOfLogin,
+                    name = config.name,
+                    description = config.description,
+                    clientId = config.clientId,
+                    verifierSubIdentifier = config.verifierSubIdentifier,
+                    logoHover = config.logoHover,
+                    logoLight = config.logoLight,
+                    logoDark = config.logoDark,
+                    mainOption = config.mainOption,
+                    showOnModal = config.showOnModal,
+                    showOnDesktop = config.showOnDesktop,
+                    showOnMobile = config.showOnMobile
+                };
+
+                dictionary.Add(config.name, loginConfigItem);
+            }
+
+            return dictionary;
+        }
+
+        #endregion
     }
 }
