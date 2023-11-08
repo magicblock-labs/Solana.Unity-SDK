@@ -60,26 +60,26 @@ public static class SetDefaultSplashScreen
     private static void OnScriptsReloaded()
     {
         // Set Default Splash Screen
-        if(PlayerSettings.SplashScreen.logos.Length == 0)
+        if (PlayerSettings.SplashScreen.logos.Length > 0 && PlayerSettings.SplashScreen.logos[0].logo == null)
+            PlayerSettings.SplashScreen.logos = new PlayerSettings.SplashScreenLogo[] { };
+        if (PlayerSettings.SplashScreen.logos != null && PlayerSettings.SplashScreen.logos.Length != 0) return;
+        Texture2D logoTexture = Resources.Load<Texture2D>("magicblock-logo");
+        Texture2D backgroundTexture = Resources.Load<Texture2D>("background");
+        if (logoTexture != null)
         {
-            Texture2D logoTexture = (Texture2D)Resources.Load("magicblock-logo");
-            Texture2D backgroundTexture = (Texture2D)Resources.Load("background");
-            if (logoTexture != null)
-            {
-                var logo = new PlayerSettings.SplashScreenLogo();
-                Sprite logoSprite = Sprite.Create(logoTexture, new Rect(0, 0, logoTexture.width, logoTexture.height), Vector2.zero);
-                logo.logo = logoSprite;
-                logo.duration = 2;
+            var logo = new PlayerSettings.SplashScreenLogo();
+            Sprite logoSprite = Sprite.Create(logoTexture, new Rect(0, 0, logoTexture.width, logoTexture.height), Vector2.zero);
+            logo.logo = logoSprite;
+            logo.duration = 2;//asd
             
-                var logos = new List<PlayerSettings.SplashScreenLogo>(PlayerSettings.SplashScreen.logos) { logo };
-                PlayerSettings.SplashScreen.logos = logos.ToArray();
-
-                if (backgroundTexture != null && PlayerSettings.SplashScreen.background == null)
-                {
-                    Sprite backgroundSprite = Sprite.Create(backgroundTexture, new Rect(0, 0, logoTexture.width, logoTexture.height),
-                        Vector2.zero);
-                    PlayerSettings.SplashScreen.background = backgroundSprite;
-                }
+            var logos = new List<PlayerSettings.SplashScreenLogo>(PlayerSettings.SplashScreen.logos) { logo };
+            PlayerSettings.SplashScreen.logos = logos.ToArray();
+                
+            if (backgroundTexture != null && PlayerSettings.SplashScreen.background == null)
+            {
+                Sprite backgroundSprite = Sprite.Create(backgroundTexture, new Rect(0, 0, backgroundTexture.width, backgroundTexture.height),
+                    Vector2.zero);
+                PlayerSettings.SplashScreen.background = backgroundSprite;
             }
         }
     }
