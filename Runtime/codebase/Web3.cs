@@ -242,6 +242,16 @@ namespace Solana.Unity.SDK
             return acc;
         }
         
+        public async Task<Account> LoginWeb3Auth(LoginParams loginParams)
+        {
+            _web3AuthWallet ??=
+                new Web3AuthWallet(web3AuthWalletOptions, rpcCluster, customRpc, webSocketsRpc, autoConnectOnStartup);
+            var acc = await _web3AuthWallet.LoginWithParams(loginParams);
+            if (acc != null)
+                WalletBase = _web3AuthWallet;
+            return acc;
+        }
+        
         public async Task<Account> LoginXNFT()
         {
             var isXnft = await SolanaWalletAdapterWebGL.IsXnft();

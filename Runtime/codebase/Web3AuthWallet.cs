@@ -50,6 +50,7 @@ namespace Solana.Unity.SDK
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private readonly Web3AuthWalletOptions _web3AuthWalletOptions;
         private Provider _loginProvider = Provider.GOOGLE;
+        private LoginParams _loginParameters;
         private TaskCompletionSource<Web3AuthResponse> _taskCompletionSource;
         
         public event Action<Account> OnLoginNotify;
@@ -116,6 +117,8 @@ namespace Solana.Unity.SDK
             {
                 loginProvider = _loginProvider
             };
+            if(_loginParameters != null)
+                options = _loginParameters; 
             _web3Auth.login(options);
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             return _loginTaskCompletionSource.Task;
@@ -152,6 +155,12 @@ namespace Solana.Unity.SDK
         public Task<Account> LoginWithProvider(Provider provider)
         {
             _loginProvider = provider;
+            return Login();
+        }
+        
+        public Task<Account> LoginWithParams(LoginParams loginParams)
+        {
+            _loginParameters = loginParams;
             return Login();
         }
 
