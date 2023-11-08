@@ -1,9 +1,4 @@
-﻿using System;
-using UnityEngine.Scripting;
-
-[Serializable]
-[Preserve]
-public class UserInfo
+﻿public class UserInfo
 {
     public string email { get; set; }
     public string name { get; set; }
@@ -16,9 +11,5 @@ public class UserInfo
     public string idToken { get; set; }
     public string oAuthIdToken { get; set; }
     public string oAuthAccessToken { get; set; }
-
-    [Preserve]
-    public UserInfo()
-    {
-    }
+    public bool isMfaEnabled { get; set; }
 }

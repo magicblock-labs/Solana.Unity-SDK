@@ -387,7 +387,7 @@ public class SecurePlayerPrefs
 	 * Writes all modified preferences to disk.
 	 * 
    * By default Unity writes preferences to disk on Application Quit.
-   * In case when the game crashes or otherwise prematurely exits,
+   * In case when the game crashes or otherwise prematuraly exits,
    * you might want to write the PlayerPrefs at sensible 'checkpoints'
    * in your game. This function will write to disk potentially causing
    * a small hiccup, therefore it is not recommended to call during actual gameplay.

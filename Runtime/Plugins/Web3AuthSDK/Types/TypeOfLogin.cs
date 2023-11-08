@@ -1,11 +1,7 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Runtime.Serialization;
-using UnityEngine.Scripting;
 
-[Serializable]
-[Preserve]
 [JsonConverter(typeof(StringEnumConverter))]
 public enum TypeOfLogin
 {
