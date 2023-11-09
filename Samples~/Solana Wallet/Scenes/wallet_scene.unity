@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311924, g: 0.38073963, b: 0.3587269, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731704, g: 0.1341472, b: 0.121078566, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -327,13 +327,14 @@ MonoBehaviour:
     appName: Solana Unity SDK
     logoLight: 
     logoDark: 
-    defaultLanguage: en
-    dark: 1
+    defaultLanguage: 0
+    mode: 2
     themeName: primary
     themeColor: '#123456'
     redirectUrl: torusapp://com.torus.Web3AuthUnity/auth
-    clientId: BO4zGEzyV6DT1vHU46b6GEngOcg2jl5Pmd9Boi8dLdBpBZnS351ulHDz2k7XJ1dEm-DcvyyARivGCZDXrbZng-0
-    network: 0
+    clientId: BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXBI0e-Oe_u6X3oVAbCiAZOTEBtTXw4tsluTITPqA8zMsfxIKMjiqNQ
+    network: 5
+    loginConfig: []
   solanaWalletAdapterOptions:
     solanaMobileWalletAdapterOptions:
       identityUri: https://solana.unity-sdk.gg/
@@ -344,9 +345,12 @@ MonoBehaviour:
       walletAdapterButtonPrefab: {fileID: 0}
       walletAdapterUIPrefab: {fileID: 0}
     phantomWalletOptions:
-      phantomApiVersion: v1
+      apiVersion: v1
       appMetaDataUrl: https://github.com/garbles-labs/Solana.Unity-SDK
       deeplinkUrlScheme: unitydl
+      sessionEncryptionPassword: use a strong password
+      baseUrl: https://phantom.app
+      walletName: phantom
 --- !u!114 &5871494921186054784
 MonoBehaviour:
   m_ObjectHideFlags: 0
