@@ -90,7 +90,6 @@ public class LocalAssociationScenario
     {
         while (!_handledEncryptedMessage)
         {
-            //_webSocket.DispatchMessageQueue();
             var timeDelta = TimeSpan.FromMilliseconds(300);
             await Task.Delay(timeDelta);
         }
