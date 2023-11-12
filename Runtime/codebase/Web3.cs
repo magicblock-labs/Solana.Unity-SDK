@@ -332,7 +332,7 @@ namespace Solana.Unity.SDK
         /// Notify all registered listeners
         /// </summary>
         /// <param name="commitment"></param>
-        public static async UniTask UpdateBalance(Commitment commitment = Commitment.Confirmed)
+        public static async UniTask UpdateBalance(Commitment commitment = Commitment.Processed)
         {
             if (Instance == null || Instance.WalletBase == null)
                 return;
@@ -346,7 +346,7 @@ namespace Solana.Unity.SDK
         /// Notify all registered listeners
         /// </summary>
         /// <param name="commitment"></param>
-        public static async UniTask UpdateNFTs(Commitment commitment = Commitment.Confirmed)
+        public static async UniTask UpdateNFTs(Commitment commitment = Commitment.Processed)
         {
             if(_isLoadingNfts) return;
             _isLoadingNfts = true;
@@ -366,7 +366,7 @@ namespace Solana.Unity.SDK
             bool loadTexture = true, 
             bool notifyRegisteredListeners = true,
             int requestsMillisecondsDelay = 0,
-            Commitment commitment = Commitment.Confirmed)
+            Commitment commitment = Commitment.Processed)
         {
             loadTexture = LoadNftsTextureByDefault ?? loadTexture;
             if(Wallet == null) return null;
@@ -417,7 +417,7 @@ namespace Solana.Unity.SDK
                         requestsMillisecondsDelay = Mathf.Max(requestsMillisecondsDelay, 100, NftLoadingRequestsDelay);
                     }
                     if (requestsMillisecondsDelay > 0) await UniTask.Delay(requestsMillisecondsDelay);
-
+                    await UniTask.SwitchToMainThread();
                     var tNft = Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, Rpc, loadTexture: loadTexture).AsUniTask();
                     loadingTasks.Add(tNft);
                     tNft.ContinueWith(nft =>
@@ -438,7 +438,7 @@ namespace Solana.Unity.SDK
             return nfts;
         }
 
-        private static async UniTask SubscribeToWalletEvents(Commitment commitment = Commitment.Confirmed)
+        private static async UniTask SubscribeToWalletEvents(Commitment commitment = Commitment.Processed)
         {
             if(WsRpc == null) return;
             await Wallet.AwaitWsRpcConnection();
