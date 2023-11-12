@@ -21,6 +21,5 @@ public class MobileWalletAdapterWebSocket: IMessageSender
             throw new ArgumentException("Message cannot be null or empty");
         var encryptedMessage = _session.EncryptSessionPayload(message);
         _webSocket.Send(encryptedMessage);
-        _webSocket.DispatchMessageQueue();
     }
 }

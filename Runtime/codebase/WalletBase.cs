@@ -21,7 +21,8 @@ namespace Solana.Unity.SDK
     {
         MainNet = 0,
         DevNet = 1,
-        TestNet = 2
+        TestNet = 2,
+        LocalNet = 3
     }
 
     public abstract class WalletBase : IWalletBase
@@ -36,7 +37,8 @@ namespace Solana.Unity.SDK
         {
             { 0, Cluster.MainNet },
             { 1, Cluster.DevNet },
-            { 2, Cluster.TestNet }
+            { 2, Cluster.TestNet },
+            { 3, Cluster.LocalNet }
         };
 
         protected readonly Dictionary<int, string> RPCNameMap = new ()
@@ -44,7 +46,7 @@ namespace Solana.Unity.SDK
             { 0, "mainnet-beta" },
             { 1, "devnet" },
             { 2, "testnet" },
-            { 3, "mainnet-beta" },
+            { 3, "localnet" },
         };
 
         protected readonly string CustomRpcUri;

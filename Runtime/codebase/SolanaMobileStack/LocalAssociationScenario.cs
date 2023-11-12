@@ -41,7 +41,6 @@ public class LocalAssociationScenario
             _didConnect = true;
             var helloReq = _session.CreateHelloReq();
             _webSocket.Send(helloReq);
-            _webSocket.DispatchMessageQueue();
             ListenKeyExchange();
         };
         _webSocket.OnClose += (e) =>
@@ -91,7 +90,6 @@ public class LocalAssociationScenario
     {
         while (!_handledEncryptedMessage)
         {
-            _webSocket.DispatchMessageQueue();
             var timeDelta = TimeSpan.FromMilliseconds(300);
             await Task.Delay(timeDelta);
         }

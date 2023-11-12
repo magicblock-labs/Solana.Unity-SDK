@@ -124,6 +124,7 @@ namespace Solana.Unity.SDK
                 RpcCluster.MainNet => "mainnet-beta",
                 RpcCluster.DevNet => "devnet",
                 RpcCluster.TestNet => "testnet",
+                RpcCluster.LocalNet => "localnet",
                 _ => "mainnet-beta"
             };
         }

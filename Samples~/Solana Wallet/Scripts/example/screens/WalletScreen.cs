@@ -151,7 +151,7 @@ namespace Solana.Unity.SDK.Example
         {
             if(_isLoadingTokens) return;
             _isLoadingTokens = true;
-            var tokens = await Web3.Wallet.GetTokenAccounts(Commitment.Confirmed);
+            var tokens = await Web3.Wallet.GetTokenAccounts(Commitment.Processed);
             if(tokens == null) return;
             // Remove tokens not owned anymore and update amounts
             var tkToRemove = new List<TokenItem>();
@@ -173,7 +173,10 @@ namespace Solana.Unity.SDK.Example
             tkToRemove.ForEach(tk =>
             {
                 _instantiatedTokens.Remove(tk);
-                Destroy(tk.gameObject);
+                MainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    Destroy(tk.gameObject);
+                });
             });
             // Add new tokens
             List<UniTask> loadingTasks = new List<UniTask>();
@@ -186,22 +189,25 @@ namespace Solana.Unity.SDK.Example
                     if (!(item.Account.Data.Parsed.Info.TokenAmount.AmountUlong > 0)) break;
                     if (_instantiatedTokens.All(t => t.TokenAccount.Account.Data.Parsed.Info.Mint != item.Account.Data.Parsed.Info.Mint))
                     {
-                        var tk = Instantiate(tokenItem, tokenContainer, true);
-                        tk.transform.localScale = Vector3.one;
-
-                        var loadTask = Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
-                            Web3.Instance.WalletBase.ActiveRpcClient).AsUniTask();
-                        loadingTasks.Add(loadTask);
-                        loadTask.ContinueWith(nft =>
+                        // Run in the main thread
+                        await MainThreadDispatcher.Instance().EnqueueAsync(() =>
                         {
-                            TokenItem tkInstance = tk.GetComponent<TokenItem>();
-                            _instantiatedTokens.Add(tkInstance);
-                            tk.SetActive(true);
-                            if (tkInstance)
+                            var tk = Instantiate(tokenItem, tokenContainer, true);
+                            tk.transform.localScale = Vector3.one;
+                            var loadTask = Nft.Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
+                                Web3.Instance.WalletBase.ActiveRpcClient, commitment: Commitment.Processed).AsUniTask();
+                            loadingTasks.Add(loadTask);
+                            loadTask.ContinueWith(nft =>
                             {
-                                tkInstance.InitializeData(item, this, nft).Forget();
-                            }
-                        }).Forget();
+                                TokenItem tkInstance = tk.GetComponent<TokenItem>();
+                                _instantiatedTokens.Add(tkInstance);
+                                tk.SetActive(true);
+                                if (tkInstance)
+                                {
+                                    tkInstance.InitializeData(item, this, nft).Forget();
+                                }
+                            }).Forget();
+                        });
                     }
                 }
             }
