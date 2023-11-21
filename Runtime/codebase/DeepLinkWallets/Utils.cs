@@ -89,6 +89,29 @@ namespace Solana.Unity.SDK
                    $"&payload={base58Payload}" +
                    $"&cluster={GetClusterString(cluster)}";
         }
+        
+        public static string CreateSignAllTransactionsDeepLink(Transaction[] transactions,
+            byte[] phantomEncryptionPubKey, byte[] phantomConnectionAccountPrivateKey,
+            string sessionId, string baseUrl ,string redirectScheme, string apiVersion,
+            string connectionPublicKey, RpcCluster cluster)
+        {
+            var redirectUri = $"{redirectScheme}://allTransactionsSigned";
+            var base58Transactions = transactions
+                .Select(transaction => Encoders.Base58.EncodeData(transaction.Serialize())).ToList();
+            var transactionPayload = new PhantomTransactionsPayload(base58Transactions, sessionId);
+            var transactionPayloadJson = JsonUtility.ToJson(transactionPayload);
+            var bytesJson = Encoding.UTF8.GetBytes(transactionPayloadJson);
+            var randomNonce = GenerateRandomBytes(24);
+            var k = MontgomeryCurve25519.KeyExchange(phantomEncryptionPubKey, phantomConnectionAccountPrivateKey);
+            var encryptedMessage = XSalsa20Poly1305.Encrypt(bytesJson, k, randomNonce);
+            var base58Payload = Encoders.Base58.EncodeData(encryptedMessage);
+            return $"{baseUrl}/ul/{apiVersion}/signAllTransactions?d" +
+                   $"app_encryption_public_key={connectionPublicKey}" +
+                   $"&redirect_link={redirectUri}" +
+                   $"&nonce={Encoders.Base58.EncodeData(randomNonce)}" +
+                   $"&payload={base58Payload}" +
+                   $"&cluster={GetClusterString(cluster)}";
+        }
 
         /// <summary>
         /// Create DeepLink URL for signing a message with Phantom and redirect to the game
@@ -154,6 +177,12 @@ namespace Solana.Unity.SDK
     public class PhantomWalletTransactionSignedSuccessfully
     {
         public string transaction;
+    }
+    
+    [Serializable]
+    public class PhantomWalletAllTransactionsSignedSuccessfully
+    {
+        public List<string> transactions;
     }
 
     [Serializable]
