@@ -90,7 +90,9 @@ namespace Solana.Unity.SDK
 
         protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
-            throw new NotImplementedException();
+            _signedAllTransactionsTaskCompletionSource = new TaskCompletionSource<Transaction[]>();
+            StartSignAllTransactions(transactions);
+            return _signedAllTransactionsTaskCompletionSource.Task;
         }
 
         public override Task<byte[]> SignMessage(byte[] message)
@@ -165,6 +167,22 @@ namespace Solana.Unity.SDK
             Application.OpenURL(url);
         }
 
+        private void StartSignAllTransactions(Transaction[] transactions)
+        {
+            var url = Utils.CreateSignAllTransactionsDeepLink(
+                transactions: transactions,
+                phantomEncryptionPubKey: _phantomEncryptionPubKey,
+                connectionPublicKey: Encoders.Base58.EncodeData(PhantomConnectionAccountPublicKey),
+                phantomConnectionAccountPrivateKey: PhantomConnectionAccountPrivateKey,
+                baseUrl: _deepLinksWalletOptions.BaseUrl,
+                redirectScheme: _deepLinksWalletOptions.DeeplinkUrlScheme,
+                apiVersion: _deepLinksWalletOptions.ApiVersion,
+                sessionId: _sessionId,
+                cluster: GetCluster()
+            );
+            Application.OpenURL(url);
+        }
+        
         private void StartSignMessage(byte[] message)
         {
             var url = Utils.CreateSignMessageDeepLink(
@@ -188,19 +206,23 @@ namespace Solana.Unity.SDK
 
         private void OnDeepLinkActivated(string url)
         {
-            if (url.ToLower().Contains("transactionsigned"))
+            if (url.ToLower().Contains("alltransactionssigned"))
+            {
+                ParseSuccessfullySignedAllTransactions(url);
+            }
+            else if (url.ToLower().Contains("transactionsigned"))
             {
                 ParseSuccessfullySignedTransaction(url);
             }
-            else if(url.ToLower().Contains("onphantomconnected"))
+            else if (url.ToLower().Contains("onconnected"))
             {
                 ParseConnectionSuccessful(url);
             }
-            else if(url.ToLower().Contains("messagesigned"))
+            else if (url.ToLower().Contains("messagesigned"))
             {
                 ParseSuccessfullySignedMessage(url);
             }
-            else if(url.ToLower().Contains("disconnect"))
+            else if (url.ToLower().Contains("disconnect"))
             {
                 Debug.LogError("on disconnect");
                 DestroySessionInfo();
@@ -244,6 +266,31 @@ namespace Solana.Unity.SDK
                 _loginTaskCompletionSource?.TrySetResult(null);
                 Debug.LogError($"Deeplink error: {error.errorCode} {error.errorMessage}");
             }
+        }
+        
+        private void ParseSuccessfullySignedAllTransactions(string url)
+        {
+            var result = ParseQueryString(url);
+            result.TryGetValue("nonce", out var nonce);
+            result.TryGetValue("data", out var data);
+            result.TryGetValue("errorMessage", out var errorMessage);
+            if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(data))
+            {
+                result.TryGetValue("errorCode", out var errorCode);
+                OnError?.Invoke(errorCode, errorMessage);
+                Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
+                return;
+            }
+
+            data = data.Replace("#", "");
+            var k = MontgomeryCurve25519.KeyExchange(_phantomEncryptionPubKey, PhantomConnectionAccountPrivateKey);
+            var unencryptedMessage =
+                XSalsa20Poly1305.TryDecrypt(Encoders.Base58.DecodeData(data), k, Encoders.Base58.DecodeData(nonce));
+            var bytesToUtf8String = Encoding.UTF8.GetString(unencryptedMessage);
+            var success = JsonUtility.FromJson<PhantomWalletAllTransactionsSignedSuccessfully>(bytesToUtf8String);
+            var base58TransBytes = success.transactions.Select(x => Encoders.Base58.DecodeData(x));
+            var transactions = base58TransBytes.Select(x => Transaction.Deserialize(x)).ToArray();
+            _signedAllTransactionsTaskCompletionSource?.TrySetResult(transactions);
         }
 
         private void ParseSuccessfullySignedTransaction(string url)
