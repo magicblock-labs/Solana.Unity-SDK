@@ -39,6 +39,7 @@ namespace Solana.Unity.SDK
         
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
+        private TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
 
         public PhantomDeepLink(
@@ -277,7 +278,7 @@ namespace Solana.Unity.SDK
             if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(data))
             {
                 result.TryGetValue("errorCode", out var errorCode);
-                OnError?.Invoke(errorCode, errorMessage);
+                _signedAllTransactionsTaskCompletionSource?.TrySetResult(null);
                 Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
                 return;
             }
