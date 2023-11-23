@@ -183,7 +183,6 @@ namespace Solana.Unity.SDK
                 { 
                     if(w == null) return;
                     WalletBase = _web3AuthWallet;
-                    OnLogin?.Invoke(w);
                     OnWalletChangeStateInternal?.Invoke();
                     SubscribeToWalletEvents().Forget();
                 };

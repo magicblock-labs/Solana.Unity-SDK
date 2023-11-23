@@ -117,8 +117,10 @@ namespace Solana.Unity.SDK
             {
                 loginProvider = _loginProvider
             };
-            if(_loginParameters != null)
-                options = _loginParameters; 
+            if (_loginParameters != null)
+            {
+                options = _loginParameters;
+            }
             _web3Auth.login(options);
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             return _loginTaskCompletionSource.Task;
