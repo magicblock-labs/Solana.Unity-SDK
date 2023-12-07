@@ -99,11 +99,11 @@ Account mint = new Account();
 Transaction tx = await dex.OpenPositionWithLiquidity(
     whirlpool.Address,
     mint,
-    -3712,
-    -256,
-    DecimalUtil.ToUlong(0.5, orcaToken.Decimals),
-    DecimalUtil.ToUlong(0.9, usdcToken.Decimals),
-    slippageTolerance: 0.3,
+    -443520,
+    443520,
+    DecimalUtil.ToUlong(0.1, orcaToken.Decimals),
+    DecimalUtil.ToUlong(0.25, usdcToken.Decimals),
+    slippageTolerance: 0.5,
     withMetadata: true,
     commitment: Commitment.Confirmed
 );
