@@ -49,6 +49,7 @@ const navigation = [
       { title: 'Creating a CandyMachine with the Unity tool', href: '/docs/candy-machine'},
       { title: 'Host your game on Github pages', href: '/docs/gh-pages'},
       { title: 'Publishing a game as Xnft', href: '/docs/xnft'},
+      { title: 'Soar integration: Leaderboards & Rankings', href: '/docs/soar'},
       { title: 'DEX integration: Orca', href: '/docs/orca'},
       { title: 'DEX integration: Jupiter', href: '/docs/jupiter'},
       { title: 'Additional examples', href: '/docs/examples'},
