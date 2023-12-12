@@ -49,43 +49,41 @@ Example of a transaction that creates a new profile on Soar: [tx](https://explor
  
 
 ```csharp
-OrcaDex dex = new OrcaDex(
-    Web3.Account, 
-    Web3.Rpc
+var tx = new Transaction()
+{
+    FeePayer = Web3.Account,
+    Instructions = new List<TransactionInstruction>(),
+    RecentBlockHash = await Web3.BlockHash()
+};
+var game = new Account();
+var gameMeta = new GameAttributes()
+{
+    Title = "My Game",
+    Description = "My Game Description",
+    Genre = 0,
+    GameType = 0,
+    NftMeta = new PublicKey("8PyfKjB46ih1NHdNQLGhEGRDNRPTnFf94bwnQxa9Veux")
+};
+
+var initializeGameAccounts = new InitializeGameAccounts()
+{
+    Creator = Web3.Account,
+    Game = game,
+    SystemProgram = SystemProgram.ProgramIdKey
+};
+var initializeGameIx = SoarProgram.InitializeGame(
+    accounts: initializeGameAccounts,
+    gameMeta: gameMeta,
+    gameAuth: new[] { Web3.Account.PublicKey }, // Add other authorities or PDAs which can sign for CPI
+    SoarProgram.ProgramIdKey
 );
-
-var orcaToken = await dex.GetTokenBySymbol("ORCA");
-var usdcToken = await dex.GetTokenBySymbol("USDC");
-
-Debug.Log($"Token A: {orcaToken}");
-Debug.Log($"Token A: {usdcToken}");
-
-var whirlpool = await dex.FindWhirlpoolAddress(
-    usdcToken.MintAddress, 
-    orcaToken.MintAddress
-);
-
-Debug.Log($"Whirlpool: {whirlpool.Address}");
-
-Account mint = new Account();
-
-Transaction tx = await dex.OpenPositionWithLiquidity(
-    whirlpool.Address,
-    mint,
-    -443520,
-    443520,
-    DecimalUtil.ToUlong(0.1, orcaToken.Decimals),
-    DecimalUtil.ToUlong(0.25, usdcToken.Decimals),
-    slippageTolerance: 0.5,
-    withMetadata: true,
-    commitment: Commitment.Confirmed
-);
+tx.Add(initializeGameIx);
 
 tx.PartialSign(Web3.Account);
-tx.PartialSign(mint);
+tx.PartialSign(game);
 
 var res = await Web3.Wallet.SignAndSendTransaction(tx, commitment: Commitment.Confirmed);
-Debug.Log(res.Result);
+Debug.Log($"Tx initialize game: {res.Result}");
 ```
 
 Example of a transaction that creates a new game on Soar: [tx](https://explorer.solana.com/tx/3QdndnvV21M2KRVFT4fBne5dfPW8c4JDbqLyYVqMvDJWuW9b2KafLYEjLiSk4iyZ7WBBrQo1UHYeZvNacQXkjB2a)
