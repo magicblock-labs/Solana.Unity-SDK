@@ -61,6 +61,22 @@ To establish a wallet configuration in accordance with the Mobile Wallet Adapter
 
 Some of the wallet on IOS, e.g. Phantom, are currently implemented using DeepLinks. Deep links are URLs that link to a specific piece of content or functionality within an app, in the context of Solana transactions, deep links can be used to sign a transaction by allowing users to approve a transaction using their Solana wallet.
 
+### Enabling deep linking for Android applications
+
+*SolanaWalletAdapter does not uses deep links on Android. Unless you are manually istantiating the [PhantomDeepLink](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Runtime/codebase/DeepLinkWallets/PhantomDeepLink.cs) implementation, this step is not necessary* 
+
+To enable deep linking for Android applications, use an [intent filter](https://developer.android.com/guide/components/intents-filters). An intent filter overrides the standard Android App [Manifest](https://docs.unity3d.com/Manual/android-manifest.html) to include a specific intent filter section for [Activity](https://developer.android.com/reference/android/app/Activity). 
+
+To set up the wallet intent filter:
+
+1. In the Project window, go to the folder `Assets > Plugins > Android` (or create it).
+2. Create a new file and call it AndroidManifest.xml. Unity automatically processes this file when you build your application.
+3. Copy the [code sample](https://github.com/magicblock-labs/Solana.Unity-SDK/blob/main/Samples~/Solana%20Wallet/Plugins/Android/AndroidManifest.xml) into the new file and save it.
+
+*android:scheme="unitydl" should match the value defined in the wallet configuration* 
+
+See the detailed explanation on the Unity [documentation page](https://docs.unity3d.com/Manual/deep-linking-android.html).
+
 
 ### Enabling deep linking for IOS applications
 
