@@ -111,8 +111,9 @@ var leaderboardMeta = new RegisterLeaderBoardInput()
 {
     Description = "A new leaderboard",
     NftMeta = new PublicKey("8PyfKjB46ih1NHdNQLGhEGRDNRPTnFf94bwnQxa9Veux"),
-    ScoresToRetain = 5,
-    ScoresOrder = false // ascending
+    ScoresToRetain = 10,
+    IsAscending = false, // From highest to lowest
+    AllowMultipleScores = false // Only one score per player in the global leaderboard
 };
 
 var addLeaderboardAccounts = new AddLeaderboardAccounts()
