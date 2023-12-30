@@ -36,6 +36,9 @@ mergeInto(LibraryManager.library, {
                 } else {
                     pubKey = await window.walletAdapterLib.connectWallet(walletName);
                 }
+                if(pubKey == undefined){
+                    throw new Error('Unable to connect to: ' + walletName);
+                }
                 var bufferSize = lengthBytesUTF8(pubKey) + 1;
                 var pubKeyPtr = _malloc(bufferSize);
                 stringToUTF8(pubKey, pubKeyPtr, bufferSize);
