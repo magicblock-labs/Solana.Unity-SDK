@@ -3,6 +3,16 @@ title: Installation
 description: Solana.Unity-SDK - Installation
 ---
 
+## Video Tutorial
+
+Here's a quick tutorial on how to setup the Unity SDK.
+
+{% video src="https://www.youtube.com/embed/D0uk6oDVezM" /%}
+
+
+
+https://www.youtube.com/watch?v=D0uk6oDVezM
+
 ## Unity
 
 Go [here](https://unity.com/download) to install Unity.
