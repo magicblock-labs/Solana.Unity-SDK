@@ -52,6 +52,8 @@ namespace Solana.Unity.SDK
         public static WalletSpecs[] Wallets { get; private set; }
 
         private static WalletSpecs _currentWallet;
+
+        private static string _clusterName;
             
 
         [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
@@ -68,12 +70,14 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("SolanaWalletAdapterWebGL can only be used on WebGL");
             }
+            _clusterName = RPCNameMap[(int)RpcCluster];
         }
         
         private static async Task InitWallets() {
             _currentWallet = null;
             _walletsInitializedTaskCompletionSource = new TaskCompletionSource<bool>();
-            InitWalletAdapter(OnWalletsInitialized);
+            
+            InitWalletAdapter(OnWalletsInitialized, _clusterName);
             bool isXnft = await _walletsInitializedTaskCompletionSource.Task;
             if (isXnft){
                _currentWallet = new WalletSpecs()
@@ -300,7 +304,7 @@ namespace Solana.Unity.SDK
                 private static extern string  ExternGetWallets(Action<string> callback);
 
                 [DllImport("__Internal")]
-                private static extern void InitWalletAdapter(Action<bool> callback);
+                private static extern void InitWalletAdapter(Action<bool> callback, string clusterName);
                 
                 
         #else
@@ -309,7 +313,7 @@ namespace Solana.Unity.SDK
                 private static void ExternSignAllTransactionsWallet(string walletName, string transactions, Action<string> callback){}
                 private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
                 private static string ExternGetWallets(Action<string> callback){return null;}
-                private static void InitWalletAdapter(Action<bool> callback){}
+                private static void InitWalletAdapter(Action<bool> callback, string clusterName){}
                 
         #endif
     }
