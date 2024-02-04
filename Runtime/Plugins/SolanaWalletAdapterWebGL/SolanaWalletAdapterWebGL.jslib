@@ -11,12 +11,13 @@ mergeInto(LibraryManager.library, {
     if (window.walletAdapterLib == undefined) {
       var script = document.createElement("script");
       script.src =
-        "https://cdn.jsdelivr.net/gh/magicblock-labs/unity-js-wallet-adapter@main/dist/wallet-adapter-lib.js";
+        "https://cdn.jsdelivr.net/gh/magicblock-labs/unity-js-wallet-adapter@v1.2.0/dist/wallet-adapter-lib.js";
       document.head.appendChild(script);
       script.onload = function () {
         Module.dynCall_vi(callback, isXnft);
       };
     } else {
+      window.walletAdapterLib.refreshWalletAdapters();
       Module.dynCall_vi(callback, isXnft);
     }
   },
