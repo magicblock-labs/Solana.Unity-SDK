@@ -6,7 +6,7 @@
   <h1>Solana.Unity SDK</h1>
 
   <p>
-    <strong>Solana.Unity integration Framework</strong>
+    <strong>Solana.Unity Integration Framework</strong>
   </p>
 
   <p>
