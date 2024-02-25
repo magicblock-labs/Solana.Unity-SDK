@@ -11,7 +11,7 @@ mergeInto(LibraryManager.library, {
     if (window.walletAdapterLib == undefined) {
       var script = document.createElement("script");
       script.src =
-        "https://cdn.jsdelivr.net/gh/magicblock-labs/unity-js-wallet-adapter@v1.2.0/dist/wallet-adapter-lib.js";
+        "https://cdn.jsdelivr.net/npm/@magicblock-labs/unity-wallet-adapter@1.2.1";
       document.head.appendChild(script);
       script.onload = function () {
         Module.dynCall_vi(callback, isXnft);
@@ -98,16 +98,23 @@ mergeInto(LibraryManager.library, {
         const messageBytes = Uint8Array.from(atob(base64Message), (c) =>
           c.charCodeAt(0)
         );
-        const signedMessage = await window.xnft.solana.signMessage(
+        var signedMessage = await window.xnft.solana.signMessage(
           messageBytes
         );
+        if (typeof signedMessage === 'object' && signedMessage !== null && 'signature' in signedMessage) {
+            signedMessage = signedMessage.signature;
+        }
         signatureStr = btoa(String.fromCharCode(...signedMessage));
       } else {
         var signature = await window.walletAdapterLib.signMessage(
           walletName,
           atob(base64Message)
         );
-        signatureStr = signature.toString("base64");
+        if(signature instanceof Uint8Array) {
+          signatureStr = btoa(String.fromCharCode(...signature));
+        } else {
+          signatureStr = signature.toString("base64");
+        }
       }
       var bufferSize = lengthBytesUTF8(signatureStr) + 1;
       var signaturePtr = _malloc(bufferSize);
