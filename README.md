@@ -48,7 +48,7 @@ The SDK is also available on the [Unity Asset Store](https://assetstore.unity.co
 - Native DEX operations (Orca, Jupiter)
 - Websockets to register/trigger custom events (account change, signature status, programs, ...)
 - Solana Mobile Stack support
-- Soalna Wallet Adapter
+- Solana Wallet Adapter
 
 ## 🚩 Upcoming
 - Seed Vault
@@ -60,8 +60,8 @@ The SDK is also available on the [Unity Asset Store](https://assetstore.unity.co
 - Solana.Unity.Dex
 - Solana.Unity.Gum
 - Solana.Unity.Extensions
-- Soalana.Unity.KeyStore
-- Soalana.Unity.Programs
+- Solana.Unity.KeyStore
+- Solana.Unity.Programs
 - Newtonsoft.Json
 - Chaos.NaCl.Standard
 - Portable.BouncyCastle
