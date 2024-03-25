@@ -302,6 +302,7 @@ public class Web3Auth : MonoBehaviour
         if (hash == null)
             throw new UserCancelledException();
 #endif
+        if(hash.Length == 0) return;
         hash = hash.Remove(0, 1);
         Dictionary<string, string> queryParameters = Utils.ParseQuery(uri.Query);
 
