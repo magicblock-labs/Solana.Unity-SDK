@@ -114,9 +114,37 @@ namespace Solana.Unity.SDK
         public abstract Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction, bool skipPreflight, Commitment commitment);
 
         /// <summary>
-        /// Check if there are available wallets without performing login
+        /// Check if the user has a supported wallet installed
         /// </summary>
-        /// <returns>True if there are available wallets, false otherwise</returns>
-        public abstract Task<bool> CanLogin();
+        /// <returns>True if a supported wallet is installed, false otherwise</returns>
+        public async Task<bool> CanLogin()
+        {
+            // Implement the logic to check if a supported wallet is installed
+            // For example, you can make use of the Web3AuthApi to check if a session can be authorized
+
+            // Here's a simple example assuming authorizeSession returns true if authorization is successful
+            // You should adjust this according to your actual authentication logic
+            bool canLogin = await CheckIfSessionAuthorized();
+
+            return canLogin;
+        }
+
+        // Implement the method to check if a session can be authorized
+        private async Task<bool> CheckIfSessionAuthorized()
+        {
+            // Call the Web3AuthApi to authorize a session
+            Web3AuthApi web3AuthApi = Web3AuthApi.getInstance();
+
+            // Example key to pass to authorizeSession
+            string key = "example_key";
+
+            // Perform the authorization check
+            // Replace StoreApiResponse with the actual response type returned by authorizeSession
+            StoreApiResponse response = null;
+            await web3AuthApi.authorizeSession(key, (result) => response = result);
+
+            // Return true if authorization is successful, false otherwise
+            return response != null;
+        }
     }
 }
