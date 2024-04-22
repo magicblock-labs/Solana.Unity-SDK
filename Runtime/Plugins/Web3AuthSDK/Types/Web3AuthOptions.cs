@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 #nullable enable
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -20,7 +20,7 @@ public class Web3AuthOptions {
         }
         set { }
     }
-    public const string openLoginVersion = "v5";
+    public const string openLoginVersion = "v6";
 
     public WhiteLabelData? whiteLabel { get; set; }
     public Dictionary<string, LoginConfigItem>? loginConfig { get; set; }
