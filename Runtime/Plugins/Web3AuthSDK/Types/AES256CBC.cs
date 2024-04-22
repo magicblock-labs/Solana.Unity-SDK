@@ -135,7 +135,7 @@ public class AES256CBC
     public bool hmacSha256Verify(byte[] key, byte[] data, string sig)
     {
         byte[] expectedSig = hmacSha256Sign(key, data);
-        string expectedSigHex = BitConverter.ToString(expectedSig).Replace("-", "").ToLower();
+        string expectedSigHex = BitConverter.ToString(expectedSig).Replace("-", "").ToLowerInvariant();
         return expectedSigHex.Equals(sig);
     }
 }

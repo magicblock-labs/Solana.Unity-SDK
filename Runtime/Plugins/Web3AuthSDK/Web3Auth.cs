@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
@@ -62,7 +62,7 @@ public class Web3Auth : MonoBehaviour
         this.initParams = new Dictionary<string, object>();
 
         this.initParams["clientId"] = clientId;
-        this.initParams["network"] = network.ToString().ToLower();
+        this.initParams["network"] = network.ToString().ToLowerInvariant();
 
         if (!string.IsNullOrEmpty(redirectUri))
             this.initParams["redirectUrl"] = redirectUri;
@@ -108,12 +108,13 @@ public class Web3Auth : MonoBehaviour
         if (this.web3AuthOptions.loginConfig != null)
             this.initParams["loginConfig"] = JsonConvert.SerializeObject(this.web3AuthOptions.loginConfig, settings);
 
-        if (!string.IsNullOrEmpty(this.web3AuthOptions.clientId))
+        if (this.web3AuthOptions.clientId != null)
             this.initParams["clientId"] = this.web3AuthOptions.clientId;
 
-        this.initParams["buildEnv"] = this.web3AuthOptions.buildEnv.ToString().ToLower();
+        if (this.web3AuthOptions.buildEnv != null)
+            this.initParams["buildEnv"] = this.web3AuthOptions.buildEnv.ToString().ToLowerInvariant();
 
-        this.initParams["network"] = this.web3AuthOptions.network.ToString().ToLower();
+        this.initParams["network"] = this.web3AuthOptions.network.ToString().ToLowerInvariant();
 
         if (this.web3AuthOptions.useCoreKitKey.HasValue)
             this.initParams["useCoreKitKey"] = this.web3AuthOptions.useCoreKitKey.Value;
@@ -124,7 +125,8 @@ public class Web3Auth : MonoBehaviour
         if (this.web3AuthOptions.mfaSettings != null)
             this.initParams["mfaSettings"] = JsonConvert.SerializeObject(this.web3AuthOptions.mfaSettings, settings);
 
-        this.initParams["sessionTime"] = this.web3AuthOptions.sessionTime;
+        if (this.web3AuthOptions.sessionTime != null)
+            this.initParams["sessionTime"] = this.web3AuthOptions.sessionTime;
     }
 
     private void onDeepLinkActivated(string url)
