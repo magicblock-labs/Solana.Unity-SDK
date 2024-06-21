@@ -1,6 +1,6 @@
 {
   "name": "com.solana.unity_sdk",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "unity": "2019.4",
   "displayName": "Solana SDK",
   "description": "Open-Source Unity-Solana SDK with Full RPC coverage, NFT support and more",

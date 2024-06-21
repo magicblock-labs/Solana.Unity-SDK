@@ -8,7 +8,7 @@ using UnityEngine;
 public class Web3AuthApi
 {
     static Web3AuthApi instance;
-    static string baseAddress = "https://broadcast-server.tor.us";
+    static string baseAddress = "https://session.web3auth.io";
 
     public static Web3AuthApi getInstance()
     {
