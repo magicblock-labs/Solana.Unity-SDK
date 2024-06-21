@@ -38,5 +38,9 @@ public enum Provider
     [EnumMember(Value = "jwt")]
     JWT,
     [EnumMember(Value = "CUSTOM_VERIFIER")]
-    CUSTOM_VERIFIER
+    CUSTOM_VERIFIER,
+    [EnumMember(Value = "sms_passwordless")]
+    SMS_PASSWORDLESS,
+    [EnumMember(Value = "farcaster")]
+    FARCASTER
 }
