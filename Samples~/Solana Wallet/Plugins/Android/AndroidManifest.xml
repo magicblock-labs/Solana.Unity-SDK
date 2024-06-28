@@ -4,7 +4,7 @@
         <activity android:name="com.unity3d.player.UnityPlayerActivity"
                   android:exported="true"
                   android:theme="@style/UnityThemeSelector">
-            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+            <meta-data android:name="unityplayer.UnityActivity" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -27,23 +27,19 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="unitydl" android:host="disconnect"/>
             </intent-filter>
-           <intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="unitydl" android:host="disconnect"/>
             </intent-filter>
-                <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="torusapp" android:host="com.torus.Web3AuthUnity/auth" />
-            </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="torusapp" android:host="com.torus.Web3AuthUnity" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="torusapp" android:host="com.torus.Web3AuthUnity"
+                      android:pathPrefix="/auth"
+                      android:pathPattern="/*"/>
             </intent-filter>
         </activity>
     </application>
