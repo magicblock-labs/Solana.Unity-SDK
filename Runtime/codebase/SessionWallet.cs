@@ -238,13 +238,14 @@ namespace Solana.Unity.SDK
 
             // Get balance and calculate refund
             var balance = (await GetBalance(Account.PublicKey)) * SolLamports;
-            var estimatedFees = await ActiveRpcClient.GetFeesAsync(Commitment.Confirmed);
-            var refund = balance - estimatedFees.Result.Value.FeeCalculator.LamportsPerSignature * 1;
+            var estimatedFees = await ActiveRpcClient.GetFeeForMessageAsync(tx.CompileMessage(), Commitment.Confirmed);
+            var refund = balance - estimatedFees.Result.Value * 1;
             Debug.Log($"LAMPORTS Balance: {balance}, Refund: {refund}");
 
             tx.Add(RevokeSessionIX());
             // Issue Refund
-            tx.Add(SystemProgram.Transfer(Account.PublicKey, _externalWallet.Account.PublicKey, (ulong)refund));
+            if (refund != null)
+                tx.Add(SystemProgram.Transfer(Account.PublicKey, _externalWallet.Account.PublicKey, (ulong)refund));
             var rest = await SignAndSendTransaction(tx, commitment: commitment);
             DeleteSessionWallet();
         }
