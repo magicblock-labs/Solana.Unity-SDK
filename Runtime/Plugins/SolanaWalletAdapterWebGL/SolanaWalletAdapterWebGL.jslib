@@ -14,11 +14,11 @@ mergeInto(LibraryManager.library, {
         "https://cdn.jsdelivr.net/npm/@magicblock-labs/unity-wallet-adapter@1.2.1";
       document.head.appendChild(script);
       script.onload = function () {
-        Module.dynCall_vi(callback, isXnft);
+        {{{ makeDynCall('vi', 'callback') }}}(isXnft);
       };
     } else {
       window.walletAdapterLib.refreshWalletAdapters();
-      Module.dynCall_vi(callback, isXnft);
+      {{{ makeDynCall('vi', 'callback') }}}(isXnft);
     }
   },
   ExternGetWallets: async function (callback) {
@@ -27,10 +27,10 @@ mergeInto(LibraryManager.library, {
       var bufferSize = lengthBytesUTF8(wallets) + 1;
       var walletsPtr = _malloc(bufferSize);
       stringToUTF8(wallets, walletsPtr, bufferSize);
-      Module.dynCall_vi(callback, walletsPtr);
+      {{{ makeDynCall('vi', 'callback') }}}(walletsPtr);
     } catch (err) {
       console.error(err.message);
-      Module.dynCall_vi(callback, null);
+      {{{ makeDynCall('vi', 'callback') }}}(null);
     }
   },
   ExternConnectWallet: async function (walletNamePtr, callback) {
@@ -48,10 +48,10 @@ mergeInto(LibraryManager.library, {
       var bufferSize = lengthBytesUTF8(pubKey) + 1;
       var pubKeyPtr = _malloc(bufferSize);
       stringToUTF8(pubKey, pubKeyPtr, bufferSize);
-      Module.dynCall_vi(callback, pubKeyPtr);
+      {{{ makeDynCall('vi', 'callback') }}}(pubKeyPtr);
     } catch (err) {
       console.error(err.message);
-      Module.dynCall_vi(callback, null);
+      {{{ makeDynCall('vi', 'callback') }}}(null);
     }
   },
   ExternSignTransactionWallet: async function (
@@ -79,10 +79,10 @@ mergeInto(LibraryManager.library, {
       var bufferSize = lengthBytesUTF8(txStr) + 1;
       var txPtr = _malloc(bufferSize);
       stringToUTF8(txStr, txPtr, bufferSize);
-      Module.dynCall_vi(callback, txPtr);
+      {{{ makeDynCall('vi', 'callback') }}}(txPtr);
     } catch (err) {
       console.error(err.message);
-      Module.dynCall_vi(callback, null);
+      {{{ makeDynCall('vi', 'callback') }}}(null);
     }
   },
   ExternSignMessageWallet: async function (
@@ -119,10 +119,10 @@ mergeInto(LibraryManager.library, {
       var bufferSize = lengthBytesUTF8(signatureStr) + 1;
       var signaturePtr = _malloc(bufferSize);
       stringToUTF8(signatureStr, signaturePtr, bufferSize);
-      Module.dynCall_vi(callback, signaturePtr);
+      {{{ makeDynCall('vi', 'callback') }}}(signaturePtr);
     } catch (err) {
       console.error(err.message);
-      Module.dynCall_vi(callback, null);
+      {{{ makeDynCall('vi', 'callback') }}}(null);
     }
   },
   ExternSignAllTransactionsWallet: async function (
@@ -162,10 +162,10 @@ mergeInto(LibraryManager.library, {
       var bufferSize = lengthBytesUTF8(txsStr) + 1;
       var txsPtr = _malloc(bufferSize);
       stringToUTF8(txsStr, txsPtr, bufferSize);
-      Module.dynCall_vi(callback, txsPtr);
+      {{{ makeDynCall('vi', 'callback') }}}(txsPtr);
     } catch (err) {
       console.error(err.message);
-      Module.dynCall_vi(callback, null);
+      {{{ makeDynCall('vi', 'callback') }}}(null);
     }
   },
 });
