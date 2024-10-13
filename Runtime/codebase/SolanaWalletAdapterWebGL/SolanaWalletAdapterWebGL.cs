@@ -26,7 +26,6 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
-        private static Transaction[] _currentTransactions;
         private static Account _account;
         public static GameObject WalletAdapterUI { get; private set; }
 
@@ -176,7 +175,6 @@ namespace Solana.Unity.SDK
         protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
             _signedAllTransactionsTaskCompletionSource = new TaskCompletionSource<Transaction[]>();
-            _currentTransactions = transactions;
             string[] base64Transactions = new string[transactions.Length];
             for (int i = 0; i < transactions.Length; i++)
             {
@@ -237,15 +235,13 @@ namespace Solana.Unity.SDK
                 return;
             }
             string[] signaturesList = signatures.Split(',');
+            var transactions = new Transaction[signaturesList.Length];
+            
             for (int i = 0; i < signaturesList.Length; i++)
             {
-                _currentTransactions[i].Signatures.Add(new SignaturePubKeyPair()
-                {
-                    PublicKey = _account.PublicKey,
-                    Signature = Convert.FromBase64String(signaturesList[i])
-                });
+                transactions[i] = Transaction.Deserialize(signaturesList[i]);
             }
-            _signedAllTransactionsTaskCompletionSource.SetResult(_currentTransactions);
+            _signedAllTransactionsTaskCompletionSource.SetResult(transactions);
         }
         
         
