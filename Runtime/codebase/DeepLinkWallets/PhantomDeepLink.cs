@@ -19,7 +19,59 @@ using Pbkdf2Params = Solana.Unity.KeyStore.Model.Pbkdf2Params;
 
 namespace Solana.Unity.SDK
 {
-    public class PhantomDeepLink: WalletBase
+    [Serializable]
+    public class PhantomWalletOptions
+    {
+        [SerializeField]
+        private string apiVersion = "v1";
+        public virtual string ApiVersion
+        {
+            get => apiVersion;
+            set => apiVersion = value;
+        }
+
+        [SerializeField]
+        private string appMetaDataUrl = "https://github.com/magicblock-labs/Solana.Unity-SDK";
+        public virtual string AppMetaDataUrl
+        {
+            get => appMetaDataUrl;
+            set => appMetaDataUrl = value;
+        }
+
+        [SerializeField]
+        private string deeplinkUrlScheme = "unitydl";
+        public virtual string DeeplinkUrlScheme
+        {
+            get => deeplinkUrlScheme;
+            set => deeplinkUrlScheme = value;
+        }
+
+        [SerializeField]
+        private string sessionEncryptionPassword = "use a strong password";
+        public virtual string SessionEncryptionPassword
+        {
+            get => sessionEncryptionPassword;
+            set => sessionEncryptionPassword = value;
+        }
+
+        [SerializeField]
+        private string baseUrl = "https://phantom.app";
+        public virtual string BaseUrl
+        {
+            get => baseUrl;
+            set => baseUrl = value;
+        }
+
+        [SerializeField]
+        private string walletName = "phantom";
+        public virtual string WalletName
+        {
+            get => walletName;
+            set => walletName = value;
+        }
+    }
+
+    public class PhantomDeepLink : WalletBase
     {
         private const string TempKpPrefEntry = "phantom-kp-session";
         private const string SessionIdPrefEntry = "phantom-session-id";

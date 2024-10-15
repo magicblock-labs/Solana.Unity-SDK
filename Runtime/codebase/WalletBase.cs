@@ -10,6 +10,7 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
+using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
 using WebSocketSharp;
 
@@ -399,24 +400,31 @@ namespace Solana.Unity.SDK
         /// <param name="allowEmptySignatures"></param>
         /// <returns></returns>
         private static List<SignaturePubKeyPair> DeduplicateTransactionSignatures(
-            List<SignaturePubKeyPair> signatures, bool allowEmptySignatures = false)
+            List<SignaturePubKeyPair> signatures, bool allowEmptySignatures = false, bool preferNonEmptySignature = true)
         {
             var signaturesList = new List<SignaturePubKeyPair>();
             var signaturesSet = new HashSet<PublicKey>();
             var emptySgn = new byte[64];
             foreach (var sgn in signatures)
             {
-                if (sgn.Signature.SequenceEqual(emptySgn) && !allowEmptySignatures)
+                if (signaturesSet.Contains(sgn.PublicKey))
+                {
+                    Debug.LogFormat("Skipping duplicate signature for {0} {1}", sgn.PublicKey.ToString(), sgn.Signature.ToString());
+                    continue;
+                }
+                if (sgn.Signature.SequenceEqual(emptySgn) && (!allowEmptySignatures || preferNonEmptySignature))
                 {
                     var notEmptySig = signatures.FirstOrDefault(
                         s => s.PublicKey.Equals(sgn.PublicKey) && !s.Signature.SequenceEqual(emptySgn));
                     if (notEmptySig != null && !signaturesSet.Contains(notEmptySig.PublicKey))
                     {
+                        Debug.LogFormat("Replacing empty signature with non-empty signature for {0}", sgn.PublicKey.ToString());
                         signaturesSet.Add(notEmptySig.PublicKey);
                         signaturesList.Add(notEmptySig);
                     }
                 }
                 if ((sgn.Signature.SequenceEqual(emptySgn) && !allowEmptySignatures) || signaturesSet.Contains(sgn.PublicKey)) continue;
+                Debug.LogFormat("Adding signature for {0}", sgn.PublicKey.ToString());
                 signaturesSet.Add(sgn.PublicKey);
                 signaturesList.Add(sgn);
             }

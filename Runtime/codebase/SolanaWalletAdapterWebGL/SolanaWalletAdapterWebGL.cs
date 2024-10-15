@@ -26,6 +26,7 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
+        private static Transaction _currentTransaction;
         private static Transaction[] _currentTransactions;
         private static Account _account;
         public static GameObject WalletAdapterUI { get; private set; }
@@ -155,6 +156,7 @@ namespace Solana.Unity.SDK
         protected override Task<Transaction> _SignTransaction(Transaction transaction)
         {
             _signedTransactionTaskCompletionSource = new TaskCompletionSource<Transaction>();
+            _currentTransaction = transaction;
             var base64TransactionStr = Convert.ToBase64String(transaction.Serialize()) ;
             ExternSignTransactionWallet(_currentWallet.name,base64TransactionStr, OnTransactionSigned);
             return _signedTransactionTaskCompletionSource.Task;
@@ -206,21 +208,45 @@ namespace Solana.Unity.SDK
             _loginTaskCompletionSource.TrySetResult(_account);
         }
 
+        private static Transaction DeserializeTransaction(string base64tx)
+        {
+            var tx_bytes = Convert.FromBase64String(base64tx);
+            try
+            {
+                return VersionedTransaction.Deserialize(tx_bytes);
+            }
+            catch
+            {
+                return Transaction.Deserialize(tx_bytes);
+            }
+        }
         /// <summary>
         /// Called from javascript when the wallet signed the transaction and return the signature
         /// that we then need to put into the transaction before we send it out.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<string>))]
-        public static void OnTransactionSigned(string transaction)
+        public static void OnTransactionSigned(string signature)
         {
-            if (transaction == null)
+            if (signature == null)
             {
                 _signedTransactionTaskCompletionSource.TrySetException(new Exception("Transaction signing cancelled"));
                 _signedTransactionTaskCompletionSource.TrySetResult(null);
                 return;
             }
-            var tx = Transaction.Deserialize(Convert.FromBase64String(transaction));
-            _signedTransactionTaskCompletionSource.SetResult(tx);
+            if (signature.StartsWith("s:"))
+            {
+                _currentTransaction.Signatures.Add(new SignaturePubKeyPair()
+                {
+                    PublicKey = _account.PublicKey,
+                    Signature = Convert.FromBase64String(signature.Substring(2))
+                });
+            }
+            else
+            {
+                _currentTransaction = DeserializeTransaction(signature);
+            }
+
+            _signedTransactionTaskCompletionSource.SetResult(_currentTransaction);
         }
         
         /// <summary>
@@ -239,11 +265,18 @@ namespace Solana.Unity.SDK
             string[] signaturesList = signatures.Split(',');
             for (int i = 0; i < signaturesList.Length; i++)
             {
-                _currentTransactions[i].Signatures.Add(new SignaturePubKeyPair()
+                if (signaturesList[i].StartsWith("s:"))
                 {
-                    PublicKey = _account.PublicKey,
-                    Signature = Convert.FromBase64String(signaturesList[i])
-                });
+                    _currentTransactions[i].Signatures.Add(new SignaturePubKeyPair()
+                    {
+                        PublicKey = _account.PublicKey,
+                        Signature = Convert.FromBase64String(signaturesList[i].Substring(2))
+                    });
+                }
+                else
+                {
+                    _currentTransactions[i] = DeserializeTransaction(signaturesList[i]);
+                }
             }
             _signedAllTransactionsTaskCompletionSource.SetResult(_currentTransactions);
         }
@@ -305,6 +338,10 @@ namespace Solana.Unity.SDK
 
                 [DllImport("__Internal")]
                 private static extern void InitWalletAdapter(Action<bool> callback, string clusterName);
+
+                [DllImport("__Internal")]
+                private static extern void GetSignatureForAddress();
+                
                 
                 
         #else
@@ -314,6 +351,7 @@ namespace Solana.Unity.SDK
                 private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
                 private static string ExternGetWallets(Action<string> callback){return null;}
                 private static void InitWalletAdapter(Action<bool> callback, string clusterName){}
+                private static void GetSignatureForAddress(){}
                 
         #endif
     }
