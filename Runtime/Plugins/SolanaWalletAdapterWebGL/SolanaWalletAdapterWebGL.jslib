@@ -155,7 +155,7 @@ mergeInto(LibraryManager.library, {
       var serializedSignedTransactions = [];
       for (var i = 0; i < signedTransactions.length; i++) {
         var signedTransaction = signedTransactions[i];
-        var txStr = signedTransaction.serialize().toString("base64");
+        var txStr = Buffer.from(signedTransaction.serialize()).toString("base64");
         serializedSignedTransactions.push(txStr);
       }
       var txsStr = serializedSignedTransactions.join(",");
