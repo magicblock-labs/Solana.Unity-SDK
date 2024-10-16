@@ -222,26 +222,26 @@ namespace Solana.Unity.SDK
         }
         
         /// <summary>
-        /// Called from javascript when the wallet signed all transactions and return the signature
-        /// that we then need to put into the transaction before we send it out.
+        /// Called from javascript when the wallet signs all transactions and returns the signed transactions,
+        /// which we then need to send out.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<string>))]
-        public static void OnAllTransactionsSigned(string signatures)
+        public static void OnAllTransactionsSigned(string transactions)
         {
-            if (signatures == null)
+            if (transactions == null)
             {
                 _signedAllTransactionsTaskCompletionSource.TrySetException(new Exception("Transactions signing cancelled"));
                 _signedAllTransactionsTaskCompletionSource.TrySetResult(null);
                 return;
             }
-            string[] signaturesList = signatures.Split(',');
-            var transactions = new Transaction[signaturesList.Length];
+            string[] transactionsList = transactions.Split(',');
+            var txList = new Transaction[transactionsList.Length];
             
-            for (int i = 0; i < signaturesList.Length; i++)
+            for (int i = 0; i < transactionsList.Length; i++)
             {
-                transactions[i] = Transaction.Deserialize(signaturesList[i]);
+                txList[i] = Transaction.Deserialize(transactionsList[i]);
             }
-            _signedAllTransactionsTaskCompletionSource.SetResult(transactions);
+            _signedAllTransactionsTaskCompletionSource.SetResult(txList);
         }
         
         
