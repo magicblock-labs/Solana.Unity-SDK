@@ -26,7 +26,6 @@ namespace Solana.Unity.SDK
         private static TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private static TaskCompletionSource<Transaction[]> _signedAllTransactionsTaskCompletionSource;
         private static TaskCompletionSource<byte[]> _signedMessageTaskCompletionSource;
-        private static Transaction[] _currentTransactions;
         private static Account _account;
         public static GameObject WalletAdapterUI { get; private set; }
 
@@ -176,7 +175,6 @@ namespace Solana.Unity.SDK
         protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
             _signedAllTransactionsTaskCompletionSource = new TaskCompletionSource<Transaction[]>();
-            _currentTransactions = transactions;
             string[] base64Transactions = new string[transactions.Length];
             for (int i = 0; i < transactions.Length; i++)
             {
@@ -224,28 +222,26 @@ namespace Solana.Unity.SDK
         }
         
         /// <summary>
-        /// Called from javascript when the wallet signed all transactions and return the signature
-        /// that we then need to put into the transaction before we send it out.
+        /// Called from javascript when the wallet signs all transactions and returns the signed transactions,
+        /// which we then need to send out.
         /// </summary>
         [MonoPInvokeCallback(typeof(Action<string>))]
-        public static void OnAllTransactionsSigned(string signatures)
+        public static void OnAllTransactionsSigned(string transactions)
         {
-            if (signatures == null)
+            if (transactions == null)
             {
                 _signedAllTransactionsTaskCompletionSource.TrySetException(new Exception("Transactions signing cancelled"));
                 _signedAllTransactionsTaskCompletionSource.TrySetResult(null);
                 return;
             }
-            string[] signaturesList = signatures.Split(',');
-            for (int i = 0; i < signaturesList.Length; i++)
+            string[] transactionsList = transactions.Split(',');
+            var txList = new Transaction[transactionsList.Length];
+            
+            for (int i = 0; i < transactionsList.Length; i++)
             {
-                _currentTransactions[i].Signatures.Add(new SignaturePubKeyPair()
-                {
-                    PublicKey = _account.PublicKey,
-                    Signature = Convert.FromBase64String(signaturesList[i])
-                });
+                txList[i] = Transaction.Deserialize(transactionsList[i]);
             }
-            _signedAllTransactionsTaskCompletionSource.SetResult(_currentTransactions);
+            _signedAllTransactionsTaskCompletionSource.SetResult(txList);
         }
         
         
