@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Solana.Unity.Rpc.Models;
@@ -86,6 +87,14 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Transaction> _SignTransaction(Transaction transaction)
         {
+            var result = await _SignAllTransactions(new Transaction[] { transaction });
+            return result[0];
+        }
+
+
+        protected override async Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
+        {
+
             var cluster = RPCNameMap[(int)RpcCluster];
             SignedResult res = null;
             var localAssociationScenario = new LocalAssociationScenario();
@@ -112,10 +121,7 @@ namespace Solana.Unity.SDK
                     },
                     async client =>
                     {
-                        res = await client.SignTransactions(new List<byte[]>
-                        {
-                            transaction.Serialize()
-                        });
+                        res = await client.SignTransactions(transactions.Select(transaction => transaction.Serialize()).ToList());
                     }
                 }
             );
@@ -125,14 +131,9 @@ namespace Solana.Unity.SDK
                 throw new Exception(result.Error.Message);
             }
             _authToken = authorization.AuthToken;
-            return Transaction.Deserialize(res.SignedPayloads[0]);
+            return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
         }
 
-
-        protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
-        {
-            throw new NotImplementedException();
-        }
 
         public override void Logout()
         {
