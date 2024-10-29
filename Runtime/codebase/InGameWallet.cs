@@ -107,7 +107,11 @@ namespace Solana.Unity.SDK
 
         protected override Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
-            throw new NotImplementedException();
+            foreach (Transaction transaction in transactions)
+            {
+                transaction.PartialSign(Account);
+            }
+            return Task.FromResult(transactions);
         }
 
         public override Task<byte[]> SignMessage(byte[] message)
