@@ -130,8 +130,9 @@ namespace Solana.Unity.SDK
         /// </summary>
         /// <param name="topUp">Whether to top up the session token account with SOL.</param>
         /// <param name="sessionValidity">The validity period of the session token account, in seconds.</param>
+        /// <param name="sessionValidity">The lamports to topup</param>
         /// <returns>A transaction instruction to create a new session token account.</returns>
-        public TransactionInstruction CreateSessionIX(bool topUp, long sessionValidity)
+        public TransactionInstruction CreateSessionIX(bool topUp, long sessionValidity, ulong? topUpLamports = null)
         {
             CreateSessionAccounts createSessionAccounts = new CreateSessionAccounts()
             {
@@ -145,7 +146,8 @@ namespace Solana.Unity.SDK
             return GplSessionProgram.CreateSession(
                 createSessionAccounts,
                 topUp: topUp,
-                validUntil: sessionValidity
+                validUntil: sessionValidity,
+                lamports: topUpLamports
             );
         }
 
