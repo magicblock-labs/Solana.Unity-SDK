@@ -40,7 +40,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Initializes the encryptor. If its the frist time, it will generate
+	 * Initializes the encryptor. If its the first time, it will generate
 	 * a random 3 digit number and puts it between private key and its appendix.
 	 * If this was initialized on this device before, it will load it and create
 	 * the private key.
@@ -138,7 +138,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Saves a string in player preferences but securly encrypted.
+	 * Saves a string in player preferences but securely encrypted.
 	 * @param key The preference id.
 	 * @param val The value of the preference, it will be encrypted.
 	 */
@@ -194,7 +194,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted text from the player preferences.
+	 * Get a securely encrypted text from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @param defaultValue The default to return.
@@ -222,7 +222,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted text from the player preferences.
+	 * Get a securely encrypted text from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @return The decrypted value or default in case of not found.
@@ -235,7 +235,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted int from the player preferences.
+	 * Get a securely encrypted int from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @param defaultValue The default to return.
@@ -265,7 +265,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted int from the player preferences.
+	 * Get a securely encrypted int from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @return The decrypted value or default in case of not found.
@@ -278,7 +278,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted float from the player preferences.
+	 * Get a securely encrypted float from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @param defaultValue The default to return.
@@ -308,7 +308,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted float from the player preferences.
+	 * Get a securely encrypted float from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @return The decrypted value or default in case of not found.
@@ -321,7 +321,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted bool from the player preferences.
+	 * Get a securely encrypted bool from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @param defaultValue the default value to return.
@@ -339,7 +339,7 @@ public class SecurePlayerPrefs
 
 
 	/**
-	 * Get a securly encrypted bool from the player preferences.
+	 * Get a securely encrypted bool from the player preferences.
 	 *
 	 * @param key The id of the player preferences.
 	 * @return The decrypted value or default in case of not found.
