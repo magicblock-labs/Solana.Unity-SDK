@@ -193,7 +193,9 @@ namespace Solana.Unity.SDK
             }
             
             #if UNITY_WEBGL
-            LoginXNFT().AsUniTask().Forget();
+            if (autoConnectOnStartup) {
+                LoginXNFT().AsUniTask().Forget();
+            }
             #endif
 
             
