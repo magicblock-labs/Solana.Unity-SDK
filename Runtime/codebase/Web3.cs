@@ -191,12 +191,6 @@ namespace Solana.Unity.SDK
             {
                 Debug.Log("We3Auth session not detected, " +  e.Message);
             }
-            
-            #if UNITY_WEBGL
-            LoginXNFT().AsUniTask().Forget();
-            #endif
-
-            
         }
 
         /// <summary>
