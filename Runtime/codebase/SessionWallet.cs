@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using Org.BouncyCastle.Crypto.Tls;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using Solana.Unity.Programs;
@@ -64,7 +65,39 @@ namespace Solana.Unity.SDK
         {
             tx.PartialSign(new[] { _externalWallet.Account, Account });
         }
-        
+
+        /// <summary>
+        /// Creates a new SessionWallet instance and logs in with the provided password if a session wallet exists, otherwise creates a new account and logs in.
+        /// </summary>
+        /// <param name="targetProgram">The target program to interact with.</param>
+        /// <param name="password">The password to decrypt the session keystore.</param>
+        /// <param name="externalWallet">The external wallet</param>
+        /// <returns>A SessionWallet instance.</returns>
+        public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, WalletBase externalWallet = null, string seed = "MagicBlock.SessionKey")
+        {
+            // TODO: This class behaves like a singleton, what if I want multiple session wallets active at the same time?
+            if (Instance != null) return Instance;
+            
+            externalWallet ??= Web3.Wallet;
+            _externalWallet = externalWallet;
+            
+            var message = Encoding.UTF8.GetBytes(seed);
+            var signature = await _externalWallet.SignMessage(message);
+
+            // Generate the keypair from the signed and hashed seed
+            var wallet = new Wallet.Wallet(signature);
+            
+            // TODO: ActiveRpcClient can be null, get node address some other way
+            var sessionWallet = new SessionWallet(externalWallet.RpcCluster, externalWallet.ActiveRpcClient.NodeAddress.ToString())
+            {
+                TargetProgram = targetProgram,
+                EncryptedKeystoreKey = $"{_externalWallet.Account.PublicKey}_SessionKeyStore",
+                SessionTokenPDA = FindSessionToken(targetProgram, wallet.Account, _externalWallet.Account),
+                Account = wallet.Account,
+            };
+
+            return sessionWallet;
+        }
         
         /// <summary>
         /// Creates a new SessionWallet instance and logs in with the provided password if a session wallet exists, otherwise creates a new account and logs in.
@@ -75,12 +108,17 @@ namespace Solana.Unity.SDK
         /// <returns>A SessionWallet instance.</returns>
         public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, string password, WalletBase externalWallet = null)
         {
-            if(Instance != null) return Instance;
+            if (Instance != null) return Instance;
+            
             externalWallet ??= Web3.Wallet;
             _externalWallet = externalWallet;
-            SessionWallet sessionWallet = new SessionWallet(externalWallet.RpcCluster, externalWallet.ActiveRpcClient.NodeAddress.ToString());
-            sessionWallet.TargetProgram = targetProgram;
-            sessionWallet.EncryptedKeystoreKey = $"{_externalWallet.Account.PublicKey}_SessionKeyStore";
+            
+            SessionWallet sessionWallet = new SessionWallet(externalWallet.RpcCluster, externalWallet.ActiveRpcClient.NodeAddress.ToString())
+            {
+                TargetProgram = targetProgram,
+                EncryptedKeystoreKey = $"{_externalWallet.Account.PublicKey}_SessionKeyStore"
+            };
+            
             var derivedPassword = DeriveSessionPassword(password);
 
             if (sessionWallet.HasSessionWallet())
@@ -123,7 +161,6 @@ namespace Solana.Unity.SDK
             sessionWallet.SessionTokenPDA = FindSessionToken(targetProgram, sessionWallet.Account, _externalWallet.Account);
             return sessionWallet;
         }
-
 
         /// <summary>
         /// Creates a transaction instruction to create a new session token account and initialize it with the provided session signer and target program.
