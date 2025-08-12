@@ -67,11 +67,11 @@ namespace Solana.Unity.SDK
         }
 
         /// <summary>
-        /// Creates a new SessionWallet instance and logs in with the provided password if a session wallet exists, otherwise creates a new account and logs in.
+        /// Creates a new SessionWallet instance based on the signature we get from signing a specific message.
         /// </summary>
-        /// <param name="targetProgram">The target program to interact with.</param>
-        /// <param name="password">The password to decrypt the session keystore.</param>
+        /// <param name="targetProgram">The target program to interact with</param>
         /// <param name="externalWallet">The external wallet</param>
+        /// <param name="seed">The message used for signing</param>
         /// <returns>A SessionWallet instance.</returns>
         public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, WalletBase externalWallet = null, string seed = "MagicBlock.SessionKey")
         {
