@@ -11,7 +11,7 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 Do Not Translate or Localize
 
 1.   zxibg.unity (https://github.com/micjahn/ZXing.Net)
-2.   garbles-labs/Solana.Unity-Core (https://github.com/garbles-labs/Solana.Unity-Core)
+2.   magicblock-labs/Solana.Unity-Core (https://github.com/magicblock-labs/Solana.Unity-Core)
      a.Solana.Unity.Wallet
      b.Solana.Unity.Rpc
      c.Solana.Unity.Dex
