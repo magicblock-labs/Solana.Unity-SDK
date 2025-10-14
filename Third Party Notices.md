@@ -11,7 +11,7 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 Do Not Translate or Localize
 
 1.   zxibg.unity (https://github.com/micjahn/ZXing.Net)
-2.   garbles-labs/Solana.Unity-Core (https://github.com/garbles-labs/Solana.Unity-Core)
+2.   magicblock-labs/Solana.Unity-Core (https://github.com/magicblock-labs/Solana.Unity-Core)
      a.Solana.Unity.Wallet
      b.Solana.Unity.Rpc
      c.Solana.Unity.Dex
@@ -22,7 +22,7 @@ Do Not Translate or Localize
      4.Portable.BouncyCastle (https://github.com/bcgit/bc-csharp)
      5.UniTask (https://github.com/Cysharp/UniTask)
      6.Websocket-sharp (https://github.com/sta/websocket-sharp)
-     7.NativeWebSocket (https://github.com/garbles-labs/NativeWebSocket)
+     7.NativeWebSocket (https://github.com/magicblock-labs/NativeWebSocket)
 
 %% zxibg.unity NOTICES, INFORMATION, AND LICENSE BEGIN HERE
 =========================================
