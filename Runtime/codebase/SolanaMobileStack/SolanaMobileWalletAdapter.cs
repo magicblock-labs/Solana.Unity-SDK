@@ -57,7 +57,7 @@ namespace Solana.Unity.SDK
                 if (!pk.IsNullOrEmpty()) return new Account(string.Empty, new PublicKey(pk));
             }
             AuthorizationResult authorization = null;
-            var localAssociationScenario = new LocalAssociationScenario();
+            using var localAssociationScenario = new LocalAssociationScenario();
             var cluster = RPCNameMap[(int)RpcCluster];
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
@@ -97,7 +97,7 @@ namespace Solana.Unity.SDK
 
             var cluster = RPCNameMap[(int)RpcCluster];
             SignedResult res = null;
-            var localAssociationScenario = new LocalAssociationScenario();
+            using var localAssociationScenario = new LocalAssociationScenario();
             AuthorizationResult authorization = null;
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
@@ -145,7 +145,7 @@ namespace Solana.Unity.SDK
         public override async Task<byte[]> SignMessage(byte[] message)
         {
             SignedResult signedMessages = null;
-            var localAssociationScenario = new LocalAssociationScenario();
+            using var localAssociationScenario = new LocalAssociationScenario();
             AuthorizationResult authorization = null;
             var cluster = RPCNameMap[(int)RpcCluster];
             var result = await localAssociationScenario.StartAndExecute(
