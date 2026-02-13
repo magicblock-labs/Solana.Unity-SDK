@@ -25,11 +25,16 @@ namespace Solana.Unity.SDK
         public static Web3 Instance;
         
         [Header("Rpc Settings")]
-
-        public RpcCluster rpcCluster = RpcCluster.DevNet;
         public string customRpc = string.Empty;
         public string webSocketsRpc;
         public bool autoConnectOnStartup;
+        
+#if MAINNET
+        [NonSerialized] public RpcCluster rpcCluster = RpcCluster.MainNet;
+#else   
+        [NonSerialized] public RpcCluster rpcCluster = RpcCluster.DevNet;
+#endif
+        
         public WalletBase WalletBase {
         
             get => _wallet;
