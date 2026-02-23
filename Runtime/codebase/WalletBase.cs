@@ -388,6 +388,10 @@ namespace Solana.Unity.SDK
         {
             var wsConnection = ActiveStreamingRpcClient;
             if(wsConnection?.State.Equals(WebSocketState.Open) ?? false) return Task.CompletedTask;
+
+            if (_webSocketConnection == null)
+                throw new InvalidOperationException("WebSocket connection is not initialized. Make sure StartStreamingConnection() was called and RPC client is available.");
+            
             return _webSocketConnection.Task;
         }
 
