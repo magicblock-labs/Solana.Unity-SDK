@@ -312,11 +312,13 @@ namespace Solana.Unity.SDK
         /// <param name="maxSeconds">A given blockhash can only be used by transactions for about 60 to 90 seconds
         /// https://docs.solana.com/developing/transaction_confirmation#how-does-transaction-expiration-work</param>
         /// <returns></returns>
-        public static Task<string> BlockHash(
+        public static Task<string?> BlockHash(
             Commitment commitment = Commitment.Confirmed,
             bool useCache = true,
             int maxSeconds = 0) =>
-            Instance != null ? Instance.WalletBase.GetBlockHash(commitment, useCache, maxSeconds) : null;
+            Instance != null 
+                ? Instance.WalletBase.GetBlockHash(commitment, useCache, maxSeconds) 
+                : Task.FromResult<string?>(null);
 
         
         
