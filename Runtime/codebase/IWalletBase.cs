@@ -1,117 +1,150 @@
 using System.Threading.Tasks;
-using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
-using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
-
-// ReSharper disable once CheckNamespace
 
 namespace Solana.Unity.SDK
 {
-    public interface IWalletBase
+    /// <summary>
+    /// Interface for Solana wallet base functionality
+    /// </summary>
+    public abstract class WalletBase : IWalletBase
     {
         /// <summary>
         /// Perform wallet setup and initialization, such as wallet state loading and RPC connection
         /// </summary>
-        void Setup();
-        
+        public void Setup() { }
+
         /// <summary>
-        /// login to the wallet
+        /// Login to the wallet
         /// </summary>
-        Task<Account> Login(string password=null);
-        
-        
+        /// <param name="password">The password used for login, if required</param>
+        /// <returns>The account object representing the logged-in wallet</returns>
+        public abstract Task<Account> Login(string password = null);
+
         /// <summary>
         /// Wallet logout
         /// </summary>
-        void Logout();
-        
-        
+        public abstract void Logout();
+
         /// <summary>
-        /// Creates and configure an account with private and public key, using mnemonics if provided
+        /// Creates and configures an account with private and public keys, using mnemonics if provided
         /// </summary>
         /// <param name="mnemonic">The mnemonic to use</param>
-        /// <param name="password">The password used for encryption if the mnemonic need to be stored</param>
-        /// <returns></returns>
-        Task<Account> CreateAccount(string mnemonic=null, string password=null);
-
+        /// <param name="password">The password used for encryption if the mnemonic needs to be stored</param>
+        /// <returns>The account object representing the created wallet</returns>
+        public abstract Task<Account> CreateAccount(string mnemonic = null, string password = null);
 
         /// <summary>
         /// Get the SOL balance for a Token Account PublicKey
         /// </summary>
-        /// <param name="publicKey"></param>
-        /// <param name="commitment"></param>
-        /// <returns></returns>
-        Task<double> GetBalance(PublicKey publicKey, Commitment commitment);
-        
+        /// <param name="publicKey">The public key of the token account</param>
+        /// <param name="commitment">The desired commitment level</param>
+        /// <returns>The SOL balance of the specified token account</returns>
+        public abstract Task<double> GetBalance(PublicKey publicKey, Commitment commitment);
+
         /// <summary>
         /// Get the SOL balance
         /// </summary>
-        /// <returns></returns>
-        Task<double> GetBalance(Commitment commitment);
+        /// <param name="commitment">The desired commitment level</param>
+        /// <returns>The SOL balance of the wallet</returns>
+        public abstract Task<double> GetBalance(Commitment commitment = Commitment.Confirmed);
 
         /// <summary>
-        /// Transfer a certain amount of a given tokenMint to destination account 
+        /// Transfer a certain amount of a given tokenMint to a destination account 
         /// </summary>
-        /// <param name="destination"></param>
-        /// <param name="tokenMint"></param>
-        /// <param name="amount"></param>
-        /// <param name="commitment"></param>
-        /// <returns></returns>
-        Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount, Commitment commitment);
+        /// <param name="destination">The destination public key</param>
+        /// <param name="tokenMint">The public key of the token mint</param>
+        /// <param name="amount">The amount to transfer</param>
+        /// <param name="commitment">The desired commitment level</param>
+        /// <returns>The result of the transfer operation</returns>
+        public abstract Task<RequestResult<string>> Transfer(PublicKey destination, PublicKey tokenMint, ulong amount, Commitment commitment = Commitment.Confirmed);
 
         /// <summary>
-        /// Transfer a certain amount of lamports to a destination account
+        /// Transfer a certain amount of SOL to a destination account
         /// </summary>
-        /// <param name="destination">Destination PublicKey</param>
-        /// <param name="amount">SOL amount</param>
-        /// <param name="commitment"></param>
-        /// <returns></returns>
-        Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, Commitment commitment);
+        /// <param name="destination">The destination public key</param>
+        /// <param name="amount">The amount of SOL to transfer</param>
+        /// <param name="commitment">The desired commitment level</param>
+        /// <returns>The result of the transfer operation</returns>
+        public abstract Task<RequestResult<string>> Transfer(PublicKey destination, ulong amount, Commitment commitment = Commitment.Confirmed);
 
         /// <summary>
         /// Returns tokens held by the given publicKey
         /// </summary>
-        /// <param name="tokenMint"></param>
-        /// <param name="tokenProgramPublicKey"></param>
-        /// <returns></returns>
-        Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey);
-        
+        /// <param name="tokenMint">The public key of the token mint</param>
+        /// <param name="tokenProgramPublicKey">The public key of the token program</param>
+        /// <returns>Array of token accounts</returns>
+        public abstract Task<TokenAccount[]> GetTokenAccounts(PublicKey tokenMint, PublicKey tokenProgramPublicKey);
+
         /// <summary>
-        /// Returns tokens held by the given publicKey
+        /// Returns tokens held by the wallet
         /// </summary>
-        /// <param name="commitment"></param>
-        /// <returns></returns>
-        Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Confirmed);
+        /// <param name="commitment">The desired commitment level</param>
+        /// <returns>Array of token accounts</returns>
+        public abstract Task<TokenAccount[]> GetTokenAccounts(Commitment commitment = Commitment.Confirmed);
 
         /// <summary>
         /// Sign a transaction
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <returns></returns>
-        Task<Transaction> SignTransaction(Transaction transaction);
-        
+        /// <param name="transaction">The transaction to sign</param>
+        /// <returns>The signed transaction</returns>
+        public abstract Task<Transaction> SignTransaction(Transaction transaction);
+
         /// <summary>
-        /// Signs all transactions
+        /// Sign all transactions
         /// </summary>
-        /// <param name="transactions"></param>
-        /// <returns></returns>
-        Task<Transaction[]> SignAllTransactions(Transaction[] transactions);
+        /// <param name="transactions">The transactions to sign</param>
+        /// <returns>Array of signed transactions</returns>
+        public abstract Task<Transaction[]> SignAllTransactions(Transaction[] transactions);
 
         /// <summary>
         /// Sign a message
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        Task<byte[]> SignMessage(byte[] message);
+        /// <param name="message">The message to sign</param>
+        /// <returns>The signed message</returns>
+        public abstract Task<byte[]> SignMessage(byte[] message);
 
         /// <summary>
         /// Sign and send a transaction
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="skipPreflight"></param>
-        /// <param name="commitment"></param>
-        /// <returns></returns>
-        Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction, bool skipPreflight, Commitment commitment);
+        /// <param name="transaction">The transaction to sign and send</param>
+        /// <param name="skipPreflight">Whether to skip preflight checks</param>
+        /// <param name="commitment">The desired commitment level</param>
+        /// <returns>The result of the transaction sending operation</returns>
+        public abstract Task<RequestResult<string>> SignAndSendTransaction(Transaction transaction, bool skipPreflight, Commitment commitment);
+
+        /// <summary>
+        /// Check if the user has a supported wallet installed
+        /// </summary>
+        /// <returns>True if a supported wallet is installed, false otherwise</returns>
+        public async Task<bool> CanLogin()
+        {
+            // Implement the logic to check if a supported wallet is installed
+            // For example, you can make use of the Web3AuthApi to check if a session can be authorized
+
+            // Here's a simple example assuming authorizeSession returns true if authorization is successful
+            // You should adjust this according to your actual authentication logic
+            bool canLogin = await CheckIfSessionAuthorized();
+
+            return canLogin;
+        }
+
+        // Implement the method to check if a session can be authorized
+        private async Task<bool> CheckIfSessionAuthorized()
+        {
+            // Call the Web3AuthApi to authorize a session
+            Web3AuthApi web3AuthApi = Web3AuthApi.getInstance();
+
+            // Example key to pass to authorizeSession
+            string key = "example_key";
+
+            // Perform the authorization check
+            // Replace StoreApiResponse with the actual response type returned by authorizeSession
+            StoreApiResponse response = null;
+            await web3AuthApi.authorizeSession(key, (result) => response = result);
+
+            // Return true if authorization is successful, false otherwise
+            return response != null;
+        }
     }
 }
