@@ -72,6 +72,7 @@ MonoBehaviour:
     redirectUrl: torusapp://com.torus.Web3AuthUnity/auth
     clientId: BO4zGEzyV6DT1vHU46b6GEngOcg2jl5Pmd9Boi8dLdBpBZnS351ulHDz2k7XJ1dEm-DcvyyARivGCZDXrbZng-0
     network: 0
+    useExternalBrowser: 0
   solanaWalletAdapterOptions:
     solanaMobileWalletAdapterOptions:
       identityUri: https://solana.unity-sdk.gg/

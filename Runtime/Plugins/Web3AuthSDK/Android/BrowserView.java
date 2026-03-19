@@ -48,6 +48,23 @@ public class BrowserView {
     }
 
     public static void launchUrl(Activity context, String url) {
+        launchUrl(context, url, false);
+    }
+
+    /**
+     * Launch auth URL. When useExternalBrowser is true, always use the system browser
+     * instead of Chrome Custom Tabs. Use this to work around "Init parameters not found...
+     * storage is not available" errors that occur when Custom Tabs loses localStorage
+     * across OAuth redirects.
+     */
+    public static void launchUrl(Activity context, String url, boolean useExternalBrowser) {
+        if (useExternalBrowser) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            return;
+        }
+
         String defaultBrowser = getDefaultBrowser(context);
         List<String> customTabBrowsers = getCustomTabsBrowsers(context);
 
