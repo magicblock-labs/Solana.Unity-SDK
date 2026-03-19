@@ -130,6 +130,11 @@ public class Web3Auth : MonoBehaviour
             this.initParams["sessionTime"] = this.web3AuthOptions.sessionTime;
     }
 
+    private bool GetUseExternalBrowser()
+    {
+        return web3AuthOptions?.useExternalBrowser ?? false;
+    }
+
     private void onDeepLinkActivated(string url)
     {
         this.setResultUrl(new Uri(url));
@@ -298,7 +303,7 @@ public class Web3Auth : MonoBehaviour
             uriBuilder.Fragment = "b64Params=" + hash;
             //Debug.Log("finalUriBuilderToOpen: =>" + uriBuilder.ToString());
 
-            Utils.LaunchUrl(uriBuilder.ToString(), this.initParams["redirectUrl"].ToString(), gameObject.name);
+            Utils.LaunchUrl(uriBuilder.ToString(), this.initParams["redirectUrl"].ToString(), gameObject.name, GetUseExternalBrowser());
         }
         else
         {
@@ -354,7 +359,7 @@ public class Web3Auth : MonoBehaviour
                 uriBuilder.Fragment = "b64Params=" + hash;
                 //Debug.Log("finalUriBuilderToOpen: =>" + uriBuilder.ToString());
 
-                Utils.LaunchUrl(uriBuilder.ToString(), this.initParams["redirectUrl"].ToString(), gameObject.name);
+                Utils.LaunchUrl(uriBuilder.ToString(), this.initParams["redirectUrl"].ToString(), gameObject.name, GetUseExternalBrowser());
             }
             else
             {

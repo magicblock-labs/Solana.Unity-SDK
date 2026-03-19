@@ -38,4 +38,10 @@ public class Web3AuthOptions {
     public MfaSettings? mfaSettings { get; set; } = null;
     public int sessionTime { get; set; } = 86400;
     public ChainConfig? chainConfig { get; set; }
+    /// <summary>
+    /// On Android: when true, opens auth in external browser instead of Chrome Custom Tabs.
+    /// Use this if you get "Init parameters not found... storage is not available" errors,
+    /// as Custom Tabs can lose localStorage across OAuth redirects.
+    /// </summary>
+    public bool useExternalBrowser { get; set; } = false;
 }

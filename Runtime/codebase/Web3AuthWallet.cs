@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Merkator.Tools;
@@ -24,6 +24,11 @@ namespace Solana.Unity.SDK
         public string clientId = "BAwFgL-r7wzQKmtcdiz2uHJKNZdK7gzEf2q-m55xfzSZOw8jLOyIi4AVvvzaEQO5nv2dFLEmf9LBkF8kaq3aErg";
         public Web3Auth.Network network = Web3Auth.Network.TESTNET;
         public List<LoginConfig> loginConfig = null;
+        /// <summary>
+        /// On Android: when true, opens auth in external browser instead of Chrome Custom Tabs.
+        /// Enable this if you get "Init parameters not found... storage is not available" errors.
+        /// </summary>
+        public bool useExternalBrowser = false;
     }
     
     [Serializable]
@@ -71,6 +76,7 @@ namespace Solana.Unity.SDK
                 redirectUrl = new Uri(_web3AuthWalletOptions.redirectUrl),
                 clientId = _web3AuthWalletOptions.clientId,
                 network = _web3AuthWalletOptions.network,
+                useExternalBrowser = _web3AuthWalletOptions.useExternalBrowser,
                 whiteLabel = new WhiteLabelData()
                 {
                     appName = _web3AuthWalletOptions.appName,
