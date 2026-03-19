@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 #nullable enable
 
@@ -11,11 +11,11 @@ public class Web3AuthOptions {
     public string sdkUrl {
         get {
             if (buildEnv == Web3Auth.BuildEnv.STAGING)
-                return "https://staging-auth.web3auth.io/v8";
+                return "https://staging-auth.web3auth.io/v9";
             else if (buildEnv == Web3Auth.BuildEnv.TESTING)
                 return "https://develop-auth.web3auth.io";
             else 
-                return "https://auth.web3auth.io/v8";
+                return "https://auth.web3auth.io/v9";
         }
         set { }
     }
@@ -23,11 +23,11 @@ public class Web3AuthOptions {
     public string walletSdkUrl {
          get {
             if (buildEnv == Web3Auth.BuildEnv.STAGING)
-                return "https://staging-wallet.web3auth.io/v2";
+                return "https://staging-wallet.web3auth.io/v3";
             else if (buildEnv == Web3Auth.BuildEnv.TESTING)
                 return "https://develop-wallet.web3auth.io";
             else
-                return "https://wallet.web3auth.io/v2";
+                return "https://wallet.web3auth.io/v3";
          }
          set { }
     }

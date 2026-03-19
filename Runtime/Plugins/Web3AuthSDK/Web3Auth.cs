@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
@@ -87,7 +87,7 @@ public class Web3Auth : MonoBehaviour
 //            this.setResultUrl(new Uri($"http://localhost#{code}"));
 //        } 
 #endif
-        authorizeSession("");
+        authorizeSession("", GetOrigin());
     }
 
     public void setOptions(Web3AuthOptions web3AuthOptions)
@@ -200,7 +200,7 @@ public class Web3Auth : MonoBehaviour
                     if (window.location.hash.trim() == """") {
                         document.querySelector(""#error"").style.display=""flex"";
                     } else {
-                        fetch(`http://${window.location.host}/auth/?code=${window.location.hash.slice(1,window.location.hash.length)}`).then(function(response) {
+                        fetch(`http://${window.location.host}/auth/?code=${encodeURIComponent(window.location.hash.slice(1))}`).then(function(response) {
                           console.log(response);
                           document.querySelector(""#success"").style.display=""flex"";
                         }).catch(function(error) {
@@ -236,6 +236,9 @@ public class Web3Auth : MonoBehaviour
             string code = httpRequest.QueryString.Get("code");
             if (!string.IsNullOrEmpty(code))
             {
+                try { code = Uri.UnescapeDataString(code); } catch { }
+                if (!code.StartsWith("b64Params="))
+                    code = "b64Params=" + code;
                 this.setResultUrl(new Uri($"http://localhost#{code}"));
             }
 
@@ -392,11 +395,16 @@ public class Web3Auth : MonoBehaviour
         {
             Debug.Log("Failed to decode JSON: " + e.Message);
         }
+        if (sessionResponse == null || string.IsNullOrEmpty(sessionResponse.sessionId))
+        {
+            Debug.LogError("Web3Auth: Invalid session response - no sessionId received");
+            return;
+        }
         string sessionId = sessionResponse.sessionId;
         this.Enqueue(() => KeyStoreManagerUtils.savePreferenceData(KeyStoreManagerUtils.SESSION_ID, sessionId));
 
         //call authorize session API
-        this.Enqueue(() => authorizeSession(sessionId));
+        this.Enqueue(() => authorizeSession(sessionId, GetOrigin()));
 
 #if !UNITY_EDITOR && UNITY_WEBGL
         if (this.web3AuthResponse != null) 
@@ -414,10 +422,10 @@ public class Web3Auth : MonoBehaviour
             string[] queryParameters = uri.Query.Substring(1).Split('&');
             foreach (string queryParameter in queryParameters)
             {
-                string[] keyValue = queryParameter.Split('=');
-                if (keyValue[0] == key)
+                int eqIndex = queryParameter.IndexOf('=');
+                if (eqIndex > 0 && queryParameter.Substring(0, eqIndex) == key)
                 {
-                    value = keyValue[1];
+                    value = queryParameter.Substring(eqIndex + 1);
                     break;
                 }
             }
@@ -501,8 +509,25 @@ public class Web3Auth : MonoBehaviour
         }
     }
 
-    private void authorizeSession(string newSessionId)
+    private string GetOrigin()
     {
+        // In Editor/Standalone, the actual redirect used is localhost - session API requires matching origin
+        if (initParams != null && initParams.TryGetValue("redirectUrl", out var redirectUrl) && redirectUrl != null)
+        {
+            var url = redirectUrl.ToString();
+            if (url.Contains("localhost"))
+                return url;
+        }
+        if (web3AuthOptions?.redirectUrl != null)
+            return web3AuthOptions.redirectUrl.ToString();
+        return redirectUri ?? "";
+    }
+
+    private void authorizeSession(string newSessionId, string origin = null)
+    {
+        if (string.IsNullOrEmpty(origin))
+            origin = GetOrigin();
+
         string sessionId = "";
         if (string.IsNullOrEmpty(newSessionId))
         {
@@ -517,11 +542,13 @@ public class Web3Auth : MonoBehaviour
         if (!string.IsNullOrEmpty(sessionId))
         {
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
-            StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, (response =>
+            StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, origin, (response =>
             {
-                if (response != null)
+                if (response != null && !string.IsNullOrEmpty(response.message))
                 {
                     var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
+                    if (shareMetadata == null)
+                        return;
 
                     var aes256cbc = new AES256CBC(
                         sessionId,
@@ -556,8 +583,10 @@ public class Web3Auth : MonoBehaviour
                         if (string.IsNullOrEmpty(this.web3AuthResponse.privKey) || string.IsNullOrEmpty(this.web3AuthResponse.privKey.Trim('0')))
                             this.Enqueue(() => this.onLogout?.Invoke());
                         else
+                        {
                             this.Enqueue(() => this.onLogin?.Invoke(this.web3AuthResponse));
                             this.Enqueue(() => this.onMFASetup?.Invoke(true));
+                        }
                     }
                 }
 
@@ -571,11 +600,13 @@ public class Web3Auth : MonoBehaviour
         if (!string.IsNullOrEmpty(sessionId))
         {
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
-            StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, (response =>
+            StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, GetOrigin(), (response =>
             {
-                if (response != null)
+                if (response != null && !string.IsNullOrEmpty(response.message))
                 {
                     var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
+                    if (shareMetadata == null)
+                        return;
 
                     var aes256cbc = new AES256CBC(
                         sessionId,
