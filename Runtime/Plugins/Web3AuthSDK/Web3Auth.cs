@@ -58,7 +58,7 @@ public class Web3Auth : MonoBehaviour
     private Web3Auth.Network network;
 
     private static readonly Queue<Action> _executionQueue = new Queue<Action>();
-    private bool _sessionRestoreAttempted = false;
+    private string _sessionRestoreOrigin = string.Empty;
 
     public void Awake()
     {
@@ -91,10 +91,11 @@ public class Web3Auth : MonoBehaviour
 #endif
         // Only restore session when we have a valid origin (from serialized redirectUri).
         // When using Web3AuthWallet, setOptions will call authorizeSession with the full config.
-        if (!_sessionRestoreAttempted && !string.IsNullOrEmpty(GetOrigin()))
+        var origin = GetOrigin();
+        if (!string.IsNullOrEmpty(origin) && !string.Equals(_sessionRestoreOrigin, origin, StringComparison.Ordinal))
         {
-            authorizeSession(string.Empty, GetOrigin());
-            _sessionRestoreAttempted = true;
+            authorizeSession(string.Empty, origin);
+            _sessionRestoreOrigin = origin;
         }
     }
 
@@ -138,11 +139,12 @@ public class Web3Auth : MonoBehaviour
             this.initParams["sessionTime"] = this.web3AuthOptions.sessionTime;
 
         // Restore session now that we have options (redirectUrl for GetOrigin).
-        // Skips if Awake already ran with a valid origin from serialized redirectUri.
-        if (!_sessionRestoreAttempted && !string.IsNullOrEmpty(GetOrigin()))
+        // Retries if origin changed (e.g. setOptions provides different redirectUrl than Awake's redirectUri).
+        var origin = GetOrigin();
+        if (!string.IsNullOrEmpty(origin) && !string.Equals(_sessionRestoreOrigin, origin, StringComparison.Ordinal))
         {
-            authorizeSession(string.Empty, GetOrigin());
-            _sessionRestoreAttempted = true;
+            authorizeSession(string.Empty, origin);
+            _sessionRestoreOrigin = origin;
         }
     }
 
