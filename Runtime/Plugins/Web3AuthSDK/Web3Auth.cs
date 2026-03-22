@@ -46,6 +46,7 @@ public class Web3Auth : MonoBehaviour
     public event Action<Web3AuthResponse> onLogin;
     public event Action onLogout;
     public event Action<bool> onMFASetup;
+    public event Action<Exception> onLoginFailed;
 
     [SerializeField]
     private string clientId;
@@ -87,7 +88,10 @@ public class Web3Auth : MonoBehaviour
 //            this.setResultUrl(new Uri($"http://localhost#{code}"));
 //        } 
 #endif
-        authorizeSession("", GetOrigin());
+        // Only restore session when we have a valid origin (from serialized redirectUri).
+        // When using Web3AuthWallet, setOptions will call authorizeSession with the full config.
+        if (!string.IsNullOrEmpty(GetOrigin()))
+            authorizeSession(string.Empty, GetOrigin());
     }
 
     public void setOptions(Web3AuthOptions web3AuthOptions)
@@ -128,6 +132,11 @@ public class Web3Auth : MonoBehaviour
 
         if (this.web3AuthOptions.sessionTime != null)
             this.initParams["sessionTime"] = this.web3AuthOptions.sessionTime;
+
+        // Restore session now that we have options (redirectUrl for GetOrigin).
+        // Skips if Awake already ran with a valid origin from serialized redirectUri.
+        if (!string.IsNullOrEmpty(GetOrigin()))
+            authorizeSession(string.Empty, GetOrigin());
     }
 
     private bool GetUseExternalBrowser()
@@ -348,7 +357,7 @@ public class Web3Auth : MonoBehaviour
                     })));
 
                 UriBuilder uriBuilder = new UriBuilder(this.web3AuthOptions.walletSdkUrl);
-                if(this.web3AuthOptions.sdkUrl.Contains("develop"))
+                if(this.web3AuthOptions.walletSdkUrl.Contains("develop"))
                 {
                     uriBuilder.Path = "/" + path;
                 }
@@ -402,7 +411,9 @@ public class Web3Auth : MonoBehaviour
         }
         if (sessionResponse == null || string.IsNullOrEmpty(sessionResponse.sessionId))
         {
-            Debug.LogError("Web3Auth: Invalid session response - no sessionId received");
+            var errorMsg = "Web3Auth: Invalid session response - no sessionId received";
+            Debug.LogError(errorMsg);
+            this.Enqueue(() => onLoginFailed?.Invoke(new Exception(errorMsg)));
             return;
         }
         string sessionId = sessionResponse.sessionId;
@@ -421,7 +432,7 @@ public class Web3Auth : MonoBehaviour
 
     private string getQueryParamValue(Uri uri, string key)
     {
-        string value = "";
+        string value = string.Empty;
         if (uri.Query != null && uri.Query.Length > 0)
         {
             string[] queryParameters = uri.Query.Substring(1).Split('&');
@@ -514,18 +525,23 @@ public class Web3Auth : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns the redirect origin for session API validation. Precedence:
+    /// 1. initParams["redirectUrl"] when present and non-null
+    /// 2. web3AuthOptions.redirectUrl when set
+    /// 3. redirectUri field or string.Empty
+    /// </summary>
     private string GetOrigin()
     {
-        // In Editor/Standalone, the actual redirect used is localhost - session API requires matching origin
         if (initParams != null && initParams.TryGetValue("redirectUrl", out var redirectUrl) && redirectUrl != null)
         {
             var url = redirectUrl.ToString();
-            if (url.Contains("localhost"))
+            if (!string.IsNullOrEmpty(url))
                 return url;
         }
         if (web3AuthOptions?.redirectUrl != null)
             return web3AuthOptions.redirectUrl.ToString();
-        return redirectUri ?? "";
+        return redirectUri ?? string.Empty;
     }
 
     private void authorizeSession(string newSessionId, string origin = null)
@@ -549,13 +565,18 @@ public class Web3Auth : MonoBehaviour
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
             StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, origin, (response =>
             {
-                if (response != null && !string.IsNullOrEmpty(response.message))
+                if (response == null || string.IsNullOrEmpty(response.message))
                 {
-                    var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
-                    if (shareMetadata == null)
-                        return;
-
-                    var aes256cbc = new AES256CBC(
+                    this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - no response from server")));
+                    return;
+                }
+                var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
+                if (shareMetadata == null)
+                {
+                    this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - invalid response format")));
+                    return;
+                }
+                var aes256cbc = new AES256CBC(
                         sessionId,
                         shareMetadata.ephemPublicKey,
                         shareMetadata.iv
@@ -593,8 +614,6 @@ public class Web3Auth : MonoBehaviour
                             this.Enqueue(() => this.onMFASetup?.Invoke(true));
                         }
                     }
-                }
-
             })));
         }
     }
