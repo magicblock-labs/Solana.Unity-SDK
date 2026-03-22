@@ -97,6 +97,12 @@ namespace Solana.Unity.SDK
                 web3AuthOptions.loginConfig = BuildLoginConfigDictionary(_web3AuthWalletOptions.loginConfig);
             _web3Auth.setOptions(web3AuthOptions);
             _web3Auth.onLogin += OnLogin;
+            _web3Auth.onLoginFailed += OnLoginFailed;
+        }
+
+        private void OnLoginFailed(Exception ex)
+        {
+            _loginTaskCompletionSource?.TrySetException(ex);
         }
 
         private void OnLogin(Web3AuthResponse response)
@@ -136,6 +142,7 @@ namespace Solana.Unity.SDK
         {
             base.Logout();
             _web3Auth.onLogin -= OnLogin;
+            _web3Auth.onLoginFailed -= OnLoginFailed;
             _web3Auth.logout();
         }
 
