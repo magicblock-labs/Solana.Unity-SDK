@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 #nullable enable
 
@@ -11,11 +11,11 @@ public class Web3AuthOptions {
     public string sdkUrl {
         get {
             if (buildEnv == Web3Auth.BuildEnv.STAGING)
-                return "https://staging-auth.web3auth.io/v8";
+                return "https://staging-auth.web3auth.io/v9";
             else if (buildEnv == Web3Auth.BuildEnv.TESTING)
                 return "https://develop-auth.web3auth.io";
             else 
-                return "https://auth.web3auth.io/v8";
+                return "https://auth.web3auth.io/v9";
         }
         set { }
     }
@@ -23,11 +23,11 @@ public class Web3AuthOptions {
     public string walletSdkUrl {
          get {
             if (buildEnv == Web3Auth.BuildEnv.STAGING)
-                return "https://staging-wallet.web3auth.io/v2";
+                return "https://staging-wallet.web3auth.io/v3";
             else if (buildEnv == Web3Auth.BuildEnv.TESTING)
                 return "https://develop-wallet.web3auth.io";
             else
-                return "https://wallet.web3auth.io/v2";
+                return "https://wallet.web3auth.io/v3";
          }
          set { }
     }
@@ -38,4 +38,10 @@ public class Web3AuthOptions {
     public MfaSettings? mfaSettings { get; set; } = null;
     public int sessionTime { get; set; } = 86400;
     public ChainConfig? chainConfig { get; set; }
+    /// <summary>
+    /// On Android: when true, opens auth in external browser instead of Chrome Custom Tabs.
+    /// Use this if you get "Init parameters not found... storage is not available" errors,
+    /// as Custom Tabs can lose localStorage across OAuth redirects.
+    /// </summary>
+    public bool useExternalBrowser { get; set; } = false;
 }

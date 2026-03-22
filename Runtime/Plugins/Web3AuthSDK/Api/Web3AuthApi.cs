@@ -8,7 +8,7 @@ using UnityEngine;
 public class Web3AuthApi
 {
     static Web3AuthApi instance;
-    static string baseAddress = "https://session.web3auth.io";
+    static string baseAddress = "https://session.web3auth.io/v2";
 
     public static Web3AuthApi getInstance()
     {
@@ -17,7 +17,7 @@ public class Web3AuthApi
         return instance;
     }
 
-    public IEnumerator authorizeSession(string key, Action<StoreApiResponse> callback)
+    public IEnumerator authorizeSession(string key, string origin, Action<StoreApiResponse> callback)
     {
         //var requestURL = $"{baseAddress}/store/get?key={key}";
         //var request = UnityWebRequest.Get(requestURL);
@@ -25,6 +25,8 @@ public class Web3AuthApi
         data.AddField("key", key);
 
         var request = UnityWebRequest.Post($"{baseAddress}/store/get", data);
+        if (!string.IsNullOrEmpty(origin))
+            request.SetRequestHeader("origin", origin);
 
         yield return request.SendWebRequest();
         // Debug.Log("baseAddress =>" + baseAddress);

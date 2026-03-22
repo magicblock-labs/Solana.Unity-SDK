@@ -40,6 +40,9 @@ namespace Solana.Unity.SDK
                 {
                     value.RpcMaxHits = RpcMaxHits;
                     value.RpcMaxHitsPerSeconds = RpcMaxHitsPerSeconds;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    Debug.Log($"[Solana SDK] Wallet connected: {value.Account.PublicKey}");
+#endif
                     OnLogin?.Invoke(value.Account);
                     UpdateBalance().Forget();
                     if(OnNFTsUpdateInternal != null && AutoLoadNfts) UpdateNFTs().Forget();
@@ -332,6 +335,15 @@ namespace Solana.Unity.SDK
             var balance = await Instance.WalletBase.GetBalance(commitment);
             _solAmount = balance;
             OnBalanceChangeInternal?.Invoke(balance);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var account = Account;
+            if (account != null)
+            {
+                var lamports = (ulong)(balance * WalletBase.SolLamports);
+                Debug.Log($"[Solana SDK] Connected wallet: {account.PublicKey} | Balance: {balance:F9} SOL ({lamports} lamports)");
+            }
+#endif
         }
 
         /// <summary>

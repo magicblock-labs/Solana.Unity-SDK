@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -25,7 +25,7 @@ public static class Utils
 #endif
 
 
-    public static void LaunchUrl(string url, string redirectUri = null, string objectName = null)
+    public static void LaunchUrl(string url, string redirectUri = null, string objectName = null, bool useExternalBrowser = false)
     {
 #if UNITY_EDITOR || UNITY_STANDALONE
         Application.OpenURL(url);
@@ -34,7 +34,7 @@ public static class Utils
         using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
         using (var browserView = new AndroidJavaObject("com.web3auth.unity.android.BrowserView"))
         {
-            browserView.CallStatic("launchUrl", activity, url);
+            browserView.CallStatic("launchUrl", activity, url, useExternalBrowser);
         }
 
 #elif UNITY_IOS
