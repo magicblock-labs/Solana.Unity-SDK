@@ -572,22 +572,24 @@ public class Web3Auth : MonoBehaviour
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
             StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, origin, (response =>
             {
-                if (response == null || string.IsNullOrEmpty(response.message))
+                try
                 {
-                    this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - no response from server")));
-                    return;
-                }
-                var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
-                if (shareMetadata == null)
-                {
-                    this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - invalid response format")));
-                    return;
-                }
-                var aes256cbc = new AES256CBC(
-                        sessionId,
-                        shareMetadata.ephemPublicKey,
-                        shareMetadata.iv
-                    );
+                    if (response == null || string.IsNullOrEmpty(response.message))
+                    {
+                        this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - no response from server")));
+                        return;
+                    }
+                    var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
+                    if (shareMetadata == null)
+                    {
+                        this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - invalid response format")));
+                        return;
+                    }
+                    var aes256cbc = new AES256CBC(
+                            sessionId,
+                            shareMetadata.ephemPublicKey,
+                            shareMetadata.iv
+                        );
 
                     var encryptedShareBytes = AES256CBC.toByteArray(new BigInteger(shareMetadata.ciphertext, 16));
                     var share = aes256cbc.decrypt(encryptedShareBytes, shareMetadata.mac);
@@ -621,6 +623,11 @@ public class Web3Auth : MonoBehaviour
                             this.Enqueue(() => this.onMFASetup?.Invoke(true));
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    this.Enqueue(() => onLoginFailed?.Invoke(ex));
+                }
             })));
         }
     }
@@ -633,22 +640,24 @@ public class Web3Auth : MonoBehaviour
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
             StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, GetOrigin(), (response =>
             {
-                if (response == null || string.IsNullOrEmpty(response.message))
+                try
                 {
-                    Debug.LogWarning("Web3Auth: Session timeout cleanup failed - no response from server");
-                    return;
-                }
-                var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
-                if (shareMetadata == null)
-                {
-                    Debug.LogWarning("Web3Auth: Session timeout cleanup failed - invalid response format");
-                    return;
-                }
-                var aes256cbc = new AES256CBC(
-                        sessionId,
-                        shareMetadata.ephemPublicKey,
-                        shareMetadata.iv
-                    );
+                    if (response == null || string.IsNullOrEmpty(response.message))
+                    {
+                        Debug.LogWarning("Web3Auth: Session timeout cleanup failed - no response from server");
+                        return;
+                    }
+                    var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
+                    if (shareMetadata == null)
+                    {
+                        Debug.LogWarning("Web3Auth: Session timeout cleanup failed - invalid response format");
+                        return;
+                    }
+                    var aes256cbc = new AES256CBC(
+                            sessionId,
+                            shareMetadata.ephemPublicKey,
+                            shareMetadata.iv
+                        );
 
                     var encryptedData = aes256cbc.encrypt(System.Text.Encoding.UTF8.GetBytes(""));
                     var encryptedMetadata = new ShareMetadata()
@@ -689,6 +698,11 @@ public class Web3Auth : MonoBehaviour
                             }
                         }
                     ));
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Web3Auth: Session timeout cleanup failed - {ex.Message}");
+                }
             })));
         }
     }
