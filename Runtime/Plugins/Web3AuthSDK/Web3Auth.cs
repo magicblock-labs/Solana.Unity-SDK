@@ -58,6 +58,7 @@ public class Web3Auth : MonoBehaviour
     private Web3Auth.Network network;
 
     private static readonly Queue<Action> _executionQueue = new Queue<Action>();
+    private bool _sessionRestoreAttempted = false;
 
     public void Awake()
     {
@@ -90,8 +91,11 @@ public class Web3Auth : MonoBehaviour
 #endif
         // Only restore session when we have a valid origin (from serialized redirectUri).
         // When using Web3AuthWallet, setOptions will call authorizeSession with the full config.
-        if (!string.IsNullOrEmpty(GetOrigin()))
+        if (!_sessionRestoreAttempted && !string.IsNullOrEmpty(GetOrigin()))
+        {
             authorizeSession(string.Empty, GetOrigin());
+            _sessionRestoreAttempted = true;
+        }
     }
 
     public void setOptions(Web3AuthOptions web3AuthOptions)
@@ -135,8 +139,11 @@ public class Web3Auth : MonoBehaviour
 
         // Restore session now that we have options (redirectUrl for GetOrigin).
         // Skips if Awake already ran with a valid origin from serialized redirectUri.
-        if (!string.IsNullOrEmpty(GetOrigin()))
+        if (!_sessionRestoreAttempted && !string.IsNullOrEmpty(GetOrigin()))
+        {
             authorizeSession(string.Empty, GetOrigin());
+            _sessionRestoreAttempted = true;
+        }
     }
 
     private bool GetUseExternalBrowser()
@@ -626,13 +633,18 @@ public class Web3Auth : MonoBehaviour
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
             StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, GetOrigin(), (response =>
             {
-                if (response != null && !string.IsNullOrEmpty(response.message))
+                if (response == null || string.IsNullOrEmpty(response.message))
                 {
-                    var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
-                    if (shareMetadata == null)
-                        return;
-
-                    var aes256cbc = new AES256CBC(
+                    Debug.LogWarning("Web3Auth: Session timeout cleanup failed - no response from server");
+                    return;
+                }
+                var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
+                if (shareMetadata == null)
+                {
+                    Debug.LogWarning("Web3Auth: Session timeout cleanup failed - invalid response format");
+                    return;
+                }
+                var aes256cbc = new AES256CBC(
                         sessionId,
                         shareMetadata.ephemPublicKey,
                         shareMetadata.iv
@@ -677,7 +689,6 @@ public class Web3Auth : MonoBehaviour
                             }
                         }
                     ));
-                }
             })));
         }
     }
