@@ -337,8 +337,12 @@ namespace Solana.Unity.SDK
             OnBalanceChangeInternal?.Invoke(balance);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            var lamports = (ulong)(balance * WalletBase.SolLamports);
-            Debug.Log($"[Solana SDK] Connected wallet: {Account.PublicKey} | Balance: {balance:F9} SOL ({lamports} lamports)");
+            var account = Account;
+            if (account != null)
+            {
+                var lamports = (ulong)(balance * WalletBase.SolLamports);
+                Debug.Log($"[Solana SDK] Connected wallet: {account.PublicKey} | Balance: {balance:F9} SOL ({lamports} lamports)");
+            }
 #endif
         }
 
