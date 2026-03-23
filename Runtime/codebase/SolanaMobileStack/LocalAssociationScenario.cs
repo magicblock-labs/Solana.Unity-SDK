@@ -183,7 +183,7 @@ public class LocalAssociationScenario
         catch (Exception e)
         {
             Debug.LogError($"[MWA] Async action failed: {e}");
-            CloseAssociation(new Response<object> { Error = new ResponseError { Message = e.Message } });
+            CloseAssociation(new Response<object> { Error = new Response<object>.ResponseError { Message = e.Message } });
         }
     }
 
