@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using UnityEngine;
-using UnityEngine.Events;
 using WebSocketSharp;
 
 // ReSharper disable once CheckNamespace
@@ -107,8 +106,8 @@ namespace Solana.Unity.SDK
             // Step 2: Full authorization (prompts user in wallet app)
             AuthorizationResult authorization = null;
             var localAssociationScenario = new LocalAssociationScenario();
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+            var result = await localAssociationScenario.StartAndExecuteAsync(
+                new List<Func<IAdapterOperations, Task>>
                 {
                     async client =>
                     {
@@ -152,8 +151,8 @@ namespace Solana.Unity.SDK
                 {
                     var localAssociationScenario = new LocalAssociationScenario();
                     var currentToken = _authToken; // capture before clearing
-                    await localAssociationScenario.StartAndExecute(
-                        new List<Action<IAdapterOperations>>
+                    await localAssociationScenario.StartAndExecuteAsync(
+                        new List<Func<IAdapterOperations, Task>>
                         {
                             async client => await client.Deauthorize(currentToken)
                         }
@@ -162,7 +161,7 @@ namespace Solana.Unity.SDK
                 catch (Exception e)
                 {
                     // Best-effort — don't block logout if deauthorize fails (e.g. wallet not installed)
-                    Debug.LogWarning($"[MWA] Deauthorize failed during disconnect: {e.Message}");
+                    Debug.LogWarning($"[MWA] Deauthorize failed during disconnect: {e}");
                 }
             }
 
@@ -177,9 +176,11 @@ namespace Solana.Unity.SDK
 
         /// <summary>
         /// Attempts a silent reconnect using the cached auth token.
-        /// If the token is expired or missing, performs a full Authorize (user is prompted).
-        /// Fires <see cref="OnWalletReconnected"/> on silent success.
+        /// If the cached token is expired or missing, performs a full <c>Authorize</c> flow
+        /// (the user will be prompted by the wallet app).
+        /// Fires <see cref="OnWalletReconnected"/> when a silent reauthorize succeeds.
         /// </summary>
+        /// <returns>The connected <see cref="Account"/> on success.</returns>
         public async Task<Account> ReconnectWallet()
         {
             return await Login();
@@ -193,8 +194,8 @@ namespace Solana.Unity.SDK
         {
             WalletCapabilities capabilities = null;
             var localAssociationScenario = new LocalAssociationScenario();
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+            var result = await localAssociationScenario.StartAndExecuteAsync(
+                new List<Func<IAdapterOperations, Task>>
                 {
                     async client =>
                     {
@@ -227,8 +228,8 @@ namespace Solana.Unity.SDK
             var localAssociationScenario = new LocalAssociationScenario();
             AuthorizationResult authorization = null;
 
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+            var result = await localAssociationScenario.StartAndExecuteAsync(
+                new List<Func<IAdapterOperations, Task>>
                 {
                     async client =>
                     {
@@ -279,8 +280,8 @@ namespace Solana.Unity.SDK
             AuthorizationResult authorization = null;
             var cluster = RPCNameMap[(int)RpcCluster];
 
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+            var result = await localAssociationScenario.StartAndExecuteAsync(
+                new List<Func<IAdapterOperations, Task>>
                 {
                     async client =>
                     {
@@ -330,9 +331,15 @@ namespace Solana.Unity.SDK
         /// cached state, and fires <see cref="OnWalletDisconnected"/>.
         /// Equivalent to <see cref="DisconnectWallet"/> — prefer that method for UI-triggered logouts.
         /// </summary>
+        /// <remarks>
+        /// This override must be synchronous (<c>void</c>) to satisfy the base class contract.
+        /// The underlying async disconnect is intentionally fire-and-forget here.
+        /// For full async control, call <see cref="DisconnectWallet"/> directly and await it.
+        /// </remarks>
         public override void Logout()
         {
-            // Fire-and-forget the async disconnect (can't await in override void)
+            // Intentional fire-and-forget: the base class Logout() contract is void.
+            // Call DisconnectWallet() directly if you need to await deauthorization.
             _ = DisconnectWallet();
         }
 
@@ -348,8 +355,8 @@ namespace Solana.Unity.SDK
             {
                 AuthorizationResult result = null;
                 var scenario = new LocalAssociationScenario();
-                var response = await scenario.StartAndExecute(
-                    new List<Action<IAdapterOperations>>
+                var response = await scenario.StartAndExecuteAsync(
+                    new List<Func<IAdapterOperations, Task>>
                     {
                         async client =>
                         {
@@ -366,7 +373,7 @@ namespace Solana.Unity.SDK
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[MWA] Silent reauthorize failed: {e.Message}");
+                Debug.LogWarning($"[MWA] Silent reauthorize failed: {e}");
                 return null;
             }
         }

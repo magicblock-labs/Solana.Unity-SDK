@@ -122,11 +122,11 @@ The grant will fund the completion and productionization of this work:
 
 | Item                                                           | Cost       |
 | -------------------------------------------------------------- | ---------- |
-| Core SDK implementation (API parity, auth cache, lifecycle UX) | $3,500     |
+| Core SDK implementation (API parity, auth cache, lifecycle UX) | $2,200     |
 | PR review rounds + integration polish                          | $800       |
 | Full SDK documentation                                         | $1,200     |
-| Open-source Example Android App                                | $700       |
-| Community support + post-merge maintenance                     | $800       |
+| Open-source Example Android App                                | $1,200     |
+| Community support + post-merge maintenance                     | $600       |
 | Buffer / contingency                                           | $500       |
 | **Total**                                                      | **$6,500** |
 

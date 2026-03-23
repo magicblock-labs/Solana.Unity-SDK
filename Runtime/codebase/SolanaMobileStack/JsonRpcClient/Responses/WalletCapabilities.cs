@@ -6,38 +6,38 @@ using UnityEngine.Scripting;
 
 /// <summary>
 /// Represents the capabilities reported by a connected wallet via the get_capabilities MWA endpoint.
+/// All properties are optional — wallets may omit fields they do not support.
 /// </summary>
 [Preserve]
 public class WalletCapabilities
 {
     /// <summary>
     /// Maximum number of transaction payloads that can be signed in a single request.
-    /// Null if the wallet does not report this capability.
+    /// Null if the wallet does not report this limit.
     /// </summary>
     [JsonProperty("max_transactions_per_request")]
-    [RequiredMember]
     public int? MaxTransactionsPerRequest { get; set; }
 
     /// <summary>
     /// Maximum number of message payloads that can be signed in a single request.
-    /// Null if the wallet does not report this capability.
+    /// Null if the wallet does not report this limit.
     /// </summary>
     [JsonProperty("max_messages_per_request")]
-    [RequiredMember]
     public int? MaxMessagesPerRequest { get; set; }
 
     /// <summary>
-    /// Supported MWA feature set identifiers (e.g. "sign_and_send_transactions").
+    /// Supported Solana transaction versions (e.g. "legacy", "0").
+    /// Null or empty if the wallet does not report this capability.
     /// </summary>
     [JsonProperty("supported_transaction_versions")]
-    [RequiredMember]
     public List<string> SupportedTransactionVersions { get; set; }
 
     /// <summary>
-    /// Whether the wallet supports the sign_and_send_transactions endpoint.
+    /// Whether the wallet supports clone authorization, which allows
+    /// one authorization context to extend to another app instance.
+    /// Null if the wallet does not report this capability.
     /// </summary>
     [JsonProperty("supports_clone_authorization")]
-    [RequiredMember]
     public bool? SupportsCloneAuthorization { get; set; }
 
     [Preserve]

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace
@@ -5,14 +6,21 @@ using System.Threading.Tasks;
 namespace Solana.Unity.SDK
 {
     /// <summary>
-    /// A no-op stub implementation of <see cref="IMwaAuthCache"/> intended as a 
-    /// template for encrypted or platform-specific storage backends.
+    /// A placeholder implementation of <see cref="IMwaAuthCache"/> that documents
+    /// where to integrate an encrypted or platform-specific storage backend.
     /// 
-    /// Replace the method bodies with your secure storage provider.
-    /// Examples:
-    /// - Android Keystore (via plugin)  
-    /// - iOS Keychain (via plugin)
-    /// - A remote wallet-server token store
+    /// <para>
+    /// <b>Do not use this class directly in production.</b> It throws
+    /// <see cref="NotImplementedException"/> on every call to make integration gaps visible
+    /// immediately during development, rather than silently dropping tokens.
+    /// </para>
+    /// 
+    /// To implement secure storage:
+    /// <list type="bullet">
+    ///   <item>Android Keystore (via plugin)</item>
+    ///   <item>iOS Keychain (via plugin)</item>
+    ///   <item>A remote wallet-server token store</item>
+    /// </list>
     /// </summary>
     public class EncryptedAuthCache : IMwaAuthCache
     {
@@ -24,7 +32,8 @@ namespace Solana.Unity.SDK
         {
             // TODO: retrieve from your encrypted storage using walletIdentity as key
             // Example: return _secureStorage.GetAsync(walletIdentity);
-            return Task.FromResult<string>(null);
+            throw new NotImplementedException(
+                "EncryptedAuthCache is a template. Implement GetAuthToken using your secure storage provider.");
         }
 
         /// <inheritdoc/>
@@ -32,7 +41,8 @@ namespace Solana.Unity.SDK
         {
             // TODO: persist to your encrypted storage
             // Example: return _secureStorage.SetAsync(walletIdentity, token);
-            return Task.CompletedTask;
+            throw new NotImplementedException(
+                "EncryptedAuthCache is a template. Implement SetAuthToken using your secure storage provider.");
         }
 
         /// <inheritdoc/>
@@ -40,7 +50,8 @@ namespace Solana.Unity.SDK
         {
             // TODO: remove from your encrypted storage
             // Example: return _secureStorage.RemoveAsync(walletIdentity);
-            return Task.CompletedTask;
+            throw new NotImplementedException(
+                "EncryptedAuthCache is a template. Implement ClearAuthToken using your secure storage provider.");
         }
     }
 }

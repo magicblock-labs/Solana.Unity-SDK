@@ -25,6 +25,8 @@ public class LocalAssociationScenario
     private MobileWalletAdapterClient _client;
     private readonly AndroidJavaObject _currentActivity;
     private Queue<Action<IAdapterOperations>> _actions;
+    private Queue<Func<IAdapterOperations, Task>> _asyncActions;
+    private bool _useAsyncActions;
 
     public LocalAssociationScenario(int clientTimeoutMs = 9000)
     {
@@ -61,6 +63,26 @@ public class LocalAssociationScenario
         if (actions == null || actions.Count == 0)
             throw new ArgumentException("Actions must be non-null and non-empty");
         _actions = new Queue<Action<IAdapterOperations>>(actions);
+        var intent = LocalAssociationIntentCreator.CreateAssociationIntent(
+            _session.AssociationToken, 
+            _port);
+        _currentActivity.Call("startActivityForResult", intent, 0);
+        _currentActivity.Call("runOnUiThread", new AndroidJavaRunnable(TryConnectWs));
+        _startAssociationTaskCompletionSource = new TaskCompletionSource<Response<object>>();
+        return _startAssociationTaskCompletionSource.Task;
+    }
+
+    /// <summary>
+    /// Async-compatible overload of <see cref="StartAndExecute"/>.
+    /// Accepts async delegate actions (<see cref="Func{IAdapterOperations, Task}"/>) and properly
+    /// awaits each one before executing the next, preventing fire-and-forget race conditions.
+    /// </summary>
+    public Task<Response<object>> StartAndExecuteAsync(List<Func<IAdapterOperations, Task>> asyncActions)
+    {
+        if (asyncActions == null || asyncActions.Count == 0)
+            throw new ArgumentException("Actions must be non-null and non-empty");
+        _asyncActions = new Queue<Func<IAdapterOperations, Task>>(asyncActions);
+        _useAsyncActions = true;
         var intent = LocalAssociationIntentCreator.CreateAssociationIntent(
             _session.AssociationToken, 
             _port);
@@ -133,8 +155,36 @@ public class LocalAssociationScenario
     {
         if (_actions.Count == 0 || response is { Failed: true })
             CloseAssociation(response);
-        var action = _actions.Dequeue();
-        action.Invoke(_client);
+
+        if (_useAsyncActions)
+        {
+            // Properly await the async action before proceeding
+            ExecuteNextActionAsync(response);
+        }
+        else
+        {
+            var action = _actions.Dequeue();
+            action.Invoke(_client);
+        }
+    }
+
+    private async void ExecuteNextActionAsync(Response<object> response = null)
+    {
+        if (_asyncActions.Count == 0 || response is { Failed: true })
+        {
+            CloseAssociation(response);
+            return;
+        }
+        var action = _asyncActions.Dequeue();
+        try
+        {
+            await action.Invoke(_client);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[MWA] Async action failed: {e}");
+            CloseAssociation(new Response<object> { Error = new ResponseError { Message = e.Message } });
+        }
     }
 
     private async void CloseAssociation(Response<object> response)
