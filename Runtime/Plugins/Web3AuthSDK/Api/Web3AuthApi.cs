@@ -42,6 +42,9 @@ public class Web3AuthApi
         if (!string.IsNullOrEmpty(originToSend))
             request.SetRequestHeader("origin", originToSend);
 
+        // Avoid hanging WaitForSessionRestoreAsync / _Login indefinitely on dead connections.
+        request.timeout = 30;
+
         yield return request.SendWebRequest();
         // Debug.Log("baseAddress =>" + baseAddress);
         // Debug.Log("key =>" + key);
