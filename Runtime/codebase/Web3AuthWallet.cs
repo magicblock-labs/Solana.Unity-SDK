@@ -125,7 +125,7 @@ namespace Solana.Unity.SDK
             var wallet = new Wallet.Wallet(keyBytes);
             if (_loginTaskCompletionSource != null)
             {
-                _loginTaskCompletionSource?.SetResult(wallet.Account);
+                _loginTaskCompletionSource.TrySetResult(wallet.Account);
             }
             else
             {   
