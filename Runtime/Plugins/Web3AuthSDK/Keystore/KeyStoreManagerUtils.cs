@@ -58,6 +58,11 @@ public class KeyStoreManagerUtils
     {
 #if UNITY_IOS && !UNITY_EDITOR
         web3auth_keystore_set(key, value);
+#elif UNITY_EDITOR
+        UnityEngine.PlayerPrefs.SetString("Web3Auth_" + key, value);
+        UnityEngine.PlayerPrefs.Save();
+        if (key == SESSION_ID && UnityEngine.Application.isPlaying)
+            UnityEngine.Debug.Log($"[Web3Auth] Session saved to PlayerPrefs (length {value?.Length ?? 0})");
 #else
         SecurePlayerPrefs.SetString(key, value);
 #endif
@@ -67,6 +72,11 @@ public class KeyStoreManagerUtils
     {
 #if UNITY_IOS && !UNITY_EDITOR
         return web3auth_keystore_get(key);
+#elif UNITY_EDITOR
+        var value = UnityEngine.PlayerPrefs.GetString("Web3Auth_" + key, "");
+        if (key == SESSION_ID && UnityEngine.Application.isPlaying)
+            UnityEngine.Debug.Log($"[Web3Auth] Session read from PlayerPrefs: {(string.IsNullOrEmpty(value) ? "empty" : $"length {value.Length}")}");
+        return value;
 #else
         return SecurePlayerPrefs.GetString(key);
 #endif
@@ -75,6 +85,9 @@ public class KeyStoreManagerUtils
     {
 #if UNITY_IOS && !UNITY_EDITOR
         web3auth_keystore_delete(key);
+#elif UNITY_EDITOR
+        UnityEngine.PlayerPrefs.DeleteKey("Web3Auth_" + key);
+        UnityEngine.PlayerPrefs.Save();
 #else
         SecurePlayerPrefs.DeleteKey(key);
 #endif
