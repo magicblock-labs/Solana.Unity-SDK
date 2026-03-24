@@ -155,7 +155,15 @@ namespace Solana.Unity.SDK
             _loginSnapshotEpoch = _walletAuthEpoch;
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             _web3Auth.login(options);
-            return await _loginTaskCompletionSource.Task;
+            try
+            {
+                return await _loginTaskCompletionSource.Task;
+            }
+            catch (TaskCanceledException)
+            {
+                // Logout() calls TrySetCanceled() on the same TCS; callers expect null, not an exception.
+                return null;
+            }
         }
         
         public override void Logout()
