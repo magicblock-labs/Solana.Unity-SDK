@@ -59,6 +59,7 @@ public class Web3Auth : MonoBehaviour
 
     private static readonly Queue<Action> _executionQueue = new Queue<Action>();
     private string _sessionRestoreOrigin = string.Empty;
+    private TaskCompletionSource<object> _sessionRestoreTcs;
 
     public void Awake()
     {
@@ -146,6 +147,20 @@ public class Web3Auth : MonoBehaviour
             authorizeSession(string.Empty, origin);
             _sessionRestoreOrigin = origin;
         }
+        else if (_sessionRestoreTcs == null)
+        {
+            _sessionRestoreTcs = new TaskCompletionSource<object>();
+            _sessionRestoreTcs.TrySetResult(null);
+        }
+    }
+
+    /// <summary>
+    /// Waits for the initial session restore (triggered by setOptions/Awake) to complete.
+    /// Call this before starting a full login to avoid racing with async restore.
+    /// </summary>
+    public Task WaitForSessionRestoreAsync()
+    {
+        return _sessionRestoreTcs?.Task ?? Task.CompletedTask;
     }
 
     private bool GetUseExternalBrowser()
@@ -561,6 +576,7 @@ public class Web3Auth : MonoBehaviour
         string sessionId = "";
         if (string.IsNullOrEmpty(newSessionId))
         {
+            _sessionRestoreTcs = new TaskCompletionSource<object>();
             sessionId = KeyStoreManagerUtils.getPreferencesData(KeyStoreManagerUtils.SESSION_ID);
             // Debug.Log("sessionId during  authorizeSession in if part =>" + sessionId);
         }
@@ -579,12 +595,14 @@ public class Web3Auth : MonoBehaviour
                     if (response == null || string.IsNullOrEmpty(response.message))
                     {
                         this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - no response from server")));
+                        _sessionRestoreTcs?.TrySetResult(null);
                         return;
                     }
                     var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
                     if (shareMetadata == null)
                     {
                         this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - invalid response format")));
+                        _sessionRestoreTcs?.TrySetResult(null);
                         return;
                     }
                     var aes256cbc = new AES256CBC(
@@ -618,19 +636,32 @@ public class Web3Auth : MonoBehaviour
                         }
 
                         if (string.IsNullOrEmpty(this.web3AuthResponse.privKey) || string.IsNullOrEmpty(this.web3AuthResponse.privKey.Trim('0')))
-                            this.Enqueue(() => this.onLogout?.Invoke());
+                            this.Enqueue(() => { this.onLogout?.Invoke(); _sessionRestoreTcs?.TrySetResult(null); });
                         else
                         {
-                            this.Enqueue(() => this.onLogin?.Invoke(this.web3AuthResponse));
-                            this.Enqueue(() => this.onMFASetup?.Invoke(true));
+                            // Complete TCS only AFTER onLogin runs, so _Login sees Account set before proceeding.
+                            this.Enqueue(() =>
+                            {
+                                this.onLogin?.Invoke(this.web3AuthResponse);
+                                this.onMFASetup?.Invoke(true);
+                                _sessionRestoreTcs?.TrySetResult(null);
+                            });
                         }
+                    }
+                    else
+                    {
+                        _sessionRestoreTcs?.TrySetResult(null);
                     }
                 }
                 catch (Exception ex)
                 {
-                    this.Enqueue(() => onLoginFailed?.Invoke(ex));
+                    this.Enqueue(() => { onLoginFailed?.Invoke(ex); _sessionRestoreTcs?.TrySetResult(null); });
                 }
             })));
+        }
+        else if (_sessionRestoreTcs != null)
+        {
+            _sessionRestoreTcs.TrySetResult(null);
         }
     }
 
@@ -639,6 +670,13 @@ public class Web3Auth : MonoBehaviour
         string sessionId = KeyStoreManagerUtils.getPreferencesData(KeyStoreManagerUtils.SESSION_ID);
         if (!string.IsNullOrEmpty(sessionId))
         {
+            // Always clear local session immediately so the user can log in with a different account.
+            // Server-side cleanup is best-effort; don't block local logout on it.
+            KeyStoreManagerUtils.deletePreferencesData(KeyStoreManagerUtils.SESSION_ID);
+            if (web3AuthOptions?.loginConfig != null)
+                KeyStoreManagerUtils.deletePreferencesData(web3AuthOptions.loginConfig?.Values.First()?.verifier);
+            this.Enqueue(() => this.onLogout?.Invoke());
+
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
             StartCoroutine(Web3AuthApi.getInstance().authorizeSession(pubKey, GetOrigin(), (response =>
             {
@@ -646,7 +684,7 @@ public class Web3Auth : MonoBehaviour
                 {
                     if (response == null || string.IsNullOrEmpty(response.message))
                     {
-                        Debug.LogWarning("Web3Auth: Session timeout cleanup failed - no response from server");
+                        Debug.LogWarning("Web3Auth: Session server cleanup skipped - no response (local session already cleared)");
                         return;
                     }
                     var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
@@ -683,21 +721,8 @@ public class Web3Auth : MonoBehaviour
                             timeout = 1
                         }, result =>
                         {
-                            if (result != null)
-                            {
-                                try
-                                {
-                                    KeyStoreManagerUtils.deletePreferencesData(KeyStoreManagerUtils.SESSION_ID);
-                                    if (web3AuthOptions.loginConfig != null)
-                                        KeyStoreManagerUtils.deletePreferencesData(web3AuthOptions.loginConfig?.Values.First()?.verifier);
-
-                                    this.Enqueue(() => this.onLogout?.Invoke());
-                                }
-                                catch (Exception ex)
-                                {
-                                    Debug.LogError(ex.Message);
-                                }
-                            }
+                            if (result == null)
+                                Debug.LogWarning("Web3Auth: Session server cleanup failed (local session already cleared)");
                         }
                     ));
                 }
