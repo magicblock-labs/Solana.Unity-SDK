@@ -28,13 +28,18 @@ public class Web3AuthApi
         // Only send Origin when it's a valid HTTP(S) URL. Custom schemes (e.g. torusapp://) can cause
         // the session API v2 to reject the request. The pre-v9 SDK did not send origin; omitting it
         // for custom schemes restores session persistence on mobile.
-        // In Editor, sessions are created with http://localhost; use that for restore when options have custom scheme.
-        var originToSend = origin;
+        // Normalize to scheme://host[:port] only (Origin header must not include path).
+        string originToSend = null;
+        if (!string.IsNullOrEmpty(origin) && Uri.TryCreate(origin, UriKind.Absolute, out var originUri) &&
+            (originUri.Scheme == Uri.UriSchemeHttp || originUri.Scheme == Uri.UriSchemeHttps))
+        {
+            originToSend = originUri.GetLeftPart(UriPartial.Authority);
+        }
 #if UNITY_EDITOR
-        if (string.IsNullOrEmpty(origin) || (!origin.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !origin.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+        if (string.IsNullOrEmpty(originToSend))
             originToSend = "http://localhost";
 #endif
-        if (!string.IsNullOrEmpty(originToSend) && (originToSend.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || originToSend.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+        if (!string.IsNullOrEmpty(originToSend))
             request.SetRequestHeader("origin", originToSend);
 
         yield return request.SendWebRequest();
@@ -54,8 +59,7 @@ public class Web3AuthApi
         else
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            var originSent = !string.IsNullOrEmpty(originToSend) && (originToSend.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || originToSend.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
-            Debug.LogWarning($"Web3Auth session restore failed: {request.responseCode} {request.error}. Origin: {(originSent ? "sent" : "omitted (custom scheme or empty)")}.");
+            Debug.LogWarning($"Web3Auth session restore failed: {request.responseCode} {request.error}. Origin: {(string.IsNullOrEmpty(originToSend) ? "omitted (custom scheme or empty)" : "sent")}.");
 #endif
             callback(null);
         }

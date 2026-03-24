@@ -57,6 +57,11 @@ namespace Solana.Unity.SDK
         private Provider _loginProvider = Provider.GOOGLE;
         private LoginParams _loginParameters;
         private TaskCompletionSource<Web3AuthResponse> _taskCompletionSource;
+        /// <summary>Incremented on logout so in-flight login callbacks are ignored.</summary>
+        private int _walletAuthEpoch;
+        private int _loginSnapshotEpoch;
+        /// <summary>After logout, ignore OAuth callbacks until the next interactive login (stale browser return).</summary>
+        private bool _suppressOAuthCallbacks;
         
         public event Action<Account> OnLoginNotify;
         public UserInfo userInfo;
@@ -102,11 +107,19 @@ namespace Solana.Unity.SDK
 
         private void OnLoginFailed(Exception ex)
         {
+            if (_suppressOAuthCallbacks)
+                return;
+            if (_loginTaskCompletionSource != null && _loginSnapshotEpoch != _walletAuthEpoch)
+                return;
             _loginTaskCompletionSource?.TrySetException(ex);
         }
 
         private void OnLogin(Web3AuthResponse response)
         {
+            if (_suppressOAuthCallbacks)
+                return;
+            if (_loginTaskCompletionSource != null && _loginSnapshotEpoch != _walletAuthEpoch)
+                return;
             userInfo = response.userInfo;
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
@@ -138,6 +151,8 @@ namespace Solana.Unity.SDK
             {
                 options = _loginParameters;
             }
+            _suppressOAuthCallbacks = false;
+            _loginSnapshotEpoch = _walletAuthEpoch;
             _web3Auth.login(options);
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
             return await _loginTaskCompletionSource.Task;
@@ -147,7 +162,10 @@ namespace Solana.Unity.SDK
         {
             base.Logout();
             // Do NOT unsubscribe from onLogin/onLoginFailed - we need them for the next login.
-            // Unsubscribing caused "login with different email" to never complete (OnLogin never received).
+            _walletAuthEpoch++;
+            _suppressOAuthCallbacks = true;
+            _loginTaskCompletionSource?.TrySetCanceled();
+            _loginTaskCompletionSource = null;
             _web3Auth.logout();
         }
 
