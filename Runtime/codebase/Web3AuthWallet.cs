@@ -153,8 +153,8 @@ namespace Solana.Unity.SDK
             }
             _suppressOAuthCallbacks = false;
             _loginSnapshotEpoch = _walletAuthEpoch;
-            _web3Auth.login(options);
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
+            _web3Auth.login(options);
             return await _loginTaskCompletionSource.Task;
         }
         
