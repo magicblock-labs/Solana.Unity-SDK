@@ -574,9 +574,11 @@ public class Web3Auth : MonoBehaviour
             origin = GetOrigin();
 
         string sessionId = "";
+        TaskCompletionSource<object> restoreTcs = null;
         if (string.IsNullOrEmpty(newSessionId))
         {
-            _sessionRestoreTcs = new TaskCompletionSource<object>();
+            restoreTcs = new TaskCompletionSource<object>();
+            _sessionRestoreTcs = restoreTcs;
             sessionId = KeyStoreManagerUtils.getPreferencesData(KeyStoreManagerUtils.SESSION_ID);
             // Debug.Log("sessionId during  authorizeSession in if part =>" + sessionId);
         }
@@ -595,14 +597,14 @@ public class Web3Auth : MonoBehaviour
                     if (response == null || string.IsNullOrEmpty(response.message))
                     {
                         this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - no response from server")));
-                        _sessionRestoreTcs?.TrySetResult(null);
+                        restoreTcs?.TrySetResult(null);
                         return;
                     }
                     var shareMetadata = Newtonsoft.Json.JsonConvert.DeserializeObject<ShareMetadata>(response.message);
                     if (shareMetadata == null)
                     {
                         this.Enqueue(() => onLoginFailed?.Invoke(new Exception("Web3Auth: Session authorization failed - invalid response format")));
-                        _sessionRestoreTcs?.TrySetResult(null);
+                        restoreTcs?.TrySetResult(null);
                         return;
                     }
                     var aes256cbc = new AES256CBC(
@@ -636,7 +638,7 @@ public class Web3Auth : MonoBehaviour
                         }
 
                         if (string.IsNullOrEmpty(this.web3AuthResponse.privKey) || string.IsNullOrEmpty(this.web3AuthResponse.privKey.Trim('0')))
-                            this.Enqueue(() => { this.onLogout?.Invoke(); _sessionRestoreTcs?.TrySetResult(null); });
+                            this.Enqueue(() => { this.onLogout?.Invoke(); restoreTcs?.TrySetResult(null); });
                         else
                         {
                             // Complete TCS only AFTER onLogin runs, so _Login sees Account set before proceeding.
@@ -644,24 +646,24 @@ public class Web3Auth : MonoBehaviour
                             {
                                 this.onLogin?.Invoke(this.web3AuthResponse);
                                 this.onMFASetup?.Invoke(true);
-                                _sessionRestoreTcs?.TrySetResult(null);
+                                restoreTcs?.TrySetResult(null);
                             });
                         }
                     }
                     else
                     {
-                        _sessionRestoreTcs?.TrySetResult(null);
+                        restoreTcs?.TrySetResult(null);
                     }
                 }
                 catch (Exception ex)
                 {
-                    this.Enqueue(() => { onLoginFailed?.Invoke(ex); _sessionRestoreTcs?.TrySetResult(null); });
+                    this.Enqueue(() => { onLoginFailed?.Invoke(ex); restoreTcs?.TrySetResult(null); });
                 }
             })));
         }
-        else if (_sessionRestoreTcs != null)
+        else if (restoreTcs != null)
         {
-            _sessionRestoreTcs.TrySetResult(null);
+            restoreTcs.TrySetResult(null);
         }
     }
 
@@ -672,9 +674,19 @@ public class Web3Auth : MonoBehaviour
         {
             // Always clear local session immediately so the user can log in with a different account.
             // Server-side cleanup is best-effort; don't block local logout on it.
+            var verifier = web3AuthResponse?.userInfo?.verifier;
+            web3AuthResponse = null;
             KeyStoreManagerUtils.deletePreferencesData(KeyStoreManagerUtils.SESSION_ID);
-            if (web3AuthOptions?.loginConfig != null)
-                KeyStoreManagerUtils.deletePreferencesData(web3AuthOptions.loginConfig?.Values.First()?.verifier);
+            if (!string.IsNullOrEmpty(verifier))
+                KeyStoreManagerUtils.deletePreferencesData(verifier);
+            else if (web3AuthOptions?.loginConfig != null)
+            {
+                foreach (var config in web3AuthOptions.loginConfig.Values)
+                {
+                    if (!string.IsNullOrEmpty(config?.verifier))
+                        KeyStoreManagerUtils.deletePreferencesData(config.verifier);
+                }
+            }
             this.Enqueue(() => this.onLogout?.Invoke());
 
             var pubKey = KeyStoreManagerUtils.getPubKey(sessionId);
