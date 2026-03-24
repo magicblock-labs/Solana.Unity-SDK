@@ -121,10 +121,15 @@ namespace Solana.Unity.SDK
             }
         }
 
-        protected override Task<Account> _Login(string password = null)
+        protected override async Task<Account> _Login(string password = null)
         {
             if (Account != null)
-                return Task.FromResult(Account);
+                return Account;
+            // Wait for initial session restore to complete before starting full auth flow.
+            // Avoids race where clicking Login immediately after Play triggers auth before restore finishes.
+            await _web3Auth.WaitForSessionRestoreAsync();
+            if (Account != null)
+                return Account;
             var options = new LoginParams
             {
                 loginProvider = _loginProvider
@@ -135,14 +140,14 @@ namespace Solana.Unity.SDK
             }
             _web3Auth.login(options);
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
-            return _loginTaskCompletionSource.Task;
+            return await _loginTaskCompletionSource.Task;
         }
         
         public override void Logout()
         {
             base.Logout();
-            _web3Auth.onLogin -= OnLogin;
-            _web3Auth.onLoginFailed -= OnLoginFailed;
+            // Do NOT unsubscribe from onLogin/onLoginFailed - we need them for the next login.
+            // Unsubscribing caused "login with different email" to never complete (OnLogin never received).
             _web3Auth.logout();
         }
 
