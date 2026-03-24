@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UnityEngine;
 using Merkator.Tools;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
-using UnityEngine;
 
 // ReSharper disable once CheckNamespace
 
@@ -140,7 +140,18 @@ namespace Solana.Unity.SDK
                 return Account;
             // Wait for initial session restore to complete before starting full auth flow.
             // Avoids race where clicking Login immediately after Play triggers auth before restore finishes.
-            await _web3Auth.WaitForSessionRestoreAsync();
+            // Belt-and-suspenders: session HTTP uses a timeout in Web3AuthApi; cap wait so _Login never blocks forever.
+            const int sessionRestoreWaitSeconds = 45;
+            var restoreTask = _web3Auth.WaitForSessionRestoreAsync();
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(sessionRestoreWaitSeconds));
+            if (await Task.WhenAny(restoreTask, timeoutTask) == timeoutTask)
+            {
+                Debug.LogWarning("Web3AuthWallet: Session restore wait exceeded " + sessionRestoreWaitSeconds + "s; continuing with login flow.");
+            }
+            else
+            {
+                await restoreTask;
+            }
             if (Account != null)
                 return Account;
             var options = new LoginParams
