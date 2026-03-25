@@ -49,6 +49,10 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = PrepareDeauthorizeRequest(authToken);
         await SendRequest<object>(request);
+        if (response != null && response.Failed)
+        {
+            Debug.LogWarning($"[MWA] Deauthorize RPC returned error: {response.Error?.Message}");
+        }
     }
 
     public Task<CapabilitiesResult> GetCapabilities()
@@ -119,7 +123,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         {
             JsonRpc = "2.0",
             Method = "get_capabilities",
-            Params = null,
+            Params = new JsonRequest.JsonRequestParams(),
             Id = NextMessageId()
         };
         return request;
