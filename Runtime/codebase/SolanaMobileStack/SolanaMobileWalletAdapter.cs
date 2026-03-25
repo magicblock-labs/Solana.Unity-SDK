@@ -128,6 +128,8 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
+            if (_authToken.IsNullOrEmpty())
+                _authToken = PlayerPrefs.GetString("authToken", null);
 
             var cluster = RPCNameMap[(int)RpcCluster];
             SignedResult res = null;
@@ -224,6 +226,9 @@ namespace Solana.Unity.SDK
 
         public override async Task<byte[]> SignMessage(byte[] message)
         {
+            if (_authToken.IsNullOrEmpty())
+                _authToken = PlayerPrefs.GetString("authToken", null);
+
             SignedResult signedMessages = null;
             var localAssociationScenario = new LocalAssociationScenario();
             AuthorizationResult authorization = null;
