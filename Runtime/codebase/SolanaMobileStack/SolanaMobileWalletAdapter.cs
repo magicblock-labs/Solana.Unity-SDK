@@ -34,6 +34,9 @@ namespace Solana.Unity.SDK
         private readonly WalletBase _internalWallet;
         private string _authToken;
 
+        public event Action OnWalletDisconnected;
+        public event Action OnWalletReconnected;
+
         public SolanaMobileWalletAdapter(
             SolanaMobileWalletAdapterOptions solanaWalletOptions,
             RpcCluster rpcCluster = RpcCluster.DevNet, 
@@ -173,6 +176,50 @@ namespace Solana.Unity.SDK
             _authToken = null;
             PlayerPrefs.DeleteKey("authToken");
             PlayerPrefs.Save();
+        }
+
+        public async Task DisconnectWallet()
+        {
+            string authToken = _authToken;
+            if (authToken.IsNullOrEmpty())
+                authToken = PlayerPrefs.GetString("authToken", null);
+
+            if (authToken.IsNullOrEmpty())
+            {
+                Logout();
+                OnWalletDisconnected?.Invoke();
+                return;
+            }
+
+            using var localAssociationScenario = new LocalAssociationScenario();
+            var result = await localAssociationScenario.StartAndExecute(
+                new List<Action<IAdapterOperations>>
+                {
+                    async client =>
+                    {
+                        await client.Deauthorize(authToken);
+                    }
+                }
+            );
+            if (!result.WasSuccessful)
+            {
+                Debug.LogError(result.Error.Message);
+            }
+            Logout();
+            OnWalletDisconnected?.Invoke();
+        }
+
+        public async Task ReconnectWallet()
+        {
+            try
+            {
+                await Login();
+                OnWalletReconnected?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+            }
         }
 
         public override async Task<byte[]> SignMessage(byte[] message)
