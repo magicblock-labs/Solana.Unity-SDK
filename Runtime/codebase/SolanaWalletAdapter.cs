@@ -73,5 +73,29 @@ namespace Solana.Unity.SDK
             base.Logout();
             _internalWallet?.Logout();
         }
+
+        public async Task DisconnectWallet()
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+            {
+                await mobileAdapter.DisconnectWallet();
+                return;
+            }
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+        }
+
+        public async Task ReconnectWallet()
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+            {
+                await mobileAdapter.ReconnectWallet();
+                return;
+            }
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+        }
     }
 }
