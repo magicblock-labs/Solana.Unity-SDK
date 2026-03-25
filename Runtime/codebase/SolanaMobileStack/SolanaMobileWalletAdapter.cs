@@ -60,7 +60,8 @@ namespace Solana.Unity.SDK
                 string authToken = PlayerPrefs.GetString("authToken", null);
                 if (!pk.IsNullOrEmpty() && !authToken.IsNullOrEmpty())
                 {
-                    using var reauthorizeScenario = new LocalAssociationScenario();
+                    // TODO: change to using var after PR #260 merges (IDisposable not yet on LocalAssociationScenario)
+                    var reauthorizeScenario = new LocalAssociationScenario();
                     var reauthorizeResult = await reauthorizeScenario.StartAndExecute(
                         new List<Action<IAdapterOperations>>
                         {
@@ -193,7 +194,8 @@ namespace Solana.Unity.SDK
                 return;
             }
 
-            using var localAssociationScenario = new LocalAssociationScenario();
+            // TODO: change to using var after PR #260 merges (IDisposable not yet on LocalAssociationScenario)
+            var localAssociationScenario = new LocalAssociationScenario();
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
                 {
