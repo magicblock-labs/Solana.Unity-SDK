@@ -71,12 +71,20 @@ namespace Solana.Unity.SDK
                                     new Uri(_walletOptions.identityUri),
                                     new Uri(_walletOptions.iconUri, UriKind.Relative),
                                     _walletOptions.name, authToken);
-                                _authToken = reauth.AuthToken;
+                                if (reauth != null && !string.IsNullOrEmpty(reauth.AuthToken))
+                                {
+                                    _authToken = reauth.AuthToken;
+                                }
                             }
                         }
                     );
                     if (reauthorizeResult.WasSuccessful)
                     {
+                        if (!string.IsNullOrEmpty(_authToken))
+                        {
+                            PlayerPrefs.SetString("authToken", _authToken);
+                            PlayerPrefs.Save();
+                        }
                         return new Account(string.Empty, new PublicKey(pk));
                     }
                     PlayerPrefs.DeleteKey("pk");
