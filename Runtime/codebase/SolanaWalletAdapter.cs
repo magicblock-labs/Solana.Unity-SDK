@@ -20,6 +20,9 @@ namespace Solana.Unity.SDK
     {
         private readonly WalletBase _internalWallet;
 
+        public event Action OnWalletDisconnected;
+        public event Action OnWalletReconnected;
+
         public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             #if UNITY_ANDROID
@@ -32,6 +35,14 @@ namespace Solana.Unity.SDK
             #pragma warning disable CS0618
             _internalWallet = new PhantomDeepLink(options.phantomWalletOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             #else
+            #endif
+
+            #if UNITY_ANDROID
+            if (_internalWallet is SolanaMobileWalletAdapter mobileAdapter)
+            {
+                mobileAdapter.OnWalletDisconnected += () => OnWalletDisconnected?.Invoke();
+                mobileAdapter.OnWalletReconnected += () => OnWalletReconnected?.Invoke();
+            }
             #endif
         }
 
@@ -96,6 +107,16 @@ namespace Solana.Unity.SDK
             }
             if (_internalWallet != null)
                 throw new NotImplementedException();
+        }
+
+        public async Task<CapabilitiesResult> GetCapabilities()
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return await mobileAdapter.GetCapabilities();
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            return null;
         }
     }
 }

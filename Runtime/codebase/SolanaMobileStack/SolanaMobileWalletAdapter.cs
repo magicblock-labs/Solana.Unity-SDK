@@ -195,28 +195,32 @@ namespace Solana.Unity.SDK
             if (authToken.IsNullOrEmpty())
                 authToken = PlayerPrefs.GetString("authToken", null);
 
-            if (authToken.IsNullOrEmpty())
+            if (!authToken.IsNullOrEmpty())
             {
-                Logout();
-                OnWalletDisconnected?.Invoke();
-                return;
-            }
-
-            // TODO: change to using var after PR #260 merges (IDisposable not yet on LocalAssociationScenario)
-            var localAssociationScenario = new LocalAssociationScenario();
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+                try
                 {
-                    async client =>
+                    // TODO: change to using var after PR #260 merges (IDisposable not yet on LocalAssociationScenario)
+                    var localAssociationScenario = new LocalAssociationScenario();
+                    var result = await localAssociationScenario.StartAndExecute(
+                        new List<Action<IAdapterOperations>>
+                        {
+                            async client =>
+                            {
+                                await client.Deauthorize(authToken);
+                            }
+                        }
+                    );
+                    if (!result.WasSuccessful)
                     {
-                        await client.Deauthorize(authToken);
+                        Debug.LogWarning($"[MWA] Deauthorize returned error: {result.Error.Message}");
                     }
                 }
-            );
-            if (!result.WasSuccessful)
-            {
-                Debug.LogError(result.Error.Message);
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[MWA] Deauthorize transport failed (best-effort): {e}");
+                }
             }
+
             Logout();
             OnWalletDisconnected?.Invoke();
         }
@@ -225,13 +229,42 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                await Login();
-                OnWalletReconnected?.Invoke();
+                var account = await Login();
+                if (account != null)
+                {
+                    OnWalletReconnected?.Invoke();
+                }
+                else
+                {
+                    Debug.LogWarning("[MWA] ReconnectWallet: Login returned null, not firing OnWalletReconnected");
+                }
             }
             catch (Exception e)
             {
                 Debug.LogError(e.Message);
             }
+        }
+
+        public async Task<CapabilitiesResult> GetCapabilities()
+        {
+            CapabilitiesResult capabilities = null;
+            // TODO: change to using var after PR #260 merges (IDisposable not yet on LocalAssociationScenario)
+            var localAssociationScenario = new LocalAssociationScenario();
+            var result = await localAssociationScenario.StartAndExecute(
+                new List<Action<IAdapterOperations>>
+                {
+                    async client =>
+                    {
+                        capabilities = await client.GetCapabilities();
+                    }
+                }
+            );
+            if (!result.WasSuccessful)
+            {
+                Debug.LogError(result.Error.Message);
+                throw new Exception(result.Error.Message);
+            }
+            return capabilities;
         }
 
         public override async Task<byte[]> SignMessage(byte[] message)
