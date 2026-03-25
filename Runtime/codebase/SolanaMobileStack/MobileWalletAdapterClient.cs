@@ -48,7 +48,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     public async Task Deauthorize(string authToken)
     {
         var request = PrepareDeauthorizeRequest(authToken);
-        await SendRequest<object>(request);
+        var response = await SendRequest<object>(request);
         if (response != null && response.Failed)
         {
             Debug.LogWarning($"[MWA] Deauthorize RPC returned error: {response.Error?.Message}");
