@@ -54,7 +54,36 @@ namespace Solana.Unity.SDK
             if (_walletOptions.keepConnectionAlive)
             {
                 string pk = PlayerPrefs.GetString("pk", null);
-                if (!pk.IsNullOrEmpty()) return new Account(string.Empty, new PublicKey(pk));
+                string authToken = PlayerPrefs.GetString("authToken", null);
+                if (!pk.IsNullOrEmpty() && !authToken.IsNullOrEmpty())
+                {
+                    using var reauthorizeScenario = new LocalAssociationScenario();
+                    var reauthorizeResult = await reauthorizeScenario.StartAndExecute(
+                        new List<Action<IAdapterOperations>>
+                        {
+                            async client =>
+                            {
+                                var reauth = await client.Reauthorize(
+                                    new Uri(_walletOptions.identityUri),
+                                    new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                    _walletOptions.name, authToken);
+                                _authToken = reauth.AuthToken;
+                            }
+                        }
+                    );
+                    if (reauthorizeResult.WasSuccessful)
+                    {
+                        return new Account(string.Empty, new PublicKey(pk));
+                    }
+                    PlayerPrefs.DeleteKey("pk");
+                    PlayerPrefs.DeleteKey("authToken");
+                    PlayerPrefs.Save();
+                }
+                else if (!pk.IsNullOrEmpty())
+                {
+                    PlayerPrefs.DeleteKey("pk");
+                    PlayerPrefs.Save();
+                }
             }
             AuthorizationResult authorization = null;
             var localAssociationScenario = new LocalAssociationScenario();
@@ -81,6 +110,8 @@ namespace Solana.Unity.SDK
             if (_walletOptions.keepConnectionAlive)
             {
                 PlayerPrefs.SetString("pk", publicKey.ToString());
+                PlayerPrefs.SetString("authToken", _authToken);
+                PlayerPrefs.Save();
             }
             return new Account(string.Empty, publicKey);
         }
