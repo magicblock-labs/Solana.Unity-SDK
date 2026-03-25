@@ -7,7 +7,7 @@ using UnityEngine.Scripting;
 public class CapabilitiesResult
 {
     [JsonProperty("supports_clone_authorization")]
-    public bool SupportsCloneAuthorization { get; set; }
+    public bool? SupportsCloneAuthorization { get; set; }
 
     [JsonProperty("max_transactions_per_request")]
     public int? MaxTransactionsPerRequest { get; set; }
