@@ -44,6 +44,12 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
 
         return SendRequest<AuthorizationResult>(request);
     }
+
+    public async Task Deauthorize(string authToken)
+    {
+        var request = PrepareDeauthorizeRequest(authToken);
+        await SendRequest<object>(request);
+    }
     
     public Task<SignedResult> SignTransactions(IEnumerable<byte[]> transactions)
     {
@@ -80,6 +86,21 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
                     Name = name
                 },
                 Cluster = cluster
+            },
+            Id = NextMessageId()
+        };
+        return request;
+    }
+
+    private JsonRequest PrepareDeauthorizeRequest(string authToken)
+    {
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "deauthorize",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                AuthToken = authToken
             },
             Id = NextMessageId()
         };
