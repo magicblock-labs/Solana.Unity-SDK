@@ -139,6 +139,8 @@ namespace Solana.Unity.SDK
         {
             base.Logout();
             PlayerPrefs.DeleteKey("pk");
+            _authToken = null;
+            PlayerPrefs.DeleteKey("authToken");
             PlayerPrefs.Save();
         }
 
