@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UnityEngine;
 using Merkator.Tools;
 using Solana.Unity.Wallet;
 using Solana.Unity.Rpc.Models;
-using UnityEngine;
 
 // ReSharper disable once CheckNamespace
 
@@ -57,6 +57,11 @@ namespace Solana.Unity.SDK
         private Provider _loginProvider = Provider.GOOGLE;
         private LoginParams _loginParameters;
         private TaskCompletionSource<Web3AuthResponse> _taskCompletionSource;
+        /// <summary>Incremented on logout so in-flight login callbacks are ignored.</summary>
+        private int _walletAuthEpoch;
+        private int _loginSnapshotEpoch;
+        /// <summary>After logout, ignore OAuth callbacks until the next interactive login (stale browser return).</summary>
+        private bool _suppressOAuthCallbacks;
         
         public event Action<Account> OnLoginNotify;
         public UserInfo userInfo;
@@ -102,17 +107,25 @@ namespace Solana.Unity.SDK
 
         private void OnLoginFailed(Exception ex)
         {
+            if (_suppressOAuthCallbacks)
+                return;
+            if (_loginTaskCompletionSource != null && _loginSnapshotEpoch != _walletAuthEpoch)
+                return;
             _loginTaskCompletionSource?.TrySetException(ex);
         }
 
         private void OnLogin(Web3AuthResponse response)
         {
+            if (_suppressOAuthCallbacks)
+                return;
+            if (_loginTaskCompletionSource != null && _loginSnapshotEpoch != _walletAuthEpoch)
+                return;
             userInfo = response.userInfo;
             var keyBytes = ArrayHelpers.SubArray(Convert.FromBase64String(response.ed25519PrivKey), 0, 64);
             var wallet = new Wallet.Wallet(keyBytes);
             if (_loginTaskCompletionSource != null)
             {
-                _loginTaskCompletionSource?.SetResult(wallet.Account);
+                _loginTaskCompletionSource.TrySetResult(wallet.Account);
             }
             else
             {   
@@ -121,10 +134,26 @@ namespace Solana.Unity.SDK
             }
         }
 
-        protected override Task<Account> _Login(string password = null)
+        protected override async Task<Account> _Login(string password = null)
         {
             if (Account != null)
-                return Task.FromResult(Account);
+                return Account;
+            // Wait for initial session restore to complete before starting full auth flow.
+            // Avoids race where clicking Login immediately after Play triggers auth before restore finishes.
+            // Belt-and-suspenders: session HTTP uses a timeout in Web3AuthApi; cap wait so _Login never blocks forever.
+            const int sessionRestoreWaitSeconds = 45;
+            var restoreTask = _web3Auth.WaitForSessionRestoreAsync();
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(sessionRestoreWaitSeconds));
+            if (await Task.WhenAny(restoreTask, timeoutTask) == timeoutTask)
+            {
+                Debug.LogWarning("Web3AuthWallet: Session restore wait exceeded " + sessionRestoreWaitSeconds + "s; continuing with login flow.");
+            }
+            else
+            {
+                await restoreTask;
+            }
+            if (Account != null)
+                return Account;
             var options = new LoginParams
             {
                 loginProvider = _loginProvider
@@ -133,16 +162,32 @@ namespace Solana.Unity.SDK
             {
                 options = _loginParameters;
             }
-            _web3Auth.login(options);
+            _suppressOAuthCallbacks = false;
+            _loginSnapshotEpoch = _walletAuthEpoch;
             _loginTaskCompletionSource = new TaskCompletionSource<Account>();
-            return _loginTaskCompletionSource.Task;
+            _web3Auth.login(options);
+            try
+            {
+                return await _loginTaskCompletionSource.Task;
+            }
+            catch (TaskCanceledException)
+            {
+                // Logout() calls TrySetCanceled() on the same TCS; callers expect null, not an exception.
+                return null;
+            }
         }
         
         public override void Logout()
         {
             base.Logout();
-            _web3Auth.onLogin -= OnLogin;
-            _web3Auth.onLoginFailed -= OnLoginFailed;
+            // Do NOT unsubscribe from onLogin/onLoginFailed - we need them for the next login.
+            // Increment epoch before SDK logout so any in-flight OAuth/session callbacks from a prior
+            // attempt are ignored (OnLogin/OnLoginFailed compare _loginSnapshotEpoch to _walletAuthEpoch).
+            // SDK logout may still run server cleanup asynchronously; local session is cleared in Web3Auth first.
+            _walletAuthEpoch++;
+            _suppressOAuthCallbacks = true;
+            _loginTaskCompletionSource?.TrySetCanceled();
+            _loginTaskCompletionSource = null;
             _web3Auth.logout();
         }
 
