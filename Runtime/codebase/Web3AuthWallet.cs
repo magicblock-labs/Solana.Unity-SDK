@@ -181,6 +181,9 @@ namespace Solana.Unity.SDK
         {
             base.Logout();
             // Do NOT unsubscribe from onLogin/onLoginFailed - we need them for the next login.
+            // Increment epoch before SDK logout so any in-flight OAuth/session callbacks from a prior
+            // attempt are ignored (OnLogin/OnLoginFailed compare _loginSnapshotEpoch to _walletAuthEpoch).
+            // SDK logout may still run server cleanup asynchronously; local session is cleared in Web3Auth first.
             _walletAuthEpoch++;
             _suppressOAuthCallbacks = true;
             _loginTaskCompletionSource?.TrySetCanceled();
