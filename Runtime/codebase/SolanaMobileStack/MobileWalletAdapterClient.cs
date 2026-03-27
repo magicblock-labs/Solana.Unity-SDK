@@ -9,42 +9,63 @@ using UnityEngine.Scripting;
 
 // ReSharper disable once CheckNamespace
 [Preserve]
-public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMessageReceiver
+public class MobileWalletAdapterClient : JsonRpc20Client, IAdapterOperations, IMessageReceiver
 {
-    
     private int _mNextMessageId = 1;
 
     public MobileWalletAdapterClient(IMessageSender messageSender) : base(messageSender)
     {
     }
-    
+
     [Preserve]
     public Task<AuthorizationResult> Authorize(Uri identityUri, Uri iconUri, string identityName, string cluster)
     {
-        var request = PrepareAuthRequest(
-            identityUri,
-            iconUri, 
-            identityName, 
-            cluster,
-            "authorize");
-        
+        var request = PrepareAuthRequest(identityUri, iconUri, identityName, cluster, "authorize");
         return SendRequest<AuthorizationResult>(request);
     }
 
     public Task<AuthorizationResult> Reauthorize(Uri identityUri, Uri iconUri, string identityName, string authToken)
     {
-        var request = PrepareAuthRequest(
-            identityUri,
-            iconUri, 
-            identityName, 
-            null,
-            "reauthorize");
-        
+        var request = PrepareAuthRequest(identityUri, iconUri, identityName, null, "reauthorize");
         request.Params.AuthToken = authToken;
-
         return SendRequest<AuthorizationResult>(request);
     }
-    
+
+    /// <summary>
+    /// Revokes the given auth token with the wallet app. The wallet will discard the session.
+    /// Always call this before clearing local state on logout.
+    /// </summary>
+    public Task Deauthorize(string authToken)
+    {
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "deauthorize",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                AuthToken = authToken
+            },
+            Id = NextMessageId()
+        };
+        return SendRequest<object>(request);
+    }
+
+    /// <summary>
+    /// Queries the connected wallet for its supported capabilities and limits.
+    /// Use this to adapt batch sizes and feature detection for your app.
+    /// </summary>
+    public Task<WalletCapabilities> GetCapabilities()
+    {
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "get_capabilities",
+            Params = new JsonRequest.JsonRequestParams(),
+            Id = NextMessageId()
+        };
+        return SendRequest<WalletCapabilities>(request);
+    }
+
     public Task<SignedResult> SignTransactions(IEnumerable<byte[]> transactions)
     {
         var request = PrepareSignTransactionsRequest(transactions);
@@ -60,14 +81,11 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     private JsonRequest PrepareAuthRequest(Uri uriIdentity, Uri icon, string name, string cluster, string method)
     {
         if (uriIdentity != null && !uriIdentity.IsAbsoluteUri)
-        {
             throw new ArgumentException("If non-null, identityUri must be an absolute, hierarchical Uri");
-        }
         if (icon != null && icon.IsAbsoluteUri)
-        {
             throw new ArgumentException("If non-null, iconRelativeUri must be a relative Uri");
-        }
-        var request = new JsonRequest
+
+        return new JsonRequest
         {
             JsonRpc = "2.0",
             Method = method,
@@ -83,12 +101,11 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             },
             Id = NextMessageId()
         };
-        return request;
     }
-    
+
     private JsonRequest PrepareSignTransactionsRequest(IEnumerable<byte[]> transactions)
     {
-        var request = new JsonRequest
+        return new JsonRequest
         {
             JsonRpc = "2.0",
             Method = "sign_transactions",
@@ -98,12 +115,11 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             },
             Id = NextMessageId()
         };
-        return request;
     }
-    
+
     private JsonRequest PrepareSignMessagesRequest(IEnumerable<byte[]> messages, IEnumerable<byte[]> addresses)
     {
-        var request = new JsonRequest
+        return new JsonRequest
         {
             JsonRpc = "2.0",
             Method = "sign_messages",
@@ -114,12 +130,10 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             },
             Id = NextMessageId()
         };
-        return request;
     }
-    
+
     private int NextMessageId()
     {
         return _mNextMessageId++;
     }
-
 }
