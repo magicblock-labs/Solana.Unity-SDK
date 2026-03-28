@@ -13,6 +13,13 @@ using System.Text;
 
 public class KeyStoreManagerUtils
 {
+#if UNITY_EDITOR
+    /// <summary>PlayerPrefs prefix for Editor Web3Auth keys (namespaced to avoid collisions with other packages).</summary>
+    private const string EditorPlayerPrefsKeyPrefix = "SolanaSDK_Web3Auth_";
+    /// <summary>Previous prefix; migrated automatically on read.</summary>
+    private const string LegacyEditorPlayerPrefsKeyPrefix = "Web3Auth_";
+#endif
+
 #if UNITY_IOS && !UNITY_EDITOR
     [DllImport("__Internal")]
     extern static int web3auth_keystore_set(string key, string value);
@@ -58,6 +65,12 @@ public class KeyStoreManagerUtils
     {
 #if UNITY_IOS && !UNITY_EDITOR
         web3auth_keystore_set(key, value);
+#elif UNITY_EDITOR
+        UnityEngine.PlayerPrefs.SetString(EditorPlayerPrefsKeyPrefix + key, value);
+        UnityEngine.PlayerPrefs.DeleteKey(LegacyEditorPlayerPrefsKeyPrefix + key);
+        UnityEngine.PlayerPrefs.Save();
+        if (key == SESSION_ID && UnityEngine.Application.isPlaying)
+            UnityEngine.Debug.Log($"[Web3Auth] Session saved to PlayerPrefs (length {value?.Length ?? 0})");
 #else
         SecurePlayerPrefs.SetString(key, value);
 #endif
@@ -67,6 +80,35 @@ public class KeyStoreManagerUtils
     {
 #if UNITY_IOS && !UNITY_EDITOR
         return web3auth_keystore_get(key);
+#elif UNITY_EDITOR
+        var prefKey = EditorPlayerPrefsKeyPrefix + key;
+        var legacyPrefKey = LegacyEditorPlayerPrefsKeyPrefix + key;
+        string value;
+        if (UnityEngine.PlayerPrefs.HasKey(prefKey))
+            value = UnityEngine.PlayerPrefs.GetString(prefKey, string.Empty);
+        else if (UnityEngine.PlayerPrefs.HasKey(legacyPrefKey))
+        {
+            value = UnityEngine.PlayerPrefs.GetString(legacyPrefKey, string.Empty);
+            if (!string.IsNullOrEmpty(value))
+            {
+                UnityEngine.PlayerPrefs.SetString(prefKey, value);
+                UnityEngine.PlayerPrefs.DeleteKey(legacyPrefKey);
+                UnityEngine.PlayerPrefs.Save();
+            }
+        }
+        else
+        {
+            value = SecurePlayerPrefs.GetString(key);
+            if (!string.IsNullOrEmpty(value))
+            {
+                UnityEngine.PlayerPrefs.SetString(prefKey, value);
+                UnityEngine.PlayerPrefs.Save();
+                SecurePlayerPrefs.DeleteKey(key);
+            }
+        }
+        if (key == SESSION_ID && UnityEngine.Application.isPlaying)
+            UnityEngine.Debug.Log($"[Web3Auth] Session read from PlayerPrefs: {(string.IsNullOrEmpty(value) ? "empty" : $"length {value.Length}")}");
+        return value;
 #else
         return SecurePlayerPrefs.GetString(key);
 #endif
@@ -75,6 +117,11 @@ public class KeyStoreManagerUtils
     {
 #if UNITY_IOS && !UNITY_EDITOR
         web3auth_keystore_delete(key);
+#elif UNITY_EDITOR
+        UnityEngine.PlayerPrefs.DeleteKey(EditorPlayerPrefsKeyPrefix + key);
+        UnityEngine.PlayerPrefs.DeleteKey(LegacyEditorPlayerPrefsKeyPrefix + key);
+        SecurePlayerPrefs.DeleteKey(key);
+        UnityEngine.PlayerPrefs.Save();
 #else
         SecurePlayerPrefs.DeleteKey(key);
 #endif
