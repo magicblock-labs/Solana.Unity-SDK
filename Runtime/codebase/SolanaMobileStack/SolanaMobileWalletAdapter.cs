@@ -60,6 +60,7 @@ namespace Solana.Unity.SDK
                 string authToken = PlayerPrefs.GetString("authToken", null);
                 if (!pk.IsNullOrEmpty() && !authToken.IsNullOrEmpty())
                 {
+                    string reauthPublicKey = null;
                     // TODO: change to using var after PR #260 merges (IDisposable not yet on LocalAssociationScenario)
                     var reauthorizeScenario = new LocalAssociationScenario();
                     var reauthorizeResult = await reauthorizeScenario.StartAndExecute(
@@ -74,6 +75,9 @@ namespace Solana.Unity.SDK
                                 if (reauth != null && !string.IsNullOrEmpty(reauth.AuthToken))
                                 {
                                     _authToken = reauth.AuthToken;
+                                    reauthPublicKey = reauth.PublicKey != null
+                                        ? new PublicKey(reauth.PublicKey).ToString()
+                                        : null;
                                 }
                             }
                         }
@@ -85,7 +89,8 @@ namespace Solana.Unity.SDK
                             PlayerPrefs.SetString("authToken", _authToken);
                             PlayerPrefs.Save();
                         }
-                        return new Account(string.Empty, new PublicKey(pk));
+                        var resolvedKey = !string.IsNullOrEmpty(reauthPublicKey) ? reauthPublicKey : pk;
+                        return new Account(string.Empty, new PublicKey(resolvedKey));
                     }
                     PlayerPrefs.DeleteKey("pk");
                     PlayerPrefs.DeleteKey("authToken");
@@ -137,7 +142,7 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
-            if (_authToken.IsNullOrEmpty())
+            if (_authToken.IsNullOrEmpty() && _walletOptions.keepConnectionAlive)
                 _authToken = PlayerPrefs.GetString("authToken", null);
 
             var cluster = RPCNameMap[(int)RpcCluster];
@@ -176,6 +181,11 @@ namespace Solana.Unity.SDK
                 throw new Exception(result.Error.Message);
             }
             _authToken = authorization.AuthToken;
+            if (_walletOptions.keepConnectionAlive)
+            {
+                PlayerPrefs.SetString("authToken", _authToken);
+                PlayerPrefs.Save();
+            }
             return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
         }
 
@@ -275,8 +285,13 @@ namespace Solana.Unity.SDK
 
         public override async Task<byte[]> SignMessage(byte[] message)
         {
-            if (_authToken.IsNullOrEmpty())
+            if (_authToken.IsNullOrEmpty() && _walletOptions.keepConnectionAlive)
                 _authToken = PlayerPrefs.GetString("authToken", null);
+
+            string cachedPk = Account?.PublicKey?.ToString()
+                ?? PlayerPrefs.GetString("pk", null);
+            if (string.IsNullOrEmpty(cachedPk))
+                throw new Exception("[MWA] Cannot sign message: no account available");
 
             SignedResult signedMessages = null;
             var localAssociationScenario = new LocalAssociationScenario();
@@ -306,7 +321,7 @@ namespace Solana.Unity.SDK
                     {
                         signedMessages = await client.SignMessages(
                             messages: new List<byte[]> { message },
-                            addresses: new List<byte[]> { Account.PublicKey.KeyBytes }
+                            addresses: new List<byte[]> { new PublicKey(cachedPk).KeyBytes }
                         );
                     }
                 }
@@ -317,6 +332,11 @@ namespace Solana.Unity.SDK
                 throw new Exception(result.Error.Message);
             }
             _authToken = authorization.AuthToken;
+            if (_walletOptions.keepConnectionAlive)
+            {
+                PlayerPrefs.SetString("authToken", _authToken);
+                PlayerPrefs.Save();
+            }
             return signedMessages.SignedPayloadsBytes[0];
         }
 
