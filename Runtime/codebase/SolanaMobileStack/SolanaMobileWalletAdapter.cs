@@ -194,6 +194,10 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("[MWA] SignAllTransactions: authorization was not populated");
             }
+            if (res == null)
+            {
+                throw new Exception("[MWA] SignAllTransactions: signed payloads were not populated");
+            }
             _authToken = authorization.AuthToken;
             if (_walletOptions.keepConnectionAlive)
             {
@@ -348,6 +352,10 @@ namespace Solana.Unity.SDK
             if (authorization == null)
             {
                 throw new Exception("[MWA] SignMessage: authorization was not populated");
+            }
+            if (signedMessages == null)
+            {
+                throw new Exception("[MWA] SignMessage: signed payloads were not populated");
             }
             _authToken = authorization.AuthToken;
             if (_walletOptions.keepConnectionAlive)
