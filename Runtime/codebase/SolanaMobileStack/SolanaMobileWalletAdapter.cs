@@ -84,13 +84,20 @@ namespace Solana.Unity.SDK
                     );
                     if (reauthorizeResult.WasSuccessful)
                     {
-                        if (!string.IsNullOrEmpty(_authToken))
+                        if (string.IsNullOrEmpty(_authToken))
+                        {
+                            // Reauthorize RPC succeeded but wallet returned no token - treat as failure
+                            PlayerPrefs.DeleteKey("pk");
+                            PlayerPrefs.DeleteKey("authToken");
+                            PlayerPrefs.Save();
+                        }
+                        else
                         {
                             PlayerPrefs.SetString("authToken", _authToken);
                             PlayerPrefs.Save();
+                            var resolvedKey = !string.IsNullOrEmpty(reauthPublicKey) ? reauthPublicKey : pk;
+                            return new Account(string.Empty, new PublicKey(resolvedKey));
                         }
-                        var resolvedKey = !string.IsNullOrEmpty(reauthPublicKey) ? reauthPublicKey : pk;
-                        return new Account(string.Empty, new PublicKey(resolvedKey));
                     }
                     PlayerPrefs.DeleteKey("pk");
                     PlayerPrefs.DeleteKey("authToken");
@@ -278,7 +285,7 @@ namespace Solana.Unity.SDK
             }
             if (capabilities == null)
             {
-                Debug.LogWarning("[MWA] GetCapabilities succeeded but returned null");
+                throw new Exception("[MWA] GetCapabilities RPC succeeded but returned no data");
             }
             return capabilities;
         }
