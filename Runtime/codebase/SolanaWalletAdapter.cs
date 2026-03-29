@@ -108,6 +108,7 @@ namespace Solana.Unity.SDK
             }
             if (_internalWallet != null)
                 throw new NotImplementedException();
+            // No internal wallet configured - nothing to reconnect
         }
 
         /// <summary>
