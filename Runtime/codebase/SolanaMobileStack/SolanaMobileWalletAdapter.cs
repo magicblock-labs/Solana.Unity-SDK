@@ -266,6 +266,10 @@ namespace Solana.Unity.SDK
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
             }
+            if (capabilities == null)
+            {
+                Debug.LogWarning("[MWA] GetCapabilities succeeded but returned null");
+            }
             return capabilities;
         }
 
