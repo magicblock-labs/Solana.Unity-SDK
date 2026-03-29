@@ -87,9 +87,7 @@ namespace Solana.Unity.SDK
                         if (string.IsNullOrEmpty(_authToken))
                         {
                             // Reauthorize RPC succeeded but wallet returned no token - treat as failure
-                            PlayerPrefs.DeleteKey("pk");
-                            PlayerPrefs.DeleteKey("authToken");
-                            PlayerPrefs.Save();
+                            // Fall through to cleanup below
                         }
                         else
                         {
@@ -99,6 +97,7 @@ namespace Solana.Unity.SDK
                             return new Account(string.Empty, new PublicKey(resolvedKey));
                         }
                     }
+                    // Reauthorize failed or returned empty token - clear cached credentials
                     PlayerPrefs.DeleteKey("pk");
                     PlayerPrefs.DeleteKey("authToken");
                     PlayerPrefs.Save();
@@ -128,6 +127,10 @@ namespace Solana.Unity.SDK
             {
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
+            }
+            if (authorization == null)
+            {
+                throw new Exception("[MWA] Login: authorization was not populated");
             }
             _authToken = authorization.AuthToken;
             var publicKey = new PublicKey(authorization.PublicKey);
@@ -186,6 +189,10 @@ namespace Solana.Unity.SDK
             {
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
+            }
+            if (authorization == null)
+            {
+                throw new Exception("[MWA] SignAllTransactions: authorization was not populated");
             }
             _authToken = authorization.AuthToken;
             if (_walletOptions.keepConnectionAlive)
@@ -337,6 +344,10 @@ namespace Solana.Unity.SDK
             {
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
+            }
+            if (authorization == null)
+            {
+                throw new Exception("[MWA] SignMessage: authorization was not populated");
             }
             _authToken = authorization.AuthToken;
             if (_walletOptions.keepConnectionAlive)
