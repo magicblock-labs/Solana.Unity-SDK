@@ -13,9 +13,9 @@ public interface IAdapterOperations
     [Preserve]
     public Task<AuthorizationResult> Reauthorize(Uri identityUri, Uri iconUri, string identityName, string authToken);
     [Preserve]
-    Task Deauthorize(string authToken);
+    public Task Deauthorize(string authToken);
     [Preserve]
-    Task<CapabilitiesResult> GetCapabilities();
+    public Task<CapabilitiesResult> GetCapabilities();
     [Preserve]
     public Task<SignedResult> SignTransactions(IEnumerable<byte[]> transactions);
     [Preserve]

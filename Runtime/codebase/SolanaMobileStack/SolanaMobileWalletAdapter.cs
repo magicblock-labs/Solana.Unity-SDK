@@ -237,11 +237,13 @@ namespace Solana.Unity.SDK
                 else
                 {
                     Debug.LogWarning("[MWA] ReconnectWallet: Login returned null, not firing OnWalletReconnected");
+                    throw new Exception("ReconnectWallet failed: Login returned null");
                 }
             }
             catch (Exception e)
             {
                 Debug.LogError(e.Message);
+                throw;
             }
         }
 

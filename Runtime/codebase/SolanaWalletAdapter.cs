@@ -95,6 +95,7 @@ namespace Solana.Unity.SDK
             }
             if (_internalWallet != null)
                 throw new NotImplementedException();
+            // No internal wallet configured - nothing to disconnect
         }
 
         public async Task ReconnectWallet()
@@ -109,6 +110,19 @@ namespace Solana.Unity.SDK
                 throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Queries the connected wallet's supported features and limits.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="CapabilitiesResult"/> containing wallet feature limits
+        /// (MaxTransactionsPerRequest, MaxMessagesPerRequest,
+        /// SupportedTransactionVersions, SupportsCloneAuthorization)
+        /// when running on Android with a connected SolanaMobileWalletAdapter.
+        /// Returns null when _internalWallet is null or not configured.
+        /// Throws <see cref="NotImplementedException"/> when _internalWallet
+        /// is non-null but is not a SolanaMobileWalletAdapter (e.g. WebGL,
+        /// iOS). Callers must handle the null return case.
+        /// </returns>
         public async Task<CapabilitiesResult> GetCapabilities()
         {
             var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
