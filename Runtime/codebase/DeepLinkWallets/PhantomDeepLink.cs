@@ -280,8 +280,10 @@ namespace Solana.Unity.SDK
                 result.TryGetValue("errorCode", out var errorCode);
                 _signedAllTransactionsTaskCompletionSource?.TrySetResult(null);
                 Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
+                SolanaWalletAdapter.TriggerUserApprovedTransaction(false);
                 return;
             }
+            else SolanaWalletAdapter.TriggerUserApprovedTransaction(true);
 
             data = data.Replace("#", "");
             var k = MontgomeryCurve25519.KeyExchange(_phantomEncryptionPubKey, PhantomConnectionAccountPrivateKey);
@@ -302,9 +304,11 @@ namespace Solana.Unity.SDK
             result.TryGetValue("errorMessage", out var errorMessage);
             if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(data))
             {
+                SolanaWalletAdapter.TriggerUserApprovedTransaction(false);
                 Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
                 return;
             }
+            else SolanaWalletAdapter.TriggerUserApprovedTransaction(true);
             data = data.Replace("#", "");
             var k = MontgomeryCurve25519.KeyExchange(_phantomEncryptionPubKey, PhantomConnectionAccountPrivateKey);
             var unencryptedMessage = XSalsa20Poly1305.TryDecrypt(Encoders.Base58.DecodeData(data), k, Encoders.Base58.DecodeData(nonce));
@@ -323,9 +327,11 @@ namespace Solana.Unity.SDK
             result.TryGetValue("errorMessage", out var errorMessage);
             if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(data))
             {
+                SolanaWalletAdapter.TriggerUserApprovedTransaction(false);
                 Debug.LogError($"Deeplink error: Error: {errorMessage} + Data: {data}");
                 return;
             }
+            else SolanaWalletAdapter.TriggerUserApprovedTransaction(true);
             data = data.Replace("#", "");
             var k = MontgomeryCurve25519.KeyExchange(_phantomEncryptionPubKey, PhantomConnectionAccountPrivateKey);
             var unencryptedMessage = XSalsa20Poly1305.TryDecrypt(Encoders.Base58.DecodeData(data), k, Encoders.Base58.DecodeData(nonce));

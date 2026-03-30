@@ -11,7 +11,7 @@ using WebSocketSharp;
 
 namespace Solana.Unity.SDK
 {
-    
+
     [Serializable]
     public class SolanaMobileWalletAdapterOptions
     {
@@ -20,13 +20,13 @@ namespace Solana.Unity.SDK
         public string name = "Solana.Unity-SDK";
         public bool keepConnectionAlive = true;
     }
-    
-    
+
+
     [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
     public class SolanaMobileWalletAdapter : WalletBase
     {
         private readonly SolanaMobileWalletAdapterOptions _walletOptions;
-        
+
         private Transaction _currentTransaction;
 
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
@@ -36,9 +36,9 @@ namespace Solana.Unity.SDK
 
         public SolanaMobileWalletAdapter(
             SolanaMobileWalletAdapterOptions solanaWalletOptions,
-            RpcCluster rpcCluster = RpcCluster.DevNet, 
-            string customRpcUri = null, 
-            string customStreamingRpcUri = null, 
+            RpcCluster rpcCluster = RpcCluster.DevNet,
+            string customRpcUri = null,
+            string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup
         )
         {
@@ -116,7 +116,7 @@ namespace Solana.Unity.SDK
                             authorization = await client.Reauthorize(
                                 new Uri(_walletOptions.identityUri),
                                 new Uri(_walletOptions.iconUri, UriKind.Relative),
-                                _walletOptions.name, _authToken);   
+                                _walletOptions.name, _authToken);
                         }
                     },
                     async client =>
@@ -125,6 +125,8 @@ namespace Solana.Unity.SDK
                     }
                 }
             );
+
+            SolanaWalletAdapter.TriggerUserApprovedTransaction(result.WasSuccessful);
             if (!result.WasSuccessful)
             {
                 Debug.LogError(result.Error.Message);
@@ -165,7 +167,7 @@ namespace Solana.Unity.SDK
                             authorization = await client.Reauthorize(
                                 new Uri(_walletOptions.identityUri),
                                 new Uri(_walletOptions.iconUri, UriKind.Relative),
-                                _walletOptions.name, _authToken);   
+                                _walletOptions.name, _authToken);
                         }
                     },
                     async client =>

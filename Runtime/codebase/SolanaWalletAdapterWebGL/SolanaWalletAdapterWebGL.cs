@@ -1,9 +1,8 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using AOT;
+﻿using AOT;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
+using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
@@ -211,6 +210,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnTransactionSigned(string transaction)
         {
+            SolanaWalletAdapter.TriggerUserApprovedTransaction(transaction != null);
             if (transaction == null)
             {
                 _signedTransactionTaskCompletionSource.TrySetException(new Exception("Transaction signing cancelled"));
@@ -228,6 +228,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnAllTransactionsSigned(string transactions)
         {
+            SolanaWalletAdapter.TriggerUserApprovedTransaction(transactions != null);
             if (transactions == null)
             {
                 _signedAllTransactionsTaskCompletionSource.TrySetException(new Exception("Transactions signing cancelled"));
@@ -252,6 +253,7 @@ namespace Solana.Unity.SDK
         [MonoPInvokeCallback(typeof(Action<string>))]
         public static void OnMessageSigned(string signature)
         {
+            SolanaWalletAdapter.TriggerUserApprovedTransaction(signature != null);
             if (signature == null)
             {
                 _signedMessageTaskCompletionSource.TrySetException(new Exception("Message signing cancelled"));

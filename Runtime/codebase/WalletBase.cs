@@ -253,10 +253,11 @@ namespace Solana.Unity.SDK
         (
             Transaction transaction,
             bool skipPreflight = false,
-            Commitment commitment = Commitment.Confirmed)
+            Commitment commitment = Commitment.Confirmed,
+            IRpcClient customClient = null)
         {
             var signedTransaction = await SignTransaction(transaction);
-            return await ActiveRpcClient.SendTransactionAsync(
+            return await (customClient ?? ActiveRpcClient).SendTransactionAsync(
                 Convert.ToBase64String(signedTransaction.Serialize()),
                 skipPreflight: skipPreflight, preFlightCommitment: commitment);
         }

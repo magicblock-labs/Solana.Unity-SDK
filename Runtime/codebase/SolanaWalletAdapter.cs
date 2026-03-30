@@ -15,10 +15,17 @@ namespace Solana.Unity.SDK
         public SolanaWalletAdapterWebGLOptions solanaWalletAdapterWebGLOptions;
         public PhantomWalletOptions phantomWalletOptions;
     }
-    
+
     public class SolanaWalletAdapter: WalletBase
     {
         private readonly WalletBase _internalWallet;
+
+        public static event EventHandler<bool> UserApprovedTransaction;
+
+        internal static void TriggerUserApprovedTransaction(bool approvedTransaction)
+        {
+            UserApprovedTransaction?.Invoke(null, approvedTransaction);
+        }
 
         public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
