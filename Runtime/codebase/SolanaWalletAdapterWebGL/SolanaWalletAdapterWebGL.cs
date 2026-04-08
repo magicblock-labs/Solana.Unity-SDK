@@ -130,6 +130,13 @@ namespace Solana.Unity.SDK
             await InitWallets();
             if (_currentWallet == null)
             {
+                // Auto-select when only one wallet adapter is available
+                if (Wallets != null && Wallets.Length == 1)
+                {
+                    _currentWallet = Wallets[0];
+                    return;
+                }
+
                 if (WalletAdapterUI == null)
                 {
                     WalletAdapterUI = GameObject.Instantiate(_walletOptions.walletAdapterUIPrefab);
