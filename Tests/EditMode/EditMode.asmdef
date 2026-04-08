@@ -1,0 +1,23 @@
+{
+    "name": "Solana.Unity.SDK.Tests.EditMode",
+    "rootNamespace": "Solana.Unity.SDK.Tests.EditMode",
+    "references": [
+        "com.solana.unity_sdk",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "BouncyCastle.Cryptography.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "noEngineReferences": false
+}
