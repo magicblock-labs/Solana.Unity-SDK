@@ -96,7 +96,7 @@ namespace Solana.Unity.SDK.Tests.EditMode.Crypto
             var payload = new byte[64]; // arbitrary non-empty payload
 
             // The production code logs before it throws, so the test needs to allow that.
-            LogAssert.Expect(LogType.Error, "Cannot encrypt, no session key has been established");
+            LogAssert.Expect(LogType.Error, "Cannot decrypt, no session key has been established");
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() =>
