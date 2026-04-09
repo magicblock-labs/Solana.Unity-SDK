@@ -118,7 +118,7 @@ public static class EcdsaSignatures
         byte[] derSignature,
         int derOffset) {
         
-        Assert.IsTrue(p1363Offset > 0);
+        Assert.IsTrue(p1363Offset >= 0);
         Assert.IsTrue(p1363ComponentDerIntLength is > 1 and <= P256P1363ComponentLen + 1);
         
         derSignature[derOffset] = P256DerSignatureComponentPrefixType;
