@@ -14,14 +14,16 @@ namespace Solana.Unity.SDK.Tests.EditMode.Mocks
 
         public void Send(byte[] message)
         {
-            SentMessages.Add(message);
+            SentMessages.Add(message == null ? null : (byte[])message.Clone());
         }
 
         /// <summary>
         /// Returns the latest message, or null if nothing has been sent yet.
         /// </summary>
         public byte[] LastMessage => SentMessages.Count > 0
-            ? SentMessages[SentMessages.Count - 1]
+            ? (SentMessages[SentMessages.Count - 1] == null
+                ? null
+                : (byte[])SentMessages[SentMessages.Count - 1].Clone())
             : null;
     }
 }
