@@ -23,6 +23,11 @@ namespace Solana.Unity.SDK
         public event Action OnWalletDisconnected;
         public event Action OnWalletReconnected;
 
+        #pragma warning disable CS0612
+        public SignInResult LastSignInResult =>
+            (_internalWallet as SolanaMobileWalletAdapter)?.LastSignInResult;
+        #pragma warning restore CS0612
+
         public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             #if UNITY_ANDROID

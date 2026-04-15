@@ -71,6 +71,62 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return SendRequest<SignedResult>(request);
     }
 
+    [Preserve]
+    public Task<AuthorizationResult> Authorize(
+        Uri identityUri, Uri iconUri, string identityName,
+        string chain, string[] features, string[] addresses,
+        string authToken, JsonRequest.SignInPayload signInPayload)
+    {
+        if (identityUri != null && !identityUri.IsAbsoluteUri)
+        {
+            throw new ArgumentException("If non-null, identityUri must be an absolute, hierarchical Uri");
+        }
+        if (iconUri != null && iconUri.IsAbsoluteUri)
+        {
+            throw new ArgumentException("If non-null, iconRelativeUri must be a relative Uri");
+        }
+
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "authorize",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                Identity = new JsonRequest.JsonRequestIdentity
+                {
+                    Uri = identityUri,
+                    Icon = iconUri,
+                    Name = identityName
+                },
+                Chain = chain,
+                Features = features?.ToList(),
+                Addresses = addresses?.ToList(),
+                AuthToken = authToken,
+                SignInPayloadData = signInPayload
+            },
+            Id = NextMessageId()
+        };
+
+        return SendRequest<AuthorizationResult>(request);
+    }
+
+    public Task<SignAndSendResult> SignAndSendTransactions(IEnumerable<byte[]> transactions, JsonRequest.SignAndSendOptions options)
+    {
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "sign_and_send_transactions",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                Payloads = transactions.Select(Convert.ToBase64String).ToList(),
+                Options = options
+            },
+            Id = NextMessageId()
+        };
+
+        return SendRequest<SignAndSendResult>(request);
+    }
+
     private JsonRequest PrepareAuthRequest(Uri uriIdentity, Uri icon, string name, string cluster, string method)
     {
         if (uriIdentity != null && !uriIdentity.IsAbsoluteUri)
