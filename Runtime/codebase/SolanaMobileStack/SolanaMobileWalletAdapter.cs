@@ -53,6 +53,26 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("SolanaMobileWalletAdapter can only be used on Android");
             }
+            MigrateLegacyPrefKeys();
+        }
+
+        private static void MigrateLegacyPrefKeys()
+        {
+            const string legacyPk = "pk";
+            const string legacyAuthToken = "authToken";
+
+            if (!PlayerPrefs.HasKey(legacyPk) && !PlayerPrefs.HasKey(legacyAuthToken))
+                return;
+
+            if (PlayerPrefs.HasKey(legacyPk) && !PlayerPrefs.HasKey(PrefKeyPublicKey))
+                PlayerPrefs.SetString(PrefKeyPublicKey, PlayerPrefs.GetString(legacyPk));
+
+            if (PlayerPrefs.HasKey(legacyAuthToken) && !PlayerPrefs.HasKey(PrefKeyAuthToken))
+                PlayerPrefs.SetString(PrefKeyAuthToken, PlayerPrefs.GetString(legacyAuthToken));
+
+            PlayerPrefs.DeleteKey(legacyPk);
+            PlayerPrefs.DeleteKey(legacyAuthToken);
+            PlayerPrefs.Save();
         }
 
         protected override async Task<Account> _Login(string password = null)
