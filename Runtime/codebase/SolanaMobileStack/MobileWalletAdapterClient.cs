@@ -47,10 +47,10 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return SendRequest<AuthorizationResult>(request);
     }
 
-    public async Task Deauthorize(string authToken)
+    public Task Deauthorize(string authToken)
     {
         var request = PrepareDeauthorizeRequest(authToken);
-        await SendRequest<object>(request);
+        return SendRequest<object>(request);
     }
 
     public Task<CapabilitiesResult> GetCapabilities()

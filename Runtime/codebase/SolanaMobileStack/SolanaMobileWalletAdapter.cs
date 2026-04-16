@@ -201,11 +201,14 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("[MWA] SignAllTransactions: signed payloads were not populated");
             }
-            _authToken = authorization.AuthToken;
-            if (_walletOptions.keepConnectionAlive)
+            if (!string.IsNullOrEmpty(authorization.AuthToken))
             {
-                PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
-                PlayerPrefs.Save();
+                _authToken = authorization.AuthToken;
+                if (_walletOptions.keepConnectionAlive)
+                {
+                    PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
+                    PlayerPrefs.Save();
+                }
             }
             return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
         }
@@ -360,11 +363,14 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("[MWA] SignMessage: signed payloads were not populated");
             }
-            _authToken = authorization.AuthToken;
-            if (_walletOptions.keepConnectionAlive)
+            if (!string.IsNullOrEmpty(authorization.AuthToken))
             {
-                PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
-                PlayerPrefs.Save();
+                _authToken = authorization.AuthToken;
+                if (_walletOptions.keepConnectionAlive)
+                {
+                    PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
+                    PlayerPrefs.Save();
+                }
             }
             return signedMessages.SignedPayloadsBytes[0];
         }
