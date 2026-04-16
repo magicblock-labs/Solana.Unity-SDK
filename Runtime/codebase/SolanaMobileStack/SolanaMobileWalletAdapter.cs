@@ -2,7 +2,10 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Merkator.BitCoin;
+using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using UnityEngine;
 using WebSocketSharp;
@@ -236,6 +239,92 @@ namespace Solana.Unity.SDK
             return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
         }
 
+
+        private async Task<SignAndSendResult> _SignAndSendAllTransactions(
+            Transaction[] transactions, JsonRequest.SignAndSendOptions options)
+        {
+            var cluster = RPCNameMap[(int)RpcCluster];
+            SignAndSendResult res = null;
+            var localAssociationScenario = new LocalAssociationScenario();
+            AuthorizationResult authorization = null;
+            var result = await localAssociationScenario.StartAndExecute(
+                new List<Action<IAdapterOperations>>
+                {
+                    async client =>
+                    {
+                        if (_authToken.IsNullOrEmpty())
+                        {
+                            authorization = await client.Authorize(
+                                new Uri(_walletOptions.identityUri),
+                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _walletOptions.name, cluster);
+                        }
+                        else
+                        {
+                            authorization = await client.Reauthorize(
+                                new Uri(_walletOptions.identityUri),
+                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _walletOptions.name, _authToken);
+                        }
+                    },
+                    async client =>
+                    {
+                        res = await client.SignAndSendTransactions(
+                            transactions.Select(tx => tx.Serialize()).ToList(), options);
+                    }
+                }
+            );
+            if (!result.WasSuccessful)
+            {
+                Debug.LogError(result.Error.Message);
+                throw new Exception(result.Error.Message);
+            }
+            _authToken = authorization.AuthToken;
+            return res;
+        }
+
+        public override async Task<RequestResult<string>> SignAndSendTransaction(
+            Transaction transaction,
+            bool skipPreflight = false,
+            Commitment commitment = Commitment.Confirmed)
+        {
+            transaction.PartialSign(Account);
+            var options = new JsonRequest.SignAndSendOptions
+            {
+                SkipPreflight = skipPreflight,
+                Commitment = commitment.ToString().ToLower()
+            };
+            try
+            {
+                var signAndSendResult = await _SignAndSendAllTransactions(new[] { transaction }, options);
+                if (signAndSendResult?.Signatures == null || signAndSendResult.Signatures.Count == 0)
+                {
+                    return new RequestResult<string>
+                    {
+                        WasHttpRequestSuccessful = true,
+                        WasRequestSuccessfullyHandled = false,
+                        Reason = "Wallet returned no signatures"
+                    };
+                }
+                var sigBase64 = signAndSendResult.Signatures[0];
+                var sigBytes = Convert.FromBase64String(sigBase64);
+                var sigBase58 = Base58Encoding.Encode(sigBytes);
+                return new RequestResult<string>
+                {
+                    WasHttpRequestSuccessful = true,
+                    WasRequestSuccessfullyHandled = true,
+                    Result = sigBase58
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequestResult<string>
+                {
+                    WasRequestSuccessfullyHandled = false,
+                    Reason = ex.Message
+                };
+            }
+        }
 
         public override void Logout()
         {

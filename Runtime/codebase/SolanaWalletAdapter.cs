@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 
 // ReSharper disable once CheckNamespace
@@ -73,7 +75,17 @@ namespace Solana.Unity.SDK
                 return _internalWallet.SignMessage(message);
             throw new NotImplementedException();
         }
-        
+
+        public override Task<RequestResult<string>> SignAndSendTransaction(
+            Transaction transaction,
+            bool skipPreflight = false,
+            Commitment commitment = Commitment.Confirmed)
+        {
+            if (_internalWallet != null)
+                return _internalWallet.SignAndSendTransaction(transaction, skipPreflight, commitment);
+            throw new NotImplementedException();
+        }
+
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
             throw new NotImplementedException();
