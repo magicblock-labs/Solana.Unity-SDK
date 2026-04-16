@@ -12,6 +12,8 @@ using UnityEngine.Scripting;
 public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMessageReceiver
 {
     
+    private const string JsonRpcVersion = "2.0";
+    
     private int _mNextMessageId = 1;
 
     public MobileWalletAdapterClient(IMessageSender messageSender) : base(messageSender)
@@ -81,7 +83,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         }
         var request = new JsonRequest
         {
-            JsonRpc = "2.0",
+            JsonRpc = JsonRpcVersion,
             Method = method,
             Params = new JsonRequest.JsonRequestParams
             {
@@ -102,7 +104,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = new JsonRequest
         {
-            JsonRpc = "2.0",
+            JsonRpc = JsonRpcVersion,
             Method = "deauthorize",
             Params = new JsonRequest.JsonRequestParams
             {
@@ -117,7 +119,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = new JsonRequest
         {
-            JsonRpc = "2.0",
+            JsonRpc = JsonRpcVersion,
             Method = "get_capabilities",
             Params = new JsonRequest.JsonRequestParams(),
             Id = NextMessageId()
@@ -129,7 +131,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = new JsonRequest
         {
-            JsonRpc = "2.0",
+            JsonRpc = JsonRpcVersion,
             Method = "sign_transactions",
             Params = new JsonRequest.JsonRequestParams
             {
@@ -144,7 +146,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = new JsonRequest
         {
-            JsonRpc = "2.0",
+            JsonRpc = JsonRpcVersion,
             Method = "sign_messages",
             Params = new JsonRequest.JsonRequestParams
             {
