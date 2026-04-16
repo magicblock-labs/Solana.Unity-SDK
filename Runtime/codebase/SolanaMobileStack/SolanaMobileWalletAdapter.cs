@@ -289,10 +289,23 @@ namespace Solana.Unity.SDK
             Commitment commitment = Commitment.Confirmed)
         {
             transaction.PartialSign(Account);
+
+            // Fetch context slot for minContextSlot — required by Phantom
+            // (see solana-mobile/mobile-wallet-adapter#1146)
+            ulong? contextSlot = null;
+            try
+            {
+                var blockHash = await ActiveRpcClient.GetLatestBlockHashAsync(commitment);
+                if (blockHash?.Result?.Context?.Slot != null)
+                    contextSlot = blockHash.Result.Context.Slot;
+            }
+            catch (Exception) { /* non-fatal, proceed without it */ }
+
             var options = new JsonRequest.SignAndSendOptions
             {
                 SkipPreflight = skipPreflight,
-                Commitment = commitment.ToString().ToLower()
+                Commitment = commitment.ToString().ToLower(),
+                MinContextSlot = contextSlot
             };
             try
             {
