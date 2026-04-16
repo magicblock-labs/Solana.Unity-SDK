@@ -148,7 +148,7 @@ namespace Solana.Unity.SDK
         {
             [JsonProperty("min_context_slot", NullValueHandling = NullValueHandling.Ignore)]
             [RequiredMember]
-            public int? MinContextSlot { get; set; }
+            public ulong? MinContextSlot { get; set; }
 
             [JsonProperty("commitment", NullValueHandling = NullValueHandling.Ignore)]
             [RequiredMember]

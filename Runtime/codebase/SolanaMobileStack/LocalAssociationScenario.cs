@@ -178,7 +178,15 @@ public class LocalAssociationScenario
         catch (Exception ex)
         {
             Debug.LogError($"{TAG} HandleEncryptedSessionPayload | FATAL type={ex.GetType().Name} msg={ex.Message} encrypted_len={e.Length} port={_port} stack={ex.StackTrace}");
-            try { CloseAssociation(null); } catch (Exception) { }
+            try { CloseAssociation(new Response<object>
+            {
+                JsonRpc = "2.0",
+                Error = new Response<object>.ResponseError
+                {
+                    Code = -3,
+                    Message = $"Session payload error: {ex.Message}"
+                }
+            }); } catch (Exception) { }
         }
     }
 
