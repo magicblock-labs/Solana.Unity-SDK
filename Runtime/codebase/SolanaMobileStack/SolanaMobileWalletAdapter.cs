@@ -299,7 +299,7 @@ namespace Solana.Unity.SDK
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                Debug.LogError($"[MWA] ReconnectWallet failed: {e}");
                 throw;
             }
         }
