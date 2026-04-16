@@ -135,13 +135,16 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("[MWA] Login: authorization was not populated");
             }
-            _authToken = authorization.AuthToken;
             var publicKey = new PublicKey(authorization.PublicKey);
-            if (_walletOptions.keepConnectionAlive)
+            if (!string.IsNullOrEmpty(authorization.AuthToken))
             {
-                PlayerPrefs.SetString(PrefKeyPublicKey, publicKey.ToString());
-                PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
-                PlayerPrefs.Save();
+                _authToken = authorization.AuthToken;
+                if (_walletOptions.keepConnectionAlive)
+                {
+                    PlayerPrefs.SetString(PrefKeyPublicKey, publicKey.ToString());
+                    PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
+                    PlayerPrefs.Save();
+                }
             }
             return new Account(string.Empty, publicKey);
         }
