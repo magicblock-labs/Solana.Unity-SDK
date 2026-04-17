@@ -150,7 +150,7 @@ public class MobileWalletAdapterSession
     {
         if (_encryptionKey == null)
         {
-            const string e = "Cannot encrypt, no session key has been established";
+            const string e = "Cannot decrypt, no session key has been established";
             Debug.LogError(e);
             throw new InvalidOperationException(e);
         }
