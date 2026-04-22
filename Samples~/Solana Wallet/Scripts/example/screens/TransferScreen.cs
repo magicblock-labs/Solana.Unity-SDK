@@ -42,19 +42,21 @@ namespace Solana.Unity.SDK.Example
         {
             var recipientAddress = await ResolveRecipientAddress();
             if (string.IsNullOrEmpty(recipientAddress)) return;
+            if (!CheckRecipientAddress(recipientAddress)) return;
 
             if (_nft != null)
             {
+                if (!CheckNftInput()) return;
                 TransferNft(recipientAddress);
             }
             else if (_transferTokenAccount == null)
             {
-                if (CheckInput(recipientAddress))
+                if (CheckInput())
                     TransferSol(recipientAddress);
             }
             else
             {
-                if (CheckInput(recipientAddress))
+                if (CheckInput())
                     TransferToken(recipientAddress);
             }
         }
@@ -76,20 +78,14 @@ namespace Solana.Unity.SDK.Example
             HandleResponse(result);
         }
 
-        bool CheckInput(string recipientAddress)
+        private bool CheckRecipientAddress(string recipientAddress)
         {
-            if (string.IsNullOrEmpty(amountTxt.text))
+            if (string.IsNullOrEmpty(toPublicTxt.text))
             {
-                errorTxt.text = "Please input transfer amount";
+                errorTxt.text = "Please enter receiver public key or .skr domain";
                 return false;
             }
 
-            if (string.IsNullOrEmpty(toPublicTxt.text))
-            {
-                errorTxt.text = "Please enter receiver public key";
-                return false;
-            }
-            
             try
             {
                 _ = new PublicKey(recipientAddress);
@@ -97,6 +93,42 @@ namespace Solana.Unity.SDK.Example
             catch (Exception)
             {
                 errorTxt.text = "Receiver must be a valid public key or .skr domain";
+                return false;
+            }
+
+            errorTxt.text = "";
+            return true;
+        }
+
+        private bool CheckNftInput()
+        {
+            if (_nft == null)
+            {
+                errorTxt.text = "Invalid NFT selection";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(amountTxt.text))
+            {
+                errorTxt.text = "Please input transfer amount";
+                return false;
+            }
+
+            if (ulong.TryParse(amountTxt.text, out var amount) && amount == 1)
+            {
+                errorTxt.text = "";
+                return true;
+            }
+
+            errorTxt.text = "NFT transfer amount must be 1";
+            return false;
+        }
+
+        bool CheckInput()
+        {
+            if (string.IsNullOrEmpty(amountTxt.text))
+            {
+                errorTxt.text = "Please input transfer amount";
                 return false;
             }
 
@@ -133,7 +165,10 @@ namespace Solana.Unity.SDK.Example
         {
             var destination = toPublicTxt.text?.Trim();
             if (string.IsNullOrEmpty(destination))
+            {
+                errorTxt.text = "Please enter receiver public key or .skr domain";
                 return null;
+            }
 
             if (!destination.EndsWith(".skr", StringComparison.OrdinalIgnoreCase))
                 return destination;
