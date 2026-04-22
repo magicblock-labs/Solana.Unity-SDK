@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using codebase.utility;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
+using Solana.Unity.SDK.Example.Services;
 
 // ReSharper disable once CheckNamespace
 
@@ -42,7 +43,18 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQr();
-        publicKey_txt.text = Web3.Instance.WalletBase.Account.PublicKey;
+        var walletAddress = Web3.Instance.WalletBase.Account.PublicKey.ToString();
+        publicKey_txt.text = walletAddress;
+        ResolveWalletDisplayName(walletAddress);
+    }
+
+    private async void ResolveWalletDisplayName(string walletAddress)
+    {
+        var domain = await SkrAddressResolutionClient.ResolveAddressToDomain(walletAddress);
+        if (!string.IsNullOrEmpty(domain))
+        {
+            publicKey_txt.text = domain;
+        }
     }
 
     private void CheckAndToggleAirdrop()
