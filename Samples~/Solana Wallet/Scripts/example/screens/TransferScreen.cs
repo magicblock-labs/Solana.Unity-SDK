@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK.Example.Services;
@@ -51,21 +52,21 @@ namespace Solana.Unity.SDK.Example
             }
             else if (_transferTokenAccount == null)
             {
-                if (CheckInput())
-                    TransferSol(recipientAddress);
+                if (CheckInput(out var transferAmount))
+                    TransferSol(recipientAddress, transferAmount);
             }
             else
             {
-                if (CheckInput())
-                    TransferToken(recipientAddress);
+                if (CheckInput(out var transferAmount))
+                    TransferToken(recipientAddress, transferAmount);
             }
         }
 
-        private async void TransferSol(string recipientAddress)
+        private async void TransferSol(string recipientAddress, ulong lamports)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
                 new PublicKey(recipientAddress),
-                Convert.ToUInt64(float.Parse(amountTxt.text)*SolLamports));
+                lamports);
             HandleResponse(result);
         }
 
@@ -124,40 +125,90 @@ namespace Solana.Unity.SDK.Example
             return false;
         }
 
-        bool CheckInput()
+        bool CheckInput(out ulong transferAmount)
         {
+            transferAmount = 0;
+
             if (string.IsNullOrEmpty(amountTxt.text))
             {
                 errorTxt.text = "Please input transfer amount";
                 return false;
             }
 
+            var amountText = amountTxt.text.Trim();
             if (_transferTokenAccount == null)
             {
-                if (float.Parse(amountTxt.text) > _ownedSolAmount)
+                if (!decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amountSol))
+                {
+                    errorTxt.text = "Please input a valid amount";
+                    return false;
+                }
+
+                if (amountSol <= 0)
+                {
+                    errorTxt.text = "Transfer amount must be greater than zero";
+                    return false;
+                }
+
+                if (amountSol > (decimal)_ownedSolAmount)
                 {
                     errorTxt.text = "Not enough funds for transaction.";
                     return false;
                 }
+
+                var lamportsDecimal = amountSol * SolLamports;
+                if (lamportsDecimal < 1m)
+                {
+                    errorTxt.text = "Transfer amount is too small";
+                    return false;
+                }
+
+                if (lamportsDecimal > ulong.MaxValue)
+                {
+                    errorTxt.text = "Transfer amount is too large";
+                    return false;
+                }
+
+                transferAmount = decimal.ToUInt64(decimal.Truncate(lamportsDecimal));
             }
             else
             {
-                if (long.Parse(amountTxt.text) > long.Parse(ownedAmountTxt.text))
+                if (!ulong.TryParse(amountText, NumberStyles.None, CultureInfo.InvariantCulture, out var amountToken))
+                {
+                    errorTxt.text = "Please input a valid whole number amount";
+                    return false;
+                }
+
+                if (amountToken == 0)
+                {
+                    errorTxt.text = "Transfer amount must be greater than zero";
+                    return false;
+                }
+
+                if (!ulong.TryParse(ownedAmountTxt.text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ownedTokenAmount))
+                {
+                    errorTxt.text = "Unable to verify token balance";
+                    return false;
+                }
+
+                if (amountToken > ownedTokenAmount)
                 {
                     errorTxt.text = "Not enough funds for transaction.";
                     return false;
                 }
+
+                transferAmount = amountToken;
             }
             errorTxt.text = "";
             return true;
         }
 
-        private async void TransferToken(string recipientAddress)
+        private async void TransferToken(string recipientAddress, ulong amount)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
                 new PublicKey(recipientAddress),
                 new PublicKey(_transferTokenAccount.Account.Data.Parsed.Info.Mint),
-                ulong.Parse(amountTxt.text));
+                amount);
             HandleResponse(result);
         }
 

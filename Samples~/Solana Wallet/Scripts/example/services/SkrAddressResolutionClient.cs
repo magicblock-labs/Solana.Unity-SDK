@@ -148,7 +148,8 @@ namespace Solana.Unity.SDK.Example.Services
 
             var filters = new List<MemCmp>
             {
-                new() { Offset = 8, Bytes = tldParentAccount.ToString() }
+                new() { Offset = 8, Bytes = tldParentAccount.ToString() },
+                new() { Offset = OwnerOffset, Bytes = owner.ToString() }
             };
             var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters);
             if (accounts?.Result == null || accounts.Result.Count == 0)
@@ -193,6 +194,12 @@ namespace Solana.Unity.SDK.Example.Services
 
                 var label = ExtractUtf8Label(reverseLookupRaw);
                 if (string.IsNullOrWhiteSpace(label))
+                    continue;
+
+                if (!TryDeriveNameAccount(label, tldParentAccount, out var forwardResolvedNameAccount))
+                    continue;
+
+                if (forwardResolvedNameAccount.Key != nameAccount.Key)
                     continue;
 
                 return $"{label}.{SuffixSkr}";
