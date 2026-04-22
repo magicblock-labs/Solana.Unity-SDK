@@ -1,6 +1,7 @@
 using System;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.SDK.Example.Services;
 using Solana.Unity.Wallet;
 using TMPro;
 using UnityEngine;
@@ -37,42 +38,45 @@ namespace Solana.Unity.SDK.Example
             });
         }
 
-        private void TryTransfer()
+        private async void TryTransfer()
         {
+            var recipientAddress = await ResolveRecipientAddress();
+            if (string.IsNullOrEmpty(recipientAddress)) return;
+
             if (_nft != null)
             {
-                TransferNft();
+                TransferNft(recipientAddress);
             }
             else if (_transferTokenAccount == null)
             {
-                if (CheckInput())
-                    TransferSol();
+                if (CheckInput(recipientAddress))
+                    TransferSol(recipientAddress);
             }
             else
             {
-                if (CheckInput())
-                    TransferToken();
+                if (CheckInput(recipientAddress))
+                    TransferToken(recipientAddress);
             }
         }
 
-        private async void TransferSol()
+        private async void TransferSol(string recipientAddress)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
-                new PublicKey(toPublicTxt.text),
+                new PublicKey(recipientAddress),
                 Convert.ToUInt64(float.Parse(amountTxt.text)*SolLamports));
             HandleResponse(result);
         }
 
-        private async void TransferNft()
+        private async void TransferNft(string recipientAddress)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
-                new PublicKey(toPublicTxt.text),
+                new PublicKey(recipientAddress),
                 new PublicKey(_nft.metaplexData.data.mint),
                 1);
             HandleResponse(result);
         }
 
-        bool CheckInput()
+        bool CheckInput(string recipientAddress)
         {
             if (string.IsNullOrEmpty(amountTxt.text))
             {
@@ -83,6 +87,16 @@ namespace Solana.Unity.SDK.Example
             if (string.IsNullOrEmpty(toPublicTxt.text))
             {
                 errorTxt.text = "Please enter receiver public key";
+                return false;
+            }
+            
+            try
+            {
+                _ = new PublicKey(recipientAddress);
+            }
+            catch (Exception)
+            {
+                errorTxt.text = "Receiver must be a valid public key or .skr domain";
                 return false;
             }
 
@@ -106,13 +120,33 @@ namespace Solana.Unity.SDK.Example
             return true;
         }
 
-        private async void TransferToken()
+        private async void TransferToken(string recipientAddress)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
-                new PublicKey(toPublicTxt.text),
+                new PublicKey(recipientAddress),
                 new PublicKey(_transferTokenAccount.Account.Data.Parsed.Info.Mint),
                 ulong.Parse(amountTxt.text));
             HandleResponse(result);
+        }
+
+        private async System.Threading.Tasks.Task<string> ResolveRecipientAddress()
+        {
+            var destination = toPublicTxt.text?.Trim();
+            if (string.IsNullOrEmpty(destination))
+                return null;
+
+            if (!destination.EndsWith(".skr", StringComparison.OrdinalIgnoreCase))
+                return destination;
+
+            var resolvedAddress = await SkrAddressResolutionClient.ResolveDomainToAddress(destination);
+            if (string.IsNullOrEmpty(resolvedAddress))
+            {
+                errorTxt.text = $"Unable to resolve {destination}";
+                return null;
+            }
+
+            toPublicTxt.text = resolvedAddress;
+            return resolvedAddress;
         }
 
         private void HandleResponse(RequestResult<string> result)
