@@ -45,12 +45,26 @@ public class ReceiveScreen : SimpleScreen
         GenerateQr();
         var walletAddress = Web3.Instance.WalletBase.Account.PublicKey.ToString();
         publicKey_txt.text = walletAddress;
-        ResolveWalletDisplayName(walletAddress);
+        _ = ResolveWalletDisplayName(walletAddress);
     }
 
-    private async void ResolveWalletDisplayName(string walletAddress)
+    private async System.Threading.Tasks.Task ResolveWalletDisplayName(string walletAddress)
     {
-        var domain = await SkrAddressResolutionClient.ResolveAddressToDomain(walletAddress);
+        var requestedAddress = walletAddress;
+        string domain;
+        try
+        {
+            domain = await SkrAddressResolutionClient.ResolveAddressToDomain(requestedAddress);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[SKR] Reverse lookup failed: {ex.Message}");
+            return;
+        }
+
+        if (!gameObject.activeInHierarchy || publicKey_txt.text != requestedAddress)
+            return;
+
         if (!string.IsNullOrEmpty(domain))
         {
             publicKey_txt.text = domain;

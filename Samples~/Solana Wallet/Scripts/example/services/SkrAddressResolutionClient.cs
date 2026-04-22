@@ -45,14 +45,30 @@ namespace Solana.Unity.SDK.Example.Services
         {
             if (string.IsNullOrWhiteSpace(domain))
                 return null;
-            return await ResolveDomainToAddressOnChain(domain);
+
+            try
+            {
+                return await ResolveDomainToAddressOnChain(domain);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public static async Task<string> ResolveAddressToDomain(string address)
         {
             if (string.IsNullOrWhiteSpace(address))
                 return null;
-            return await ResolveAddressToDomainOnChain(address);
+
+            try
+            {
+                return await ResolveAddressToDomainOnChain(address);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private static async Task<string> ResolveDomainToAddressOnChain(string domainTld)
@@ -132,8 +148,7 @@ namespace Solana.Unity.SDK.Example.Services
 
             var filters = new List<MemCmp>
             {
-                new() { Offset = 8, Bytes = tldParentAccount.ToString() },
-                new() { Offset = OwnerOffset, Bytes = owner.ToString() }
+                new() { Offset = 8, Bytes = tldParentAccount.ToString() }
             };
             var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters);
             if (accounts?.Result == null || accounts.Result.Count == 0)
@@ -152,6 +167,24 @@ namespace Solana.Unity.SDK.Example.Services
                 }
 
                 if (!TryDeriveNameAccount(nameAccount.Key, null, out var reverseLookupAccount, tldHouseAccount))
+                    continue;
+
+                var nameRecordRaw = await GetRawAccountData(nameAccount);
+                if (nameRecordRaw.Length < NameRecordHeaderLength)
+                    continue;
+
+                var expiresAt = ReadUInt64LittleEndian(nameRecordRaw, ExpiresAtOffset);
+                var now = (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                if (expiresAt != 0 && expiresAt < now)
+                    continue;
+
+                var recordOwnerBytes = nameRecordRaw.Skip(OwnerOffset).Take(PublicKeyLength).ToArray();
+                if (recordOwnerBytes.All(b => b == 0))
+                    continue;
+
+                var recordOwner = new PublicKey(recordOwnerBytes);
+                var actualOwner = await ResolveWrappedDomainOwner(nameAccount, tldHouseAccount, recordOwner);
+                if (actualOwner?.Key != owner.Key)
                     continue;
 
                 var reverseLookupRaw = await GetRawAccountData(reverseLookupAccount);
@@ -299,11 +332,11 @@ namespace Solana.Unity.SDK.Example.Services
             tld = null;
 
             var parts = input.Trim().ToLowerInvariant().Split('.');
-            if (parts.Length < 2)
+            if (parts.Length != 2 || parts[1] != SuffixSkr)
                 return false;
 
-            label = parts[^2];
-            tld = parts[^1];
+            label = parts[0];
+            tld = parts[1];
             return !string.IsNullOrWhiteSpace(label) && !string.IsNullOrWhiteSpace(tld);
         }
 
