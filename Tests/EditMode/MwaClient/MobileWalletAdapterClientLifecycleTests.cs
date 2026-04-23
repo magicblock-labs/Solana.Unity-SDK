@@ -2,7 +2,7 @@ using NUnit.Framework;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Solana.Unity.SDK.Tests.EditMode.Mocks;
 
 // ReSharper disable once CheckNamespace
@@ -32,20 +32,43 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         // Helpers
 
         /// <summary>
-        /// Reads the last captured message and decodes it as JsonRequest.
-        /// Mirrors the helper in MobileWalletAdapterClientTests.cs.
+        /// Reads the last captured message as raw JSON so the tests assert the
+        /// actual wire format rather than a round-trip through JsonRequest.
         /// </summary>
-        private JsonRequest DecodeLastRequest()
+        private JObject DecodeLastRequestObject()
         {
             Assert.IsNotNull(_sender.LastMessage, "No message was sent to MockMessageSender");
             var json = Encoding.UTF8.GetString(_sender.LastMessage);
-            return JsonConvert.DeserializeObject<JsonRequest>(json);
+            return JObject.Parse(json);
         }
 
-        private JsonRequest DecodeRequestAt(int index)
+        private JObject DecodeRequestObjectAt(int index)
         {
             var json = Encoding.UTF8.GetString(_sender.SentMessages[index]);
-            return JsonConvert.DeserializeObject<JsonRequest>(json);
+            return JObject.Parse(json);
+        }
+
+        private JObject DecodeLastParamsObject()
+        {
+            return GetParamsObject(DecodeLastRequestObject());
+        }
+
+        private static JObject GetParamsObject(JObject request)
+        {
+            var paramsToken = request["params"];
+            Assert.IsNotNull(paramsToken, "Request must include a params object");
+            Assert.AreEqual(JTokenType.Object, paramsToken.Type,
+                "Request params must serialize as a JSON object");
+            return (JObject)paramsToken;
+        }
+
+        private static int GetRequestId(JObject request)
+        {
+            var idToken = request["id"];
+            Assert.IsNotNull(idToken, "Request must include an id");
+            Assert.AreEqual(JTokenType.Integer, idToken.Type,
+                "Request id must serialize as a JSON integer");
+            return idToken.Value<int>();
         }
 
         
@@ -57,8 +80,8 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.Deauthorize("test-auth-token-abc123");
 
             // Assert
-            var request = DecodeLastRequest();
-            Assert.AreEqual("deauthorize", request.Method,
+            var request = DecodeLastRequestObject();
+            Assert.AreEqual("deauthorize", request.Value<string>("method"),
                 "Method must be 'deauthorize'");
         }
 
@@ -67,8 +90,8 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.Deauthorize("test-auth-token-abc123");
 
-            var request = DecodeLastRequest();
-            Assert.AreEqual("2.0", request.JsonRpc,
+            var request = DecodeLastRequestObject();
+            Assert.AreEqual("2.0", request.Value<string>("jsonrpc"),
                 "JsonRpc version must be '2.0'");
         }
 
@@ -82,10 +105,9 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.Deauthorize(authToken);
 
             // Assert
-            var request = DecodeLastRequest();
-            Assert.IsNotNull(request.Params, "Params must not be null");
-            Assert.AreEqual(authToken, request.Params.AuthToken,
-                "Params.AuthToken must match the supplied authToken");
+            var paramsObject = DecodeLastParamsObject();
+            Assert.AreEqual(authToken, paramsObject.Value<string>("auth_token"),
+                "params.auth_token must match the supplied authToken");
         }
 
         [Test]
@@ -95,9 +117,9 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             // of the MWA spec for this RPC and must not leak into the payload.
             _ = _client.Deauthorize("auth-token");
 
-            var request = DecodeLastRequest();
-            Assert.IsNull(request.Params.Identity,
-                "Deauthorize must not send an Identity block (uri/icon/name)");
+            var paramsObject = DecodeLastParamsObject();
+            Assert.IsNull(paramsObject.Property("identity"),
+                "Deauthorize must not send an identity key in params");
         }
 
         [Test]
@@ -105,9 +127,9 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.Deauthorize("auth-token");
 
-            var request = DecodeLastRequest();
-            Assert.IsNull(request.Params.Cluster,
-                "Deauthorize must not send a Cluster field");
+            var paramsObject = DecodeLastParamsObject();
+            Assert.IsNull(paramsObject.Property("cluster"),
+                "Deauthorize must not send a cluster key in params");
         }
 
         [Test]
@@ -115,11 +137,11 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.Deauthorize("auth-token");
 
-            var request = DecodeLastRequest();
-            Assert.IsNull(request.Params.Payloads,
-                "Deauthorize must not send Payloads");
-            Assert.IsNull(request.Params.Addresses,
-                "Deauthorize must not send Addresses");
+            var paramsObject = DecodeLastParamsObject();
+            Assert.IsNull(paramsObject.Property("payloads"),
+                "Deauthorize must not send a payloads key in params");
+            Assert.IsNull(paramsObject.Property("addresses"),
+                "Deauthorize must not send an addresses key in params");
         }
 
         [Test]
@@ -127,8 +149,9 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.Deauthorize("auth-token");
 
-            var request = DecodeLastRequest();
-            Assert.Greater(request.Id, 0, "Request Id must be a positive integer");
+            var request = DecodeLastRequestObject();
+            Assert.Greater(GetRequestId(request), 0,
+                "Request Id must be a positive integer");
         }
 
         [Test]
@@ -138,11 +161,11 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.Deauthorize("token-1");
             _ = _client.Deauthorize("token-2");
 
-            var first = DecodeRequestAt(0);
-            var second = DecodeRequestAt(1);
+            var first = DecodeRequestObjectAt(0);
+            var second = DecodeRequestObjectAt(1);
 
             // Assert
-            Assert.AreEqual(first.Id + 1, second.Id,
+            Assert.AreEqual(GetRequestId(first) + 1, GetRequestId(second),
                 "Each successive Deauthorize must have Id one greater than the previous");
         }
 
@@ -154,8 +177,11 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             Assert.DoesNotThrow(() => _client.Deauthorize(null),
                 "Deauthorize must not throw when authToken is null");
 
-            var request = DecodeLastRequest();
-            Assert.AreEqual("deauthorize", request.Method);
+            var request = DecodeLastRequestObject();
+            var paramsObject = DecodeLastParamsObject();
+            Assert.AreEqual("deauthorize", request.Value<string>("method"));
+            Assert.IsNull(paramsObject.Property("auth_token"),
+                "Null auth tokens must be omitted from params");
         }
 
         
@@ -165,8 +191,8 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.GetCapabilities();
 
-            var request = DecodeLastRequest();
-            Assert.AreEqual("get_capabilities", request.Method,
+            var request = DecodeLastRequestObject();
+            Assert.AreEqual("get_capabilities", request.Value<string>("method"),
                 "Method must be 'get_capabilities' (snake_case per MWA spec)");
         }
 
@@ -175,8 +201,8 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.GetCapabilities();
 
-            var request = DecodeLastRequest();
-            Assert.AreEqual("2.0", request.JsonRpc);
+            var request = DecodeLastRequestObject();
+            Assert.AreEqual("2.0", request.Value<string>("jsonrpc"));
         }
 
         [Test]
@@ -187,14 +213,9 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             // (which some MWA servers reject) is caught here.
             _ = _client.GetCapabilities();
 
-            var request = DecodeLastRequest();
-            Assert.IsNotNull(request.Params,
-                "GetCapabilities must send a non-null (empty) Params object");
-            Assert.IsNull(request.Params.Identity, "Params.Identity must be null");
-            Assert.IsNull(request.Params.Cluster, "Params.Cluster must be null");
-            Assert.IsNull(request.Params.AuthToken, "Params.AuthToken must be null");
-            Assert.IsNull(request.Params.Payloads, "Params.Payloads must be null");
-            Assert.IsNull(request.Params.Addresses, "Params.Addresses must be null");
+            var paramsObject = DecodeLastParamsObject();
+            Assert.IsFalse(paramsObject.HasValues,
+                "GetCapabilities must send an empty params object");
         }
 
         [Test]
@@ -202,8 +223,9 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             _ = _client.GetCapabilities();
 
-            var request = DecodeLastRequest();
-            Assert.Greater(request.Id, 0, "Request Id must be a positive integer");
+            var request = DecodeLastRequestObject();
+            Assert.Greater(GetRequestId(request), 0,
+                "Request Id must be a positive integer");
         }
 
         [Test]
@@ -212,10 +234,10 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.GetCapabilities();
             _ = _client.GetCapabilities();
 
-            var first = DecodeRequestAt(0);
-            var second = DecodeRequestAt(1);
+            var first = DecodeRequestObjectAt(0);
+            var second = DecodeRequestObjectAt(1);
 
-            Assert.AreEqual(first.Id + 1, second.Id,
+            Assert.AreEqual(GetRequestId(first) + 1, GetRequestId(second),
                 "Each successive GetCapabilities must have Id one greater than the previous");
         }
 
@@ -246,14 +268,14 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.Deauthorize("auth-token");
             _ = _client.GetCapabilities();
 
-            var first = DecodeRequestAt(0);
-            var second = DecodeRequestAt(1);
-            var third = DecodeRequestAt(2);
+            var first = DecodeRequestObjectAt(0);
+            var second = DecodeRequestObjectAt(1);
+            var third = DecodeRequestObjectAt(2);
 
             // Assert, the client maintains a single monotonic id counter.
-            Assert.AreEqual(first.Id + 1, second.Id,
+            Assert.AreEqual(GetRequestId(first) + 1, GetRequestId(second),
                 "Deauthorize id must follow Authorize id by 1");
-            Assert.AreEqual(second.Id + 1, third.Id,
+            Assert.AreEqual(GetRequestId(second) + 1, GetRequestId(third),
                 "GetCapabilities id must follow Deauthorize id by 1");
         }
     }
