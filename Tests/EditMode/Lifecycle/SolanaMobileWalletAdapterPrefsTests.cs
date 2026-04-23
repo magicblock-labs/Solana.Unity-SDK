@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using System.Reflection;
 using UnityEngine;
@@ -18,9 +19,8 @@ namespace Solana.Unity.SDK.Tests.EditMode.Lifecycle
     ///      to the namespaced keys exactly once without overwriting newer
     ///      data.
     ///
-    /// [TearDown] wipes every key the test might have touched so PlayerPrefs
-    /// (which persists in the registry under the Unity editor project) stays
-    /// clean between runs.
+    /// [SetUp]/[TearDown] snapshot and restore any pre-existing values because
+    /// EditMode PlayerPrefs persist in the Unity editor project between runs.
     /// </summary>
     [Category("Lifecycle")]
     public class SolanaMobileWalletAdapterPrefsTests
@@ -29,10 +29,20 @@ namespace Solana.Unity.SDK.Tests.EditMode.Lifecycle
         private const string LegacyAuthToken = "authToken";
         private const string NewPkKey = "solana_sdk.mwa.public_key";
         private const string NewAuthTokenKey = "solana_sdk.mwa.auth_token";
+        private static readonly string[] RelevantKeys =
+        {
+            LegacyPk,
+            LegacyAuthToken,
+            NewPkKey,
+            NewAuthTokenKey
+        };
+
+        private Dictionary<string, string> _originalPrefs;
 
         [SetUp]
         public void SetUp()
         {
+            _originalPrefs = SnapshotRelevantKeys();
             DeleteAllRelevantKeys();
         }
 
@@ -40,14 +50,45 @@ namespace Solana.Unity.SDK.Tests.EditMode.Lifecycle
         public void TearDown()
         {
             DeleteAllRelevantKeys();
+            RestoreOriginalKeys();
+        }
+
+        private static Dictionary<string, string> SnapshotRelevantKeys()
+        {
+            var snapshot = new Dictionary<string, string>();
+            foreach (var key in RelevantKeys)
+            {
+                if (PlayerPrefs.HasKey(key))
+                {
+                    snapshot[key] = PlayerPrefs.GetString(key);
+                }
+            }
+
+            return snapshot;
+        }
+
+        private void RestoreOriginalKeys()
+        {
+            if (_originalPrefs == null)
+            {
+                return;
+            }
+
+            foreach (var entry in _originalPrefs)
+            {
+                PlayerPrefs.SetString(entry.Key, entry.Value);
+            }
+
+            PlayerPrefs.Save();
         }
 
         private static void DeleteAllRelevantKeys()
         {
-            PlayerPrefs.DeleteKey(LegacyPk);
-            PlayerPrefs.DeleteKey(LegacyAuthToken);
-            PlayerPrefs.DeleteKey(NewPkKey);
-            PlayerPrefs.DeleteKey(NewAuthTokenKey);
+            foreach (var key in RelevantKeys)
+            {
+                PlayerPrefs.DeleteKey(key);
+            }
+
             PlayerPrefs.Save();
         }
 
