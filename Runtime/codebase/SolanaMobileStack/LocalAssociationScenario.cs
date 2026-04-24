@@ -92,6 +92,7 @@ public class LocalAssociationScenario : IDisposable
                     action.Invoke(_client);
                 
                     lastResponse = await _responseTcs.Task;
+                    _responseTcs = null;
 
                     ct.ThrowIfCancellationRequested();
                 }
@@ -215,10 +216,12 @@ public class LocalAssociationScenario : IDisposable
         Debug.Log($"[MWA] WS Closed: {closeCode}");
         if (closeCode == WebSocketCloseCode.Normal) 
             return;
-        
+
         if (!_isConnecting)
         {
-            _tcs?.TrySetException(new Exception($"WS closed unexpectedly: {closeCode}"));
+            var exc = new Exception($"WS closed unexpectedly: {closeCode}");
+            _responseTcs?.TrySetException(exc);
+            _tcs?.TrySetException(exc);
         }
         else
         {
