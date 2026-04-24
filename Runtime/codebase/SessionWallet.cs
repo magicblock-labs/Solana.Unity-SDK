@@ -65,24 +65,6 @@ namespace Solana.Unity.SDK
         {
             tx.PartialSign(new[] { _externalWallet.Account, Account });
         }
-        
-        public static SessionWallet GetSessionWallet(string publicKey, string privateKey, PublicKey targetProgram)
-        {
-            _externalWallet = Web3.Wallet;
-
-            var sessionAccount = new Account(privateKey, publicKey); 
-            
-            // TODO: ActiveRpcClient can be null, get node address some other way
-            var sessionWallet = new SessionWallet(_externalWallet.RpcCluster, _externalWallet.ActiveRpcClient.NodeAddress.ToString())
-            {
-                TargetProgram = targetProgram,
-                EncryptedKeystoreKey = $"{_externalWallet.Account.PublicKey}_SessionKeyStore",
-                SessionTokenPDA = FindSessionToken(targetProgram, sessionAccount, _externalWallet.Account),
-                Account = sessionAccount,
-            };
-
-            return sessionWallet;
-        }
 
         /// <summary>
         /// Creates a new SessionWallet instance based on the signature we get from signing a specific message.

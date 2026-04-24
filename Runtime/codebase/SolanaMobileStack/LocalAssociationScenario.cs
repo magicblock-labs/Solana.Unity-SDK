@@ -17,9 +17,9 @@ public class LocalAssociationScenario : IDisposable
     private readonly TimeSpan _overallTimeout = TimeSpan.FromSeconds(30);
     private readonly TimeSpan _keyExchangeTimeout = TimeSpan.FromSeconds(20);
 
-    private readonly AndroidJavaObject _currentActivity;
-    private readonly int _port;
-    private readonly MobileWalletAdapterSession _session;
+    private readonly AndroidJavaObject _currentActivity = GetCurrentActivity();
+    private readonly int _port = RandomPort();
+    private readonly MobileWalletAdapterSession _session = new();
     private IWebSocket _webSocket;
     private MobileWalletAdapterClient _client;
 
@@ -30,13 +30,6 @@ public class LocalAssociationScenario : IDisposable
     private TaskCompletionSource<Response<object>> _responseTcs;
     private TaskCompletionSource<Response<object>> _tcs;
     private CancellationToken _cancellationToken;
-
-    public LocalAssociationScenario()
-    {
-        _currentActivity = GetCurrentActivity();
-        _port = RandomPort();
-        _session = new MobileWalletAdapterSession();
-    }
 
     private static AndroidJavaObject GetCurrentActivity()
     {
@@ -53,7 +46,7 @@ public class LocalAssociationScenario : IDisposable
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(_overallTimeout);
 
-        _cancellationToken = ct;
+        _cancellationToken = cts.Token;
         _tcs = new TaskCompletionSource<Response<object>>();
 
         StartActivityForAssociation(_session.AssociationToken, _port);
@@ -94,7 +87,7 @@ public class LocalAssociationScenario : IDisposable
                     lastResponse = await _responseTcs.Task;
                     _responseTcs = null;
 
-                    ct.ThrowIfCancellationRequested();
+                    _cancellationToken.ThrowIfCancellationRequested();
                 }
 
                 _tcs.TrySetResult(lastResponse ?? new Response<object>());
@@ -140,7 +133,7 @@ public class LocalAssociationScenario : IDisposable
     {
         var intent = LocalAssociationIntentCreator.CreateAssociationIntent(associationToken, port);
         _currentActivity.Call("startActivityForResult", intent, 0);
-        Debug.Log($"[MWA] Launched intent for port {port}, token {associationToken}");
+        Debug.Log($"[MWA] Launched intent for port {port}");
     }
 
     private async Task ConnectWithBackoffAsync()
@@ -198,7 +191,7 @@ public class LocalAssociationScenario : IDisposable
         } while (_webSocket.State != WebSocketState.Open && !_cancellationToken.IsCancellationRequested &&
                  attempt < maxAttempts);
 
-        throw new TimeoutException("WebSocket connect timed out after max attempts");
+        throw new TimeoutException("[MWA] WebSocket connect timed out after max attempts");
     }
 
     private void OnWsOpen()
@@ -219,7 +212,7 @@ public class LocalAssociationScenario : IDisposable
 
         if (!_isConnecting)
         {
-            var exc = new Exception($"WS closed unexpectedly: {closeCode}");
+            var exc = new Exception($"[MWA] WS closed unexpectedly: {closeCode}");
             _responseTcs?.TrySetException(exc);
             _tcs?.TrySetException(exc);
         }
@@ -229,9 +222,12 @@ public class LocalAssociationScenario : IDisposable
         }
     }
 
-    private static void OnWsError(string message)
+    private void OnWsError(string message)
     {
-        Debug.Log($"[MWA] WS Error: {message}");
+        if (_isConnecting)
+            _wsConnected?.TrySetResult(false);
+        else
+            _tcs?.TrySetException(new Exception($"[MWA] WS error: {message}"));
     }
 
     private void OnWsMessage(byte[] bytes)
@@ -254,7 +250,7 @@ public class LocalAssociationScenario : IDisposable
                 var json = System.Text.Encoding.UTF8.GetString(decrypted);
                 _client.Receive(json);
 
-                Debug.Log($"[MWA] Received: {json}");
+                Debug.Log($"[MWA] Received encrypted message");
 
                 var response = JsonConvert.DeserializeObject<Response<object>>(json);
                 _responseTcs.TrySetResult(response);
@@ -275,7 +271,7 @@ public class LocalAssociationScenario : IDisposable
             while (_client == null)
             {
                 if (ct.IsCancellationRequested || DateTime.UtcNow - start > _keyExchangeTimeout)
-                    throw new TimeoutException("Key exchange timed out");
+                    throw new TimeoutException("[MWA] Key exchange timed out");
 
                 await Task.Delay(200, ct);
             }
