@@ -132,7 +132,7 @@ namespace Solana.Unity.SDK
                 }
             }
             AuthorizationResult authorization = null;
-            var localAssociationScenario = new LocalAssociationScenario();
+            using var localAssociationScenario = new LocalAssociationScenario();
             var cluster = RPCNameMap[(int)RpcCluster];
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
@@ -183,7 +183,7 @@ namespace Solana.Unity.SDK
 
             var cluster = RPCNameMap[(int)RpcCluster];
             SignedResult res = null;
-            var localAssociationScenario = new LocalAssociationScenario();
+            using var localAssociationScenario = new LocalAssociationScenario();
             AuthorizationResult authorization = null;
             var result = await localAssociationScenario.StartAndExecute(
                 new List<Action<IAdapterOperations>>
@@ -341,7 +341,7 @@ namespace Solana.Unity.SDK
                 throw new Exception("[MWA] Cannot sign message: no account available");
 
             SignedResult signedMessages = null;
-            var localAssociationScenario = new LocalAssociationScenario();
+            using var localAssociationScenario = new LocalAssociationScenario();
             AuthorizationResult authorization = null;
             var cluster = RPCNameMap[(int)RpcCluster];
             var result = await localAssociationScenario.StartAndExecute(
