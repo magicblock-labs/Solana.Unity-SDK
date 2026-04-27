@@ -279,7 +279,14 @@ namespace Solana.Unity.SDK
                 Debug.LogError(result.Error.Message);
                 throw new Exception(result.Error.Message);
             }
-            _authToken = authorization.AuthToken;
+            if (authorization == null)
+            {
+                throw new Exception("[MWA] SignAndSend: authorization was not populated");
+            }
+            if (!string.IsNullOrEmpty(authorization.AuthToken))
+            {
+                _authToken = authorization.AuthToken;
+            }
             return res;
         }
 
@@ -302,7 +309,12 @@ namespace Solana.Unity.SDK
             catch (Exception ex)
             {
                 Debug.LogError($"[MWA] sign_and_send: failed to fetch context slot for min_context_slot - {ex.Message}");
-                throw;
+                return new RequestResult<string>
+                {
+                    WasHttpRequestSuccessful = false,
+                    WasRequestSuccessfullyHandled = false,
+                    Reason = $"Failed to fetch context slot for min_context_slot: {ex.Message}"
+                };
             }
 
             var options = new JsonRequest.SignAndSendOptions
