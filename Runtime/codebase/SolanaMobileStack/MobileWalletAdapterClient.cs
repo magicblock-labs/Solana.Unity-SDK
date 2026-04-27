@@ -25,50 +25,106 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = PrepareAuthRequest(
             identityUri,
-            iconUri, 
-            identityName, 
+            iconUri,
+            identityName,
             cluster,
             "authorize");
-        
-        return SendRequest<AuthorizationResult>(request);
+
+        return SendRequest<AuthorizationResult>(request, "authorize");
     }
 
     public Task<AuthorizationResult> Reauthorize(Uri identityUri, Uri iconUri, string identityName, string authToken)
     {
         var request = PrepareAuthRequest(
             identityUri,
-            iconUri, 
-            identityName, 
+            iconUri,
+            identityName,
             null,
             "reauthorize");
-        
+
         request.Params.AuthToken = authToken;
 
-        return SendRequest<AuthorizationResult>(request);
+        return SendRequest<AuthorizationResult>(request, "reauthorize");
     }
 
     public Task Deauthorize(string authToken)
     {
         var request = PrepareDeauthorizeRequest(authToken);
-        return SendRequest<object>(request);
+        return SendRequest<object>(request, "deauthorize");
     }
 
     public Task<CapabilitiesResult> GetCapabilities()
     {
         var request = PrepareGetCapabilitiesRequest();
-        return SendRequest<CapabilitiesResult>(request);
+        return SendRequest<CapabilitiesResult>(request, "get_capabilities");
     }
-    
+
     public Task<SignedResult> SignTransactions(IEnumerable<byte[]> transactions)
     {
         var request = PrepareSignTransactionsRequest(transactions);
-        return SendRequest<SignedResult>(request);
+        return SendRequest<SignedResult>(request, "sign_transactions");
     }
 
     public Task<SignedResult> SignMessages(IEnumerable<byte[]> messages, IEnumerable<byte[]> addresses)
     {
         var request = PrepareSignMessagesRequest(messages, addresses);
-        return SendRequest<SignedResult>(request);
+        return SendRequest<SignedResult>(request, "sign_messages");
+    }
+
+    [Preserve]
+    public Task<AuthorizationResult> Authorize(
+        Uri identityUri, Uri iconUri, string identityName,
+        string chain, string[] features, string[] addresses,
+        string authToken, JsonRequest.SignInPayload signInPayload)
+    {
+        if (identityUri != null && !identityUri.IsAbsoluteUri)
+        {
+            throw new ArgumentException("If non-null, identityUri must be an absolute, hierarchical Uri");
+        }
+        if (iconUri != null && iconUri.IsAbsoluteUri)
+        {
+            throw new ArgumentException("If non-null, iconRelativeUri must be a relative Uri");
+        }
+
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "authorize",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                Identity = new JsonRequest.JsonRequestIdentity
+                {
+                    Uri = identityUri,
+                    Icon = iconUri,
+                    Name = identityName
+                },
+                Chain = chain,
+                Features = features?.ToList(),
+                Addresses = addresses?.ToList(),
+                AuthToken = authToken,
+                SignInPayloadData = signInPayload
+            },
+            Id = NextMessageId()
+        };
+
+        return SendRequest<AuthorizationResult>(request, "authorize");
+    }
+
+    public Task<SignAndSendResult> SignAndSendTransactions(IEnumerable<byte[]> transactions, JsonRequest.SignAndSendOptions options)
+    {
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "sign_and_send_transactions",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                Payloads = transactions.Select(Convert.ToBase64String).ToList(),
+                Options = options
+            },
+            Id = NextMessageId()
+        };
+
+        return SendRequest<SignAndSendResult>(request, "sign_and_send_transactions");
     }
 
     private JsonRequest PrepareAuthRequest(Uri uriIdentity, Uri icon, string name, string cluster, string method)

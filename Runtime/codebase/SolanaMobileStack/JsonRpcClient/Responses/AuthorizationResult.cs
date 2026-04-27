@@ -17,6 +17,15 @@ public class AuthorizationResult {
         [JsonProperty("label")]
         [RequiredMember]
         public string Label { get; set; }
+
+        [JsonProperty("chains", NullValueHandling = NullValueHandling.Ignore)]
+        public List<string> Chains { get; set; }
+
+        [JsonProperty("features", NullValueHandling = NullValueHandling.Ignore)]
+        public List<string> Features { get; set; }
+
+        [JsonProperty("icon", NullValueHandling = NullValueHandling.Ignore)]
+        public string Icon { get; set; }
     }
     
 
@@ -31,7 +40,10 @@ public class AuthorizationResult {
     [JsonProperty("accounts")]
     [RequiredMember]
     public List<AuthorizationResultAccounts> Accounts { get; set; }
-    
+
+    [JsonProperty("sign_in_result", NullValueHandling = NullValueHandling.Ignore)]
+    public SignInResult SignInResult { get; set; }
+
     [RequiredMember]
     public byte[] PublicKey => Accounts is { Count: > 0 } ? Convert.FromBase64String(Accounts[0].Address) : null;
 

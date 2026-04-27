@@ -19,6 +19,8 @@ namespace Solana.Unity.SDK
         public string iconUri = "/favicon.ico";
         public string name = "Solana.Unity-SDK";
         public bool keepConnectionAlive = true;
+        public string siwsDomain = null;
+        public string siwsStatement = null;
     }
     
     
@@ -27,9 +29,18 @@ namespace Solana.Unity.SDK
     {
         private const string PrefKeyPublicKey = "solana_sdk.mwa.public_key";
         private const string PrefKeyAuthToken = "solana_sdk.mwa.auth_token";
-        
+
+        private static readonly Dictionary<string, string> ClusterToChain = new()
+        {
+            { "mainnet-beta", "solana:mainnet" },
+            { "devnet", "solana:devnet" },
+            { "testnet", "solana:testnet" },
+            // Default solana-test-validator genesis hash; non-default validators need dynamic resolution.
+            { "localnet", "solana:4754oPEMhAKy14CZc8GzQUP93CB4ouEL" },
+        };
+
         private readonly SolanaMobileWalletAdapterOptions _walletOptions;
-        
+
         private Transaction _currentTransaction;
 
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
@@ -39,6 +50,8 @@ namespace Solana.Unity.SDK
 
         public event Action OnWalletDisconnected;
         public event Action OnWalletReconnected;
+
+        public SignInResult LastSignInResult { get; private set; }
 
         public SolanaMobileWalletAdapter(
             SolanaMobileWalletAdapterOptions solanaWalletOptions,
@@ -131,21 +144,69 @@ namespace Solana.Unity.SDK
                     PlayerPrefs.Save();
                 }
             }
+
             AuthorizationResult authorization = null;
             var localAssociationScenario = new LocalAssociationScenario();
             var cluster = RPCNameMap[(int)RpcCluster];
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+            var useSiws = !string.IsNullOrEmpty(_walletOptions.siwsDomain);
+
+            SignedResult siwsFallbackSig = null;
+            string siwsMessageText = null;
+
+            var actions = new List<Action<IAdapterOperations>>();
+
+            if (useSiws)
+            {
+                var chain = ClusterToChain.TryGetValue(cluster, out var c) ? c : "solana:mainnet";
+                var signInPayload = new JsonRequest.SignInPayload
                 {
-                    async client =>
-                    {
-                        authorization = await client.Authorize(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
-                            _walletOptions.name, cluster);
-                    }
-                }
-            );
+                    Domain = _walletOptions.siwsDomain,
+                    Statement = _walletOptions.siwsStatement,
+                    Uri = _walletOptions.identityUri
+                };
+
+                // Combined action: Authorize, then if the wallet did not return sign_in_result
+                // natively, fall back to constructing a CAIP-122 SIWS message and signing it via
+                // sign_messages. Combining both steps into one delegate avoids relying on the
+                // captured `authorization` variable being visible across separate Action lambdas
+                // under the current async-void Action<IAdapterOperations> dispatch pattern.
+                actions.Add(async client =>
+                {
+                    authorization = await client.Authorize(
+                        new Uri(_walletOptions.identityUri),
+                        new Uri(_walletOptions.iconUri, UriKind.Relative),
+                        _walletOptions.name,
+                        chain, null, null, null, signInPayload);
+
+                    if (authorization?.SignInResult != null) return;
+                    if (authorization?.PublicKey == null) return;
+
+                    var pubkeyBase58 = new PublicKey(authorization.PublicKey).Key;
+                    siwsMessageText = $"{_walletOptions.siwsDomain} wants you to sign in with your Solana account:\n{pubkeyBase58}";
+                    if (!string.IsNullOrEmpty(_walletOptions.siwsStatement))
+                        siwsMessageText += $"\n\n{_walletOptions.siwsStatement}";
+                    siwsMessageText += $"\n\nURI: {_walletOptions.identityUri}";
+                    var messageBytes = System.Text.Encoding.UTF8.GetBytes(siwsMessageText);
+
+                    siwsFallbackSig = await client.SignMessages(
+                        messages: new List<byte[]> { messageBytes },
+                        addresses: new List<byte[]> { authorization.PublicKey }
+                    );
+                });
+            }
+            else
+            {
+                actions.Add(async client =>
+                {
+                    authorization = await client.Authorize(
+                        new Uri(_walletOptions.identityUri),
+                        new Uri(_walletOptions.iconUri, UriKind.Relative),
+                        _walletOptions.name, cluster);
+                });
+            }
+
+            var result = await localAssociationScenario.StartAndExecute(actions);
+
             if (!result.WasSuccessful)
             {
                 Debug.LogError(result.Error.Message);
@@ -155,7 +216,33 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("[MWA] Login: authorization was not populated");
             }
+            LastSignInResult = authorization.SignInResult;
             var publicKey = new PublicKey(authorization.PublicKey);
+
+            // If wallet returned sign_in_result natively (e.g. Backpack), it's already set.
+            // If not, build it from the fallback sign_messages result (e.g. Phantom, Jupiter).
+            if (useSiws && LastSignInResult == null && siwsFallbackSig?.SignedPayloadsBytes?.Count > 0)
+            {
+                var signedBytes = siwsFallbackSig.SignedPayloadsBytes[0];
+                var sigBytes = new byte[64];
+                var msgBytes = new byte[signedBytes.Length - 64];
+                Array.Copy(signedBytes, 0, msgBytes, 0, msgBytes.Length);
+                Array.Copy(signedBytes, signedBytes.Length - 64, sigBytes, 0, 64);
+
+                LastSignInResult = new SignInResult
+                {
+                    Address = authorization.Accounts[0].Address,
+                    SignedMessage = Convert.ToBase64String(msgBytes),
+                    Signature = Convert.ToBase64String(sigBytes),
+                    SignatureType = "ed25519"
+                };
+            }
+
+            if (useSiws && LastSignInResult == null)
+            {
+                throw new Exception("SIWS authorization failed: wallet did not return sign_in_result and fallback signing failed");
+            }
+
             if (!string.IsNullOrEmpty(authorization.AuthToken))
             {
                 _authToken = authorization.AuthToken;
