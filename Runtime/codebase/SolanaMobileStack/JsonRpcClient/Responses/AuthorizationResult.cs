@@ -18,16 +18,13 @@ public class AuthorizationResult {
         [RequiredMember]
         public string Label { get; set; }
 
-        [JsonProperty("chains")]
-        [RequiredMember]
+        [JsonProperty("chains", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> Chains { get; set; }
 
-        [JsonProperty("features")]
-        [RequiredMember]
+        [JsonProperty("features", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> Features { get; set; }
 
-        [JsonProperty("icon")]
-        [RequiredMember]
+        [JsonProperty("icon", NullValueHandling = NullValueHandling.Ignore)]
         public string Icon { get; set; }
     }
     
@@ -44,8 +41,7 @@ public class AuthorizationResult {
     [RequiredMember]
     public List<AuthorizationResultAccounts> Accounts { get; set; }
 
-    [JsonProperty("sign_in_result")]
-    [RequiredMember]
+    [JsonProperty("sign_in_result", NullValueHandling = NullValueHandling.Ignore)]
     public SignInResult SignInResult { get; set; }
 
     [RequiredMember]

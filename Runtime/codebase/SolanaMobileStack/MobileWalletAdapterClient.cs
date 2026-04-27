@@ -25,50 +25,50 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         var request = PrepareAuthRequest(
             identityUri,
-            iconUri, 
-            identityName, 
+            iconUri,
+            identityName,
             cluster,
             "authorize");
-        
-        return SendRequest<AuthorizationResult>(request);
+
+        return SendRequest<AuthorizationResult>(request, "authorize");
     }
 
     public Task<AuthorizationResult> Reauthorize(Uri identityUri, Uri iconUri, string identityName, string authToken)
     {
         var request = PrepareAuthRequest(
             identityUri,
-            iconUri, 
-            identityName, 
+            iconUri,
+            identityName,
             null,
             "reauthorize");
-        
+
         request.Params.AuthToken = authToken;
 
-        return SendRequest<AuthorizationResult>(request);
+        return SendRequest<AuthorizationResult>(request, "reauthorize");
     }
 
     public Task Deauthorize(string authToken)
     {
         var request = PrepareDeauthorizeRequest(authToken);
-        return SendRequest<object>(request);
+        return SendRequest<object>(request, "deauthorize");
     }
 
     public Task<CapabilitiesResult> GetCapabilities()
     {
         var request = PrepareGetCapabilitiesRequest();
-        return SendRequest<CapabilitiesResult>(request);
+        return SendRequest<CapabilitiesResult>(request, "get_capabilities");
     }
-    
+
     public Task<SignedResult> SignTransactions(IEnumerable<byte[]> transactions)
     {
         var request = PrepareSignTransactionsRequest(transactions);
-        return SendRequest<SignedResult>(request);
+        return SendRequest<SignedResult>(request, "sign_transactions");
     }
 
     public Task<SignedResult> SignMessages(IEnumerable<byte[]> messages, IEnumerable<byte[]> addresses)
     {
         var request = PrepareSignMessagesRequest(messages, addresses);
-        return SendRequest<SignedResult>(request);
+        return SendRequest<SignedResult>(request, "sign_messages");
     }
 
     [Preserve]
@@ -107,7 +107,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             Id = NextMessageId()
         };
 
-        return SendRequest<AuthorizationResult>(request);
+        return SendRequest<AuthorizationResult>(request, "authorize");
     }
 
     public Task<SignAndSendResult> SignAndSendTransactions(IEnumerable<byte[]> transactions, JsonRequest.SignAndSendOptions options)
@@ -124,7 +124,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             Id = NextMessageId()
         };
 
-        return SendRequest<SignAndSendResult>(request);
+        return SendRequest<SignAndSendResult>(request, "sign_and_send_transactions");
     }
 
     private JsonRequest PrepareAuthRequest(Uri uriIdentity, Uri icon, string name, string cluster, string method)

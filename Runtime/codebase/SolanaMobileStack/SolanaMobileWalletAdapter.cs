@@ -35,6 +35,8 @@ namespace Solana.Unity.SDK
             { "mainnet-beta", "solana:mainnet" },
             { "devnet", "solana:devnet" },
             { "testnet", "solana:testnet" },
+            // Default solana-test-validator genesis hash; non-default validators need dynamic resolution.
+            { "localnet", "solana:4754oPEMhAKy14CZc8GzQUP93CB4ouEL" },
         };
 
         private readonly SolanaMobileWalletAdapterOptions _walletOptions;
@@ -163,7 +165,11 @@ namespace Solana.Unity.SDK
                     Uri = _walletOptions.identityUri
                 };
 
-                // Action 1: Authorize with sign_in_payload (MWA 2.0 SIWS)
+                // Combined action: Authorize, then if the wallet did not return sign_in_result
+                // natively, fall back to constructing a CAIP-122 SIWS message and signing it via
+                // sign_messages. Combining both steps into one delegate avoids relying on the
+                // captured `authorization` variable being visible across separate Action lambdas
+                // under the current async-void Action<IAdapterOperations> dispatch pattern.
                 actions.Add(async client =>
                 {
                     authorization = await client.Authorize(
@@ -171,12 +177,7 @@ namespace Solana.Unity.SDK
                         new Uri(_walletOptions.iconUri, UriKind.Relative),
                         _walletOptions.name,
                         chain, null, null, null, signInPayload);
-                });
 
-                // Action 2: Fallback — if wallet didn't return sign_in_result,
-                // construct CAIP-122 SIWS message and sign via sign_messages
-                actions.Add(async client =>
-                {
                     if (authorization?.SignInResult != null) return;
                     if (authorization?.PublicKey == null) return;
 

@@ -16,5 +16,5 @@ public class SignAndSendResult
     [RequiredMember]
     public List<byte[]> SignaturesBytes => Signatures is { Count: > 0 }
         ? Signatures.Select(Convert.FromBase64String).ToList()
-        : null;
+        : new List<byte[]>();
 }

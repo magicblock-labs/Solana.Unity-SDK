@@ -20,7 +20,8 @@ namespace Solana.Unity.SDK
 
         private readonly IMessageSender _messageSender;
 
-        public int PendingRequests { get; private set; }
+        private int _pendingRequests;
+        public int PendingRequests => _pendingRequests;
 
         protected JsonRpc20Client(IMessageSender messageSender)
         {
@@ -33,12 +34,12 @@ namespace Solana.Unity.SDK
             var messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
             Debug.Log($"{TAG} SendRequest | method={methodName} id={jsonRequest.Id} json_len={message.Length} byte_len={messageBytes.Length} json={message}");
             _messageSender.Send(messageBytes);
-            PendingRequests++;
+            System.Threading.Interlocked.Increment(ref _pendingRequests);
             var authTaskCompletionSource = new TaskCompletionSource<T>();
 
             // Register the message listener
             RegisterListener(authTaskCompletionSource, methodName);
-            authTaskCompletionSource.Task.ContinueWith(_ => PendingRequests--);
+            authTaskCompletionSource.Task.ContinueWith(_ => System.Threading.Interlocked.Decrement(ref _pendingRequests));
             return authTaskCompletionSource.Task;
         }
 
