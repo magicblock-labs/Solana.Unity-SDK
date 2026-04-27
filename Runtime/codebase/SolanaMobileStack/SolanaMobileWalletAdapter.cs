@@ -299,7 +299,11 @@ namespace Solana.Unity.SDK
                 if (blockHash?.Result?.Context?.Slot != null)
                     contextSlot = blockHash.Result.Context.Slot;
             }
-            catch (Exception) { /* non-fatal, proceed without it */ }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[MWA] sign_and_send: failed to fetch context slot for min_context_slot - {ex.Message}");
+                throw;
+            }
 
             var options = new JsonRequest.SignAndSendOptions
             {
