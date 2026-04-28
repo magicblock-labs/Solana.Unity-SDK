@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
-using Solana.Unity.SDK.Example.Services;
+using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using TMPro;
 using UnityEngine;

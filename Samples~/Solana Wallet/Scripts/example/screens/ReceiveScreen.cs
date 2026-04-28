@@ -5,7 +5,6 @@ using UnityEngine.UI;
 using codebase.utility;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
-using Solana.Unity.SDK.Example.Services;
 
 // ReSharper disable once CheckNamespace
 
