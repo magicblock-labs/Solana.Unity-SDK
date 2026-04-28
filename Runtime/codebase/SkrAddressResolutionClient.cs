@@ -9,7 +9,7 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 
-namespace Solana.Unity.SDK.Example.Services
+namespace Solana.Unity.SDK
 {
     /// <summary>
     /// On-chain .skr resolver (no backend dependency).
@@ -346,6 +346,5 @@ namespace Solana.Unity.SDK.Example.Services
             tld = parts[1];
             return !string.IsNullOrWhiteSpace(label) && !string.IsNullOrWhiteSpace(tld);
         }
-
     }
 }
