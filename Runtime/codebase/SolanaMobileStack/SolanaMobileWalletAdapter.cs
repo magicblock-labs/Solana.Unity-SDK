@@ -126,13 +126,20 @@ namespace Solana.Unity.SDK
                             return new Account(string.Empty, new PublicKey(resolvedKey));
                         }
                     }
-                    // Reauthorize failed or returned empty token - clear cached credentials
+                    // Reauthorize failed or returned empty token - clear cached credentials.
+                    // Drop _authToken too; the reauthorize lambda may have populated it from
+                    // a stale wallet response, and leaving it set would push the next call
+                    // down the Reauthorize() branch with a token we already know is bad.
+                    _authToken = null;
                     PlayerPrefs.DeleteKey(PrefKeyPublicKey);
                     PlayerPrefs.Save();
                     await _authCache.Clear();
                 }
                 else if (!pk.IsNullOrEmpty())
                 {
+                    // Inconsistent state: pk persisted but no auth token. Wipe memory too
+                    // so a re-entrant Login on the same instance cannot reuse a stale token.
+                    _authToken = null;
                     PlayerPrefs.DeleteKey(PrefKeyPublicKey);
                     PlayerPrefs.Save();
                 }
