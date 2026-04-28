@@ -148,8 +148,7 @@ namespace Solana.Unity.SDK
 
             var filters = new List<MemCmp>
             {
-                new() { Offset = 8, Bytes = tldParentAccount.ToString() },
-                new() { Offset = OwnerOffset, Bytes = owner.ToString() }
+                new() { Offset = 8, Bytes = tldParentAccount.ToString() }
             };
             var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters);
             if (accounts?.Result == null || accounts.Result.Count == 0)
@@ -220,7 +219,14 @@ namespace Solana.Unity.SDK
         private static async Task<byte[]> GetRawAccountData(PublicKey accountKey)
         {
             var response = await NameResolutionRpcClient.GetAccountInfoAsync(accountKey, Commitment.Confirmed);
-            var encodedData = response?.Result?.Value?.Data?[0];
+            var accountData = response?.Result?.Value?.Data;
+            if (accountData == null || accountData.Count == 0)
+                return Array.Empty<byte>();
+
+            if (accountData.Count > 1 && !string.Equals(accountData[1], "base64", StringComparison.OrdinalIgnoreCase))
+                return Array.Empty<byte>();
+
+            var encodedData = accountData[0];
             if (string.IsNullOrEmpty(encodedData))
                 return Array.Empty<byte>();
 

@@ -26,6 +26,7 @@ namespace Solana.Unity.SDK.Example
         private TokenAccount _transferTokenAccount;
         private Nft.Nft _nft;
         private double _ownedSolAmount;
+        private ulong _ownedTokenAmount;
         
         private const long SolLamports = 1000000000;
 
@@ -185,13 +186,7 @@ namespace Solana.Unity.SDK.Example
                     return false;
                 }
 
-                if (!ulong.TryParse(ownedAmountTxt.text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ownedTokenAmount))
-                {
-                    errorTxt.text = "Unable to verify token balance";
-                    return false;
-                }
-
-                if (amountToken > ownedTokenAmount)
+                if (amountToken > _ownedTokenAmount)
                 {
                     errorTxt.text = "Not enough funds for transaction.";
                     return false;
@@ -268,6 +263,8 @@ namespace Solana.Unity.SDK.Example
             {
                 var (tokenAccount, tokenDef, texture) = (Tuple<TokenAccount, string, Texture2D>)data;
                 ownedAmountTxt.text = $"{tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
+                if (!ulong.TryParse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount, NumberStyles.Integer, CultureInfo.InvariantCulture, out _ownedTokenAmount))
+                    _ownedTokenAmount = 0;
                 nftTitleTxt.gameObject.SetActive(true);
                 nftImage.gameObject.SetActive(true);
                 nftTitleTxt.text = $"{tokenDef}";
@@ -289,6 +286,7 @@ namespace Solana.Unity.SDK.Example
             {
                 _ownedSolAmount = await Web3.Instance.WalletBase.GetBalance();
                 ownedAmountTxt.text = $"{_ownedSolAmount}";
+                _ownedTokenAmount = 0;
             }
         }
 
@@ -298,6 +296,7 @@ namespace Solana.Unity.SDK.Example
             amountTxt.text = "";
             toPublicTxt.text = "";
             amountTxt.interactable = true;
+            _ownedTokenAmount = 0;
         }
 
         public override void HideScreen()
