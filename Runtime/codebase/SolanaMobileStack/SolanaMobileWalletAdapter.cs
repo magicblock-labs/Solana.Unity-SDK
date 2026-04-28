@@ -267,7 +267,17 @@ namespace Solana.Unity.SDK
             PlayerPrefs.DeleteKey(PrefKeyPublicKey);
             PlayerPrefs.Save();
             _authToken = null;
-            _authCache.Clear().GetAwaiter().GetResult();
+            try
+            {
+                // Custom IMwaAuthCache impls (Keystore, EncryptedSharedPreferences, etc.) can
+                // throw on backend errors. Swallow here so DisconnectWallet still fires
+                // OnWalletDisconnected and the rest of the logout sequence completes.
+                _authCache.Clear().GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[MWA] Auth cache clear failed during Logout: {e}");
+            }
         }
 
         public async Task DisconnectWallet()
