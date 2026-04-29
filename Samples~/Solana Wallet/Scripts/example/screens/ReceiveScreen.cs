@@ -15,6 +15,7 @@ public class ReceiveScreen : SimpleScreen
 
     public TextMeshProUGUI publicKey_txt;
     public RawImage qrCode_img;
+    private int _displayNameRequestVersion;
 
     private void Start()
     {
@@ -44,10 +45,11 @@ public class ReceiveScreen : SimpleScreen
         GenerateQr();
         var walletAddress = Web3.Instance.WalletBase.Account.PublicKey.ToString();
         publicKey_txt.text = walletAddress;
-        _ = ResolveWalletDisplayName(walletAddress);
+        var requestVersion = ++_displayNameRequestVersion;
+        _ = ResolveWalletDisplayName(walletAddress, requestVersion);
     }
 
-    private async System.Threading.Tasks.Task ResolveWalletDisplayName(string walletAddress)
+    private async System.Threading.Tasks.Task ResolveWalletDisplayName(string walletAddress, int requestVersion)
     {
         var requestedAddress = walletAddress;
         string domain;
@@ -60,6 +62,9 @@ public class ReceiveScreen : SimpleScreen
             Debug.LogWarning($"[SKR] Reverse lookup failed: {ex.Message}");
             return;
         }
+
+        if (requestVersion != _displayNameRequestVersion)
+            return;
 
         if (!gameObject.activeInHierarchy || publicKey_txt.text != requestedAddress)
             return;
@@ -113,6 +118,7 @@ public class ReceiveScreen : SimpleScreen
     public override void HideScreen()
     {
         base.HideScreen();
+        _displayNameRequestVersion++;
         gameObject.SetActive(false);
     }
 

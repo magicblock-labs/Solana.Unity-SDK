@@ -40,6 +40,17 @@ namespace Solana.Unity.SDK
         private static readonly byte[] Zero32 = new byte[32];
         private static readonly IRpcClient NameResolutionRpcClient =
             ClientFactory.GetClient("https://api.mainnet-beta.solana.com");
+        private static readonly object ReverseLookupLock = new();
+        private static readonly Dictionary<string, ReverseLookupCacheEntry> ReverseLookupCache = new();
+        private static readonly Dictionary<string, Task<string>> ReverseLookupInFlight = new();
+        private static readonly TimeSpan ReverseLookupHitTtl = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan ReverseLookupMissTtl = TimeSpan.FromSeconds(20);
+
+        private sealed class ReverseLookupCacheEntry
+        {
+            public string Domain;
+            public DateTime ExpiresAtUtc;
+        }
 
         public static async Task<string> ResolveDomainToAddress(string domain)
         {
@@ -61,6 +72,39 @@ namespace Solana.Unity.SDK
             if (string.IsNullOrWhiteSpace(address))
                 return null;
 
+            var normalizedAddress = address.Trim();
+            if (TryGetCachedReverseLookup(normalizedAddress, out var cachedDomain))
+                return cachedDomain;
+
+            Task<string> lookupTask;
+            lock (ReverseLookupLock)
+            {
+                if (TryGetCachedReverseLookup(normalizedAddress, out cachedDomain))
+                    return cachedDomain;
+
+                if (!ReverseLookupInFlight.TryGetValue(normalizedAddress, out lookupTask))
+                {
+                    lookupTask = ResolveAddressToDomainOnChainSafe(normalizedAddress);
+                    ReverseLookupInFlight[normalizedAddress] = lookupTask;
+
+                    _ = lookupTask.ContinueWith(_ =>
+                    {
+                        lock (ReverseLookupLock)
+                        {
+                            if (ReverseLookupInFlight.TryGetValue(normalizedAddress, out var currentTask) && ReferenceEquals(currentTask, lookupTask))
+                                ReverseLookupInFlight.Remove(normalizedAddress);
+                        }
+                    }, TaskScheduler.Default);
+                }
+            }
+
+            var resolvedDomain = await lookupTask;
+            CacheReverseLookup(normalizedAddress, resolvedDomain);
+            return resolvedDomain;
+        }
+
+        private static async Task<string> ResolveAddressToDomainOnChainSafe(string address)
+        {
             try
             {
                 return await ResolveAddressToDomainOnChain(address);
@@ -214,6 +258,41 @@ namespace Solana.Unity.SDK
             if (end < 0)
                 end = payload.Length;
             return Encoding.UTF8.GetString(payload, 0, end).Trim();
+        }
+
+        private static bool TryGetCachedReverseLookup(string address, out string domain)
+        {
+            lock (ReverseLookupLock)
+            {
+                if (ReverseLookupCache.TryGetValue(address, out var entry))
+                {
+                    if (entry.ExpiresAtUtc > DateTime.UtcNow)
+                    {
+                        domain = entry.Domain;
+                        return true;
+                    }
+
+                    ReverseLookupCache.Remove(address);
+                }
+            }
+
+            domain = null;
+            return false;
+        }
+
+        private static void CacheReverseLookup(string address, string domain)
+        {
+            var ttl = string.IsNullOrEmpty(domain) ? ReverseLookupMissTtl : ReverseLookupHitTtl;
+            var cacheEntry = new ReverseLookupCacheEntry
+            {
+                Domain = domain,
+                ExpiresAtUtc = DateTime.UtcNow.Add(ttl)
+            };
+
+            lock (ReverseLookupLock)
+            {
+                ReverseLookupCache[address] = cacheEntry;
+            }
         }
 
         private static async Task<byte[]> GetRawAccountData(PublicKey accountKey)
