@@ -2,7 +2,7 @@ namespace Solana.Unity.SolanaMobileStack
 {
     public sealed class AccountInfo
     {
-        public string Address { get; set; };
+        public string Address { get; set; }
 
         public string DisplayAddress { get; set; }
 

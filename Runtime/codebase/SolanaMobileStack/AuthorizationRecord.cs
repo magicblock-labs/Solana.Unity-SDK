@@ -7,9 +7,9 @@ namespace Solana.Unity.SolanaMobileStack
     {
         public int SchemaVersion { get; set; } = 1;
 
-        public string AuthToken { get; set; };
+        public string AuthToken { get; set; }
 
-        public string AccountAddress { get; set; };
+        public string AccountAddress { get; set; }
 
         public string AccountLabel { get; set; }
 
