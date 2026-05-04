@@ -31,9 +31,23 @@ test-results/
 /BUILD/
 *.DS_store
 *.idea
+.vs/
 
 CODE_OF_CONDUCT.md.meta
 CONTRIBUTING.md.meta
 LICENSE.meta
 README.md.meta
 package.json.meta
+
+docs/
+.claude/
+
+# Unity generated
+.utmp/
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+*.log
