@@ -12,12 +12,6 @@ using UnityEngine.Scripting;
 public interface IAdapterOperations
 {
     [Preserve]
-    [System.Obsolete("Use AuthorizeAsync with chain parameter instead")]
-    public Task<AuthorizationResult> Authorize(Uri identityUri, Uri iconUri, string identityName, string rpcCluster);
-    [Preserve]
-    [System.Obsolete("Use AuthorizeAsync with authToken parameter instead")]
-    public Task<AuthorizationResult> Reauthorize(Uri identityUri, Uri iconUri, string identityName, string authToken);
-    [Preserve]
     public Task<AuthorizationResult> AuthorizeAsync(Uri identityUri, Uri iconUri, string identityName, string chain, string authToken, CancellationToken ct);
     [Preserve]
     public Task<AuthorizationResult> AuthorizeAsync(

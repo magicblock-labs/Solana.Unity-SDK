@@ -44,20 +44,6 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         _verbosity = verbosity;
     }
 
-    [System.Obsolete("Use AuthorizeAsync with chain parameter instead")]
-    [Preserve]
-    public Task<AuthorizationResult> Authorize(Uri identityUri, Uri iconUri, string identityName, string cluster)
-    {
-        return AuthorizeAsync(identityUri, iconUri, identityName, cluster, null, CancellationToken.None);
-    }
-
-    [System.Obsolete("Use AuthorizeAsync with authToken parameter instead")]
-    [Preserve]
-    public Task<AuthorizationResult> Reauthorize(Uri identityUri, Uri iconUri, string identityName, string authToken)
-    {
-        return AuthorizeAsync(identityUri, iconUri, identityName, null, authToken, CancellationToken.None);
-    }
-
     [Preserve]
     public Task<AuthorizationResult> AuthorizeAsync(
         Uri identityUri,

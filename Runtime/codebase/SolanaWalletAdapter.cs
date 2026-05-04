@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.SolanaMobileStack;
 using Solana.Unity.Wallet;
 
 // ReSharper disable once CheckNamespace
@@ -23,11 +24,14 @@ namespace Solana.Unity.SDK
         public event Action OnWalletDisconnected;
         public event Action OnWalletReconnected;
 
-        public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
+        public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false, IAuthorizationCache authCache = null) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             #if UNITY_ANDROID
             #pragma warning disable CS0618
-            _internalWallet = new SolanaMobileWalletAdapter(options.solanaMobileWalletAdapterOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+            var mwaOptions = options.solanaMobileWalletAdapterOptions;
+            if (authCache != null && mwaOptions != null)
+                mwaOptions.Cache ??= authCache;
+            _internalWallet = new SolanaMobileWalletAdapter(mwaOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             #elif UNITY_WEBGL
             #pragma warning disable CS0618
             _internalWallet = new SolanaWalletAdapterWebGL(options.solanaWalletAdapterWebGLOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
