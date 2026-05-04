@@ -15,7 +15,9 @@
     "precompiledReferences": [
         "nunit.framework.dll",
         "BouncyCastle.Cryptography.dll",
-        "Newtonsoft.Json.dll"
+        "Newtonsoft.Json.dll",
+        "Solana.Unity.Wallet.dll",
+        "Solana.Unity.Rpc.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [],

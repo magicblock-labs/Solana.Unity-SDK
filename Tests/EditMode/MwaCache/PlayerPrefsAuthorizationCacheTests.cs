@@ -102,8 +102,8 @@ namespace SolanaMobileStack.Tests.EditMode
         {
             var cache = new PlayerPrefsAuthorizationCache();
 
-            Assert.DoesNotThrowAsync(async () => await cache.ClearAsync());
-            Assert.DoesNotThrowAsync(async () => await cache.ClearAsync());
+            await cache.ClearAsync();
+            await cache.ClearAsync();
         }
 
         [Test]
@@ -124,7 +124,7 @@ namespace SolanaMobileStack.Tests.EditMode
         {
             var cache = new PlayerPrefsAuthorizationCache();
 
-            Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync(null));
+            Assert.That(() => cache.SetAsync(null), Throws.TypeOf<ArgumentNullException>());
         }
     }
 }

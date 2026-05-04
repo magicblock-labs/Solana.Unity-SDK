@@ -106,7 +106,7 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             var relativeUri = new Uri("/relative/path", UriKind.Relative);
 
-            Assert.Throws<ArgumentException>(() =>
+            Assert.ThrowsAsync<ArgumentException>(() =>
                 _client.AuthorizeAsync(relativeUri, null, "TestApp", "solana:mainnet", null, CancellationToken.None));
         }
 
@@ -122,7 +122,7 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
         {
             var absoluteIcon = new Uri("https://example.com/icon.png");
 
-            Assert.Throws<ArgumentException>(() =>
+            Assert.ThrowsAsync<ArgumentException>(() =>
                 _client.AuthorizeAsync(new Uri("https://example.com"), absoluteIcon, "TestApp", "solana:mainnet", null, CancellationToken.None));
         }
 

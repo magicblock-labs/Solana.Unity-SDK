@@ -12,7 +12,7 @@ namespace SolanaMobileStack.Tests.EditMode
     public class ParserVerbosityTests
     {
         private static string FixturesDir =>
-            Path.Combine(Application.dataPath, "Tests", "EditMode", "Fixtures");
+            Path.Combine(Path.GetFullPath("Packages/com.solana.unity_sdk"), "Tests", "EditMode", "MwaParser", "Fixtures");
 
         private static JToken LoadFixture(string name) =>
             JToken.Parse(File.ReadAllText(Path.Combine(FixturesDir, name)));
