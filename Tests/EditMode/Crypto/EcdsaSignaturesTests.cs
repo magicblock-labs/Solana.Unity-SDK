@@ -8,10 +8,6 @@ using Org.BouncyCastle.Security;
 // ReSharper disable once CheckNamespace
 namespace Solana.Unity.SDK.Tests.EditMode.Crypto
 {
-    /// <summary>
-    /// Edit mode tests for the EcdsaSignatures helpers.
-    /// These only exercise the crypto conversion logic, so they don't need Android.
-    /// </summary>
     public class EcdsaSignaturesTests
     {
        

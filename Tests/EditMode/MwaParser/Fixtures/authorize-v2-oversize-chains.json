@@ -1,0 +1,7 @@
+{
+  "auth_token": "oversize-chains",
+  "accounts": [{
+    "address": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    "chains": ["solana:mainnet","solana:testnet","solana:devnet","solana:c4","solana:c5","solana:c6","solana:c7","solana:c8","solana:c9","solana:c10","solana:c11","solana:c12","solana:c13","solana:c14","solana:c15","solana:c16","solana:c17","solana:c18","solana:c19","solana:c20","solana:c21","solana:c22","solana:c23","solana:c24","solana:c25","solana:c26","solana:c27","solana:c28","solana:c29","solana:c30","solana:c31","solana:c32","solana:c33"]
+  }]
+}

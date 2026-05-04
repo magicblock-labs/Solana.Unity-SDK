@@ -155,8 +155,8 @@ public class MobileWalletAdapterSession
             throw new InvalidOperationException(e);
         }
 
-        var seqNumByte = new ArraySegment<byte>(payload, 0, SeqNumLengthBytes).Reverse().ToArray();
-        var seqNum = BitConverter.ToUInt32(seqNumByte, 0);
+        var seqNumRaw = new ArraySegment<byte>(payload, 0, SeqNumLengthBytes).ToArray();
+        uint seqNum = (uint)(payload[0] << 24 | payload[1] << 16 | payload[2] << 8 | payload[3]);
 
         if (seqNum != _mSeqNumberRx + 1)
         {
@@ -165,29 +165,18 @@ public class MobileWalletAdapterSession
             throw new InvalidOperationException(e);
         }
         _mSeqNumberRx = (int)seqNum;
-    
+
         try
         {
             var keyParam = new KeyParameter(_encryptionKey);
             var iv = new ArraySegment<byte>( payload, SeqNumLengthBytes, AesIvLengthBytes).ToArray();
             var cipher = new GcmBlockCipher(new AesEngine());
-            var parameters = new AeadParameters(keyParam, AesTagLengthBytes * 8, iv, associatedText: seqNumByte);
+            var parameters = new AeadParameters(keyParam, AesTagLengthBytes * 8, iv, associatedText: seqNumRaw);
             cipher.Init(false, parameters);
             var toDecipher = new ArraySegment<byte>( payload, SeqNumLengthBytes + AesIvLengthBytes, payload.Length - SeqNumLengthBytes - AesIvLengthBytes).ToArray();
             var decipherText = new byte[cipher.GetOutputSize(toDecipher.Length)];
             int len = cipher.ProcessBytes(payload, SeqNumLengthBytes + AesIvLengthBytes, toDecipher.Length, decipherText, 0);
-            try
-            {
-                cipher.DoFinal(decipherText, len);
-            }
-            catch (InvalidCipherTextException e)
-            {
-                // Mac check fails with BouncyCastle, but message is correctly decrypted
-                if (!e.Message.Equals("mac check in GCM failed"))
-                {
-                    throw new InvalidOperationException("Error decrypting session payload", e);
-                }
-            }
+            cipher.DoFinal(decipherText, len);
             return decipherText;
         }
         catch (InvalidCipherTextException e)

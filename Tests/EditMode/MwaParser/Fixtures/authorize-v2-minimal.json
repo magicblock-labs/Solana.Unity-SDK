@@ -1,0 +1,6 @@
+{
+  "auth_token": "auth-token-minimal",
+  "accounts": [{
+    "address": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  }]
+}

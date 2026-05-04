@@ -1,0 +1,19 @@
+{
+  "auth_token": "auth-token-happy-path-7f3e9a",
+  "accounts": [{
+    "address": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    "display_address": "11111111111111111111111111111111",
+    "display_address_format": "base58",
+    "label": "Primary Wallet Account",
+    "icon": "data:image/png;base64,iVBORw0KGgo=",
+    "chains": ["solana:mainnet"],
+    "features": ["solana:signAndSendTransaction", "solana:signMessage"]
+  }],
+  "wallet_uri_base": "https://wallet.example.com",
+  "wallet_icon": "data:image/png;base64,iVBORw0KGgo=",
+  "sign_in_result": {
+    "address": "11111111111111111111111111111111",
+    "signed_message": "base64==",
+    "signature": "base64=="
+  }
+}

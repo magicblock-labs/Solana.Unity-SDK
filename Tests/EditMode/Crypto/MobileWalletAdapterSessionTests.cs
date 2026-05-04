@@ -7,10 +7,6 @@ using UnityEngine.TestTools;
 // ReSharper disable once CheckNamespace
 namespace Solana.Unity.SDK.Tests.EditMode.Crypto
 {
-    /// <summary>
-    /// Edit mode tests for MobileWalletAdapterSession.
-    /// These cover the session's pure crypto and encoding behavior without Android.
-    /// </summary>
     public class MobileWalletAdapterSessionTests
     {
        

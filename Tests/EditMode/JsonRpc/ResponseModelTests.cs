@@ -3,10 +3,6 @@ using NUnit.Framework;
 // ReSharper disable once CheckNamespace
 namespace Solana.Unity.SDK.Tests.EditMode.JsonRpc
 {
-    /// <summary>
-    /// Edit mode tests for the simple Response&lt;T&gt; flags and nested error model.
-    /// These are small checks, but a regression here would affect every caller.
-    /// </summary>
     public class ResponseModelTests
     {
        
