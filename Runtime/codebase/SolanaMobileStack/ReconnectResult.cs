@@ -10,11 +10,6 @@ namespace Solana.Unity.SolanaMobileStack
             public Account Account { get; set; }
         }
 
-        public sealed class FreshAuthorized : ReconnectResult
-        {
-            public Account Account { get; set; }
-        }
-
         public sealed class NoCachedSession : ReconnectResult { }
 
         public sealed class Failed : ReconnectResult
