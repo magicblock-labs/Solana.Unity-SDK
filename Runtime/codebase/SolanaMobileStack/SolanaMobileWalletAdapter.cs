@@ -297,7 +297,7 @@ namespace Solana.Unity.SDK
             catch (Exception clearEx)
             {
                 if (!rpcSucceeded)
-                    return new DeauthorizeResult.Failed(clearEx);
+                    return new DeauthorizeResult.Failed { Error = clearEx };
             }
 
             _authToken = null;
@@ -309,7 +309,7 @@ namespace Solana.Unity.SDK
             if (rpcSucceeded)
                 return new DeauthorizeResult.FullyRevoked();
 
-            return new DeauthorizeResult.LocalOnly(record.WalletUriBase);
+            return new DeauthorizeResult.LocalOnly { WalletPackage = record.WalletUriBase };
         }
 
         private async Task<bool> TryAcquireGate(string operationName)
@@ -433,7 +433,7 @@ namespace Solana.Unity.SDK
                 for (int i = 0; i < sigs.Length; i++)
                     sigs[i] = Convert.FromBase64String((string)signaturesToken[i]);
 
-                return new SignAndSendTxResult.Success(sigs);
+                return new SignAndSendTxResult.Success { Signatures = sigs };
             }
             catch (JsonRpcException jrpc)
             {
@@ -446,7 +446,7 @@ namespace Solana.Unity.SDK
                     case -2:
                         bool[] valid = null;
                         try { var d = jrpc.Data; if (d?["valid"] != null) valid = d["valid"].ToObject<bool[]>(); } catch { }
-                        return new SignAndSendTxResult.InvalidPayloads(valid);
+                        return new SignAndSendTxResult.InvalidPayloads { Valid = valid };
                     case -3:
                         return new SignAndSendTxResult.UserDenied();
                     case -4:
@@ -456,11 +456,11 @@ namespace Solana.Unity.SDK
                             var d = jrpc.Data; var sa = d?["signatures"];
                             if (sa != null) { partialSigs = new byte[sa.Count()][]; for (int i = 0; i < partialSigs.Length; i++) { var s = (string)sa[i]; partialSigs[i] = s != null ? Convert.FromBase64String(s) : null; } }
                         } catch { }
-                        return new SignAndSendTxResult.NotSubmitted(partialSigs);
+                        return new SignAndSendTxResult.NotSubmitted { PartialSignatures = partialSigs };
                     case -6:
                         uint? max = null;
                         try { var d = jrpc.Data; if (d?["max_transactions_per_request"] != null) max = d["max_transactions_per_request"].ToObject<uint>(); } catch { }
-                        return new SignAndSendTxResult.TooManyPayloads(max);
+                        return new SignAndSendTxResult.TooManyPayloads { MaxTransactionsPerRequest = max };
                     case -7:
                         return new SignAndSendTxResult.ChainNotSupported();
                     default:
@@ -542,8 +542,10 @@ namespace Solana.Unity.SDK
                 );
 
                 if (!result.WasSuccessful)
-                    return new ReconnectResult.Failed(
-                        new Exception(result.Error?.Message ?? "Wallet unreachable"));
+                    return new ReconnectResult.Failed
+                    {
+                        Error = new Exception(result.Error?.Message ?? "Wallet unreachable")
+                    };
 
                 _authToken = authorization.AuthToken;
                 CacheAuthorization(authorization);
@@ -552,7 +554,7 @@ namespace Solana.Unity.SDK
                 var account = new Account(string.Empty, publicKey);
                 Account = account;
                 OnWalletReconnected?.Invoke();
-                return new ReconnectResult.SilentSuccess(account);
+                return new ReconnectResult.SilentSuccess { Account = account };
             }
             catch (JsonRpcException jrpc) when (jrpc.Code == -1)
             {
@@ -562,7 +564,7 @@ namespace Solana.Unity.SDK
             }
             catch (Exception ex)
             {
-                return new ReconnectResult.Failed(ex);
+                return new ReconnectResult.Failed { Error = ex };
             }
         }
 

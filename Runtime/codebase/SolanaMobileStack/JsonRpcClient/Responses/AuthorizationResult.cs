@@ -10,7 +10,7 @@ public sealed class AuthorizationResult
 {
     [JsonProperty("auth_token")]
     [RequiredMember]
-    public string AuthToken { get; set; };
+    public string AuthToken { get; set; }
 
     [JsonProperty("accounts")]
     [RequiredMember]
