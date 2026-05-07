@@ -37,7 +37,7 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.AuthorizeAsync(identityUri, iconUri, "TestApp", "solana:mainnet", null, CancellationToken.None);
 
             var request = DecodeLastRequest();
-            Assert.AreEqual("authorize", request.Method);
+            Assert.AreEqual(RpcMethodNames.Authorize, request.Method);
         }
 
         [Test]
@@ -168,7 +168,7 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             _ = _client.CloneAuthorizationAsync("test-token", CancellationToken.None);
 
             var request = DecodeLastRequest();
-            Assert.AreEqual("clone_authorization", request.Method);
+            Assert.AreEqual(RpcMethodNames.CloneAuthorization, request.Method);
             Assert.AreEqual("test-token", request.Params.AuthToken);
         }
     }

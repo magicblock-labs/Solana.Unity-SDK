@@ -12,7 +12,7 @@ namespace SolanaMobileStack.Tests.EditMode
             return new JsonRequest
             {
                 JsonRpc = "2.0",
-                Method = "authorize",
+                Method = RpcMethodNames.Authorize,
                 Params = new JsonRequest.JsonRequestParams
                 {
                     Identity = new JsonRequest.JsonRequestIdentity

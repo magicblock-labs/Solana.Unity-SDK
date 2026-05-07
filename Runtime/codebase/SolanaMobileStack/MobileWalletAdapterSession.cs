@@ -111,7 +111,11 @@ public class MobileWalletAdapterSession
             throw new InvalidOperationException(e);
         }
         _mSeqNumberTx++;
-        var seqNum = BitConverter.GetBytes(_mSeqNumberTx).Reverse().ToArray();
+        var seqNum = new byte[SeqNumLengthBytes];
+        seqNum[0] = (byte)(_mSeqNumberTx >> 24);
+        seqNum[1] = (byte)(_mSeqNumberTx >> 16);
+        seqNum[2] = (byte)(_mSeqNumberTx >> 8);
+        seqNum[3] = (byte)_mSeqNumberTx;
 
         try
         {

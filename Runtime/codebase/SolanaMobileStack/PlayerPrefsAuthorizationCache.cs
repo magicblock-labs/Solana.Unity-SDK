@@ -13,7 +13,7 @@ namespace Solana.Unity.SolanaMobileStack
 
         private const string LegacyPkKey = "pk";
 
-        private static bool _warnedThisSession;
+        private bool _warnedThisSession;
 
         private readonly string _key;
 
@@ -24,16 +24,6 @@ namespace Solana.Unity.SolanaMobileStack
             _key = string.IsNullOrEmpty(scope)
                 ? DefaultKey
                 : DefaultKey + "." + scope;
-
-            try
-            {
-                PlayerPrefs.DeleteKey(LegacyPkKey);
-                PlayerPrefs.Save();
-            }
-            catch (Exception)
-            {
-                // best-effort legacy cleanup
-            }
         }
 
         public Task<AuthorizationRecord> GetAsync()

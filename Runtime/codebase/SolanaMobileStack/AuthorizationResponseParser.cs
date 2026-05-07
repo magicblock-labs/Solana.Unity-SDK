@@ -13,7 +13,7 @@ namespace Solana.Unity.SolanaMobileStack
         private const int ChainsMaxEntries = 32;
         private const int FeaturesMaxEntries = 32;
         private const int AccountsMaxEntries = 16;
-        private const int PublicKeyByteLength = 32;
+        private const int PublicKeyByteLength = AuthorizationHelpers.PublicKeyByteLength;
 
         public static AuthorizationResult Parse(JToken result) => Parse(result, LogVerbosity.Default);
 

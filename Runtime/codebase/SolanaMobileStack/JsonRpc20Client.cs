@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Solana.Unity.SolanaMobileStack;
 using UnityEngine.Scripting;
 
 // ReSharper disable once CheckNamespace
@@ -75,7 +76,10 @@ namespace Solana.Unity.SDK
                 var authorizationResult = JsonConvert.DeserializeObject<Response<T>>(message);
                 if (authorizationResult.Error != null)
                 {
-                    task.SetException(new Exception(authorizationResult.Error.Message));
+                    task.SetException(new JsonRpcException(
+                        (int)authorizationResult.Error.Code,
+                        authorizationResult.Error.Message,
+                        null));
                 }
                 else
                 {
@@ -97,8 +101,10 @@ namespace Solana.Unity.SDK
                 var errorToken = envelope["error"];
                 if (errorToken != null && errorToken.Type != JTokenType.Null)
                 {
+                    var code = errorToken["code"]?.ToObject<int>() ?? 0;
                     var errorMessage = errorToken["message"]?.ToString() ?? "Unknown JSON-RPC error";
-                    task.SetException(new Exception(errorMessage));
+                    var data = errorToken["data"];
+                    task.SetException(new JsonRpcException(code, errorMessage, data));
                 }
                 else
                 {

@@ -88,7 +88,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         var request = PrepareAuthRequest(
             identityUri, iconUri, identityName,
             chain, authToken, features, addresses, signInPayload,
-            "authorize");
+            RpcMethodNames.Authorize);
 
         JToken raw = await SendRequestRaw(request);
         UnityEngine.Debug.Log($"[MWA Client] authorize response received");
@@ -165,7 +165,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         var request = new JsonRequest
         {
             JsonRpc = JsonRpcVersion,
-            Method = "sign_and_send_transactions",
+            Method = RpcMethodNames.SignAndSendTransactions,
             Params = new JsonRequest.JsonRequestParams
             {
                 Payloads = new List<string>(base64Payloads),
@@ -231,7 +231,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         var request = new JsonRequest
         {
             JsonRpc = JsonRpcVersion,
-            Method = "clone_authorization",
+            Method = RpcMethodNames.CloneAuthorization,
             Params = new JsonRequest.JsonRequestParams
             {
                 AuthToken = authToken
@@ -248,7 +248,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return new JsonRequest
         {
             JsonRpc = JsonRpcVersion,
-            Method = "deauthorize",
+            Method = RpcMethodNames.Deauthorize,
             Params = new JsonRequest.JsonRequestParams
             {
                 AuthToken = authToken
@@ -262,7 +262,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return new JsonRequest
         {
             JsonRpc = JsonRpcVersion,
-            Method = "get_capabilities",
+            Method = RpcMethodNames.GetCapabilities,
             Params = new JsonRequest.JsonRequestParams(),
             Id = NextMessageId()
         };
@@ -273,7 +273,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return new JsonRequest
         {
             JsonRpc = JsonRpcVersion,
-            Method = "sign_transactions",
+            Method = RpcMethodNames.SignTransactions,
             Params = new JsonRequest.JsonRequestParams
             {
                 Payloads = transactions.Select(Convert.ToBase64String).ToList()
@@ -287,7 +287,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return new JsonRequest
         {
             JsonRpc = JsonRpcVersion,
-            Method = "sign_messages",
+            Method = RpcMethodNames.SignMessages,
             Params = new JsonRequest.JsonRequestParams
             {
                 Payloads = messages.Select(Convert.ToBase64String).ToList(),

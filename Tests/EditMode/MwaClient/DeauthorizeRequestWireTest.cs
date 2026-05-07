@@ -11,7 +11,7 @@ namespace SolanaMobileStack.Tests.EditMode
             return new JsonRequest
             {
                 JsonRpc = "2.0",
-                Method = "deauthorize",
+                Method = RpcMethodNames.Deauthorize,
                 Params = new JsonRequest.JsonRequestParams
                 {
                     AuthToken = authToken
