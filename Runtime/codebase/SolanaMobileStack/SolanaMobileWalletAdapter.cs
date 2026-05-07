@@ -348,7 +348,7 @@ namespace Solana.Unity.SDK
 
         private void LogoutSuppressed()
         {
-            LogoutSuppressed();
+            base.Logout();
         }
 
         public async Task<SignAndSendTxResult> SignAndSendTransactions(
