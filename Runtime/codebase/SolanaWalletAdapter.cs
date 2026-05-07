@@ -89,17 +89,31 @@ namespace Solana.Unity.SDK
             _internalWallet?.Logout();
         }
 
-        public async Task DisconnectWallet()
+        public async Task Disconnect()
         {
             var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
             if (mobileAdapter != null)
             {
-                await mobileAdapter.DisconnectWallet();
+                await mobileAdapter.Disconnect();
                 return;
             }
             if (_internalWallet != null)
                 throw new NotImplementedException();
-            // No internal wallet configured - nothing to disconnect
+        }
+
+        public async Task DisconnectWallet()
+        {
+            await Disconnect();
+        }
+
+        public async Task<ReconnectResult> Reconnect()
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return await mobileAdapter.Reconnect();
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            return null;
         }
 
         public async Task ReconnectWallet()
@@ -112,7 +126,57 @@ namespace Solana.Unity.SDK
             }
             if (_internalWallet != null)
                 throw new NotImplementedException();
-            // No internal wallet configured - nothing to reconnect
+        }
+
+        public async Task<DeauthorizeResult> Deauthorize()
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return await mobileAdapter.Deauthorize();
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            return null;
+        }
+
+        public async Task<(Account, SignInResult)> LoginWithSignIn(SignInPayload signInPayload)
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return await mobileAdapter.LoginWithSignIn(signInPayload);
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public async Task<SignAndSendTxResult> SignAndSendTransactions(
+            Transaction[] transactions, SendOptions options = null)
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return await mobileAdapter.SignAndSendTransactions(transactions, options);
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public async Task<string> CloneAuthorization()
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return await mobileAdapter.CloneAuthorization();
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            return null;
+        }
+
+        public Task<byte[]> SignMessage(string message)
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+                return mobileAdapter.SignMessage(message);
+            if (_internalWallet != null)
+                throw new NotImplementedException();
+            throw new NotImplementedException();
         }
 
         /// <summary>

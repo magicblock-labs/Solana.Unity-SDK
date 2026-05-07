@@ -30,19 +30,31 @@ namespace Solana.Unity.SDK
     [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
     public class SolanaMobileWalletAdapter : WalletBase
     {
+        private enum MwaOperation
+        {
+            Deauthorize,
+            SignAndSendTransactions,
+            SignAndSendTransaction,
+            Disconnect,
+            Reconnect,
+            LoginWithSignIn,
+            CloneAuthorization
+        }
+
         public const int ExpectedSchemaVersion = 2;
 
         private readonly SolanaMobileWalletAdapterOptions _walletOptions;
         private readonly IAuthorizationCache _cache;
         private readonly LogVerbosity _verbosity;
+        private readonly Uri _identityUri;
+        private readonly Uri _iconRelativeUri;
         private readonly SemaphoreSlim _gate = new(1, 1);
-        private string _currentOperation;
+        private MwaOperation? _currentOperation;
 
         private Transaction _currentTransaction;
 
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
-        private readonly WalletBase _internalWallet;
         private string _authToken;
 
         public event Action OnWalletDisconnected;
@@ -75,14 +87,17 @@ namespace Solana.Unity.SDK
             _walletOptions = solanaWalletOptions;
             _cache = solanaWalletOptions?.Cache ?? new PlayerPrefsAuthorizationCache();
             _verbosity = solanaWalletOptions?.Verbosity ?? LogVerbosity.Default;
+            _identityUri = new Uri(solanaWalletOptions.identityUri);
+            _iconRelativeUri = new Uri(solanaWalletOptions.iconUri, UriKind.Relative);
             if (Application.platform != RuntimePlatform.Android)
             {
-                throw new Exception("SolanaMobileWalletAdapter can only be used on Android");
+                throw new PlatformNotSupportedException("SolanaMobileWalletAdapter can only be used on Android");
             }
-            MigrateLegacyPrefKeys();
         }
 
-        private void MigrateLegacyPrefKeys()
+        private bool _migrationComplete;
+
+        private async Task MigrateLegacyPrefKeysAsync()
         {
             const string legacyPk = "pk";
             const string legacyAuthToken = "authToken";
@@ -113,13 +128,13 @@ namespace Solana.Unity.SDK
 
             if (!string.IsNullOrEmpty(pk) && !string.IsNullOrEmpty(token))
             {
-                _cache.SetAsync(new AuthorizationRecord
+                await _cache.SetAsync(new AuthorizationRecord
                 {
                     SchemaVersion       = ExpectedSchemaVersion,
                     AuthToken           = token,
                     AccountAddress      = pk,
                     CachedAtUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                }).GetAwaiter().GetResult();
+                });
             }
 
             PlayerPrefs.Save();
@@ -144,11 +159,11 @@ namespace Solana.Unity.SDK
             return record;
         }
 
-        private void CacheAuthorization(AuthorizationResult authorization)
+        private async Task CacheAuthorizationAsync(AuthorizationResult authorization)
         {
             if (_walletOptions?.keepConnectionAlive ?? true)
             {
-                _cache.SetAsync(new AuthorizationRecord
+                await _cache.SetAsync(new AuthorizationRecord
                 {
                     SchemaVersion       = ExpectedSchemaVersion,
                     Chain               = authorization.PrimaryAccount().Chains?.FirstOrDefault() ?? ToChainUri(RpcCluster),
@@ -176,6 +191,15 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Account> _Login(string password = null)
         {
+            // Migration runs here instead of the constructor because C# constructors cannot be
+            // async, and _cache.SetAsync must be awaited to support custom async IAuthorizationCache
+            // implementations (e.g. Android Keystore-backed caches).
+            if (!_migrationComplete)
+            {
+                await MigrateLegacyPrefKeysAsync();
+                _migrationComplete = true;
+            }
+
             var chain = ToChainUri(RpcCluster);
 
             var reconnect = await ReconnectInternal();
@@ -190,19 +214,18 @@ namespace Solana.Unity.SDK
                     async client =>
                     {
                         authorization = await client.AuthorizeAsync(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
+                            _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, null, CancellationToken.None);
                     }
                 }
             );
             if (!result.WasSuccessful)
-                throw new Exception(result.Error?.Message ?? "Authorization failed");
+                throw new InvalidOperationException(result.Error?.Message ?? "Authorization failed");
             if (authorization == null)
-                throw new Exception("Authorization was not populated by wallet");
+                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
 
             _authToken = authorization.AuthToken;
-            CacheAuthorization(authorization);
+            await CacheAuthorizationAsync(authorization);
             var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
             return new Account(string.Empty, publicKey);
         }
@@ -226,8 +249,7 @@ namespace Solana.Unity.SDK
                     async client =>
                     {
                         authorization = await client.AuthorizeAsync(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
+                            _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken, CancellationToken.None);
                     },
                     async client =>
@@ -238,20 +260,20 @@ namespace Solana.Unity.SDK
                 }
             );
             if (!result.WasSuccessful)
-                throw new Exception(result.Error?.Message ?? "Sign transactions failed");
+                throw new InvalidOperationException(result.Error?.Message ?? "Sign transactions failed");
             if (authorization == null)
-                throw new Exception("Authorization was not populated by wallet");
+                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
             if (res == null)
-                throw new Exception("Signed payloads were not populated by wallet");
+                throw new InvalidOperationException("Signed payloads were not populated by wallet");
 
             _authToken = authorization.AuthToken ?? _authToken;
-            CacheAuthorization(authorization);
+            await CacheAuthorizationAsync(authorization);
             return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
         }
 
         public async Task<DeauthorizeResult> Deauthorize()
         {
-            if (!await TryAcquireGate("Deauthorize"))
+            if (!await TryAcquireGate(MwaOperation.Deauthorize))
                 throw new OperationInFlightException($"{_currentOperation} is in flight; cannot start Deauthorize");
             try { return await DeauthorizeInternal(); }
             finally { ReleaseGate(); }
@@ -301,9 +323,7 @@ namespace Solana.Unity.SDK
             }
 
             _authToken = null;
-#pragma warning disable CS0618
-            Logout();
-#pragma warning restore CS0618
+            LogoutSuppressed();
             OnWalletDisconnected?.Invoke();
 
             if (rpcSucceeded)
@@ -312,11 +332,11 @@ namespace Solana.Unity.SDK
             return new DeauthorizeResult.LocalOnly { WalletPackage = record.WalletUriBase };
         }
 
-        private async Task<bool> TryAcquireGate(string operationName)
+        private async Task<bool> TryAcquireGate(MwaOperation operation)
         {
             if (!await _gate.WaitAsync(0))
                 return false;
-            _currentOperation = operationName;
+            _currentOperation = operation;
             return true;
         }
 
@@ -326,10 +346,15 @@ namespace Solana.Unity.SDK
             _gate.Release();
         }
 
+        private void LogoutSuppressed()
+        {
+            LogoutSuppressed();
+        }
+
         public async Task<SignAndSendTxResult> SignAndSendTransactions(
             Transaction[] transactions, SendOptions options = null)
         {
-            if (!await TryAcquireGate("SignAndSendTransactions"))
+            if (!await TryAcquireGate(MwaOperation.SignAndSendTransactions))
                 throw new OperationInFlightException(
                     $"{_currentOperation} is in flight; cannot start SignAndSendTransactions");
             try { return await SignAndSendTransactionsInternal(transactions, options); }
@@ -340,7 +365,7 @@ namespace Solana.Unity.SDK
             Transaction transaction, bool skipPreflight = false,
             Commitment commitment = Commitment.Confirmed)
         {
-            if (!await TryAcquireGate("SignAndSendTransaction"))
+            if (!await TryAcquireGate(MwaOperation.SignAndSendTransaction))
                 throw new OperationInFlightException(
                     $"{_currentOperation} is in flight; cannot start SignAndSendTransaction");
             try
@@ -389,93 +414,94 @@ namespace Solana.Unity.SDK
                             MinContextSlot = blockHash.Result.Context.Slot,
                         };
                 }
-                catch (Exception) { }
+                catch (Exception ex) { Debug.LogWarning($"[MWA] MinContextSlot fetch failed: {ex.Message}"); }
             }
 
             var payloads = new string[transactions.Length];
             for (int i = 0; i < transactions.Length; i++)
                 payloads[i] = Convert.ToBase64String(transactions[i].Serialize());
 
-            try
-            {
-                Newtonsoft.Json.Linq.JToken raw = null;
-                var chain = ToChainUri(RpcCluster);
-                var scenario = new LocalAssociationScenario();
-                var scenarioResult = await scenario.StartAndExecute(
-                    new List<Action<IAdapterOperations>>
+            Newtonsoft.Json.Linq.JToken raw = null;
+            Exception capturedError = null;
+            var chain = ToChainUri(RpcCluster);
+            var scenario = new LocalAssociationScenario();
+            var scenarioResult = await scenario.StartAndExecute(
+                new List<Action<IAdapterOperations>>
+                {
+                    async client =>
                     {
-                        async client =>
-                        {
-                            await client.AuthorizeAsync(
-                                new Uri(_walletOptions.identityUri),
-                                new Uri(_walletOptions.iconUri, UriKind.Relative),
-                                _walletOptions.name, chain, _authToken, CancellationToken.None);
-                        },
-                        async client =>
+                        await client.AuthorizeAsync(
+                            _identityUri, _iconRelativeUri,
+                            _walletOptions.name, chain, _authToken, CancellationToken.None);
+                    },
+                    async client =>
+                    {
+                        try
                         {
                             raw = await client.SignAndSendTransactionsAsync(
                                 payloads, options, CancellationToken.None);
                         }
+                        catch (Exception ex) { capturedError = ex; }
                     }
-                );
+                }
+            );
 
-                if (!scenarioResult.WasSuccessful)
-                    return new SignAndSendTxResult.WalletUnreachable();
+            if (!scenarioResult.WasSuccessful)
+                return new SignAndSendTxResult.WalletUnreachable();
 
-                if (raw == null)
-                    return new SignAndSendTxResult.WalletUnreachable();
-
-                var signaturesToken = raw["signatures"];
-                if (signaturesToken == null)
-                    return new SignAndSendTxResult.WalletUnreachable();
-
-                var sigs = new byte[signaturesToken.Count()][];
-                for (int i = 0; i < sigs.Length; i++)
-                    sigs[i] = Convert.FromBase64String((string)signaturesToken[i]);
-
-                return new SignAndSendTxResult.Success { Signatures = sigs };
-            }
-            catch (JsonRpcException jrpc)
+            if (capturedError is JsonRpcException jrpc)
             {
                 switch (jrpc.Code)
                 {
-                    case -1:
-                        try { await _cache.ClearAsync(); } catch { }
+                    case JsonRpcErrorCodes.AuthorizationFailed:
+                        try { await _cache.ClearAsync(); } catch (Exception ex) { Debug.LogWarning($"[MWA] Cache clear failed after auth revocation: {ex.Message}"); }
                         _authToken = null;
                         return new SignAndSendTxResult.AuthRevoked();
-                    case -2:
+                    case JsonRpcErrorCodes.InvalidPayloads:
                         bool[] valid = null;
-                        try { var d = jrpc.Data; if (d?["valid"] != null) valid = d["valid"].ToObject<bool[]>(); } catch { }
+                        try { var d = jrpc.Data; if (d?["valid"] != null) valid = d["valid"].ToObject<bool[]>(); } catch (Exception ex) { Debug.LogWarning($"[MWA] Error parsing InvalidPayloads data: {ex.Message}"); }
                         return new SignAndSendTxResult.InvalidPayloads { Valid = valid };
-                    case -3:
+                    case JsonRpcErrorCodes.NotSigned:
                         return new SignAndSendTxResult.UserDenied();
-                    case -4:
+                    case JsonRpcErrorCodes.NotSubmitted:
                         byte[][] partialSigs = null;
                         try
                         {
                             var d = jrpc.Data; var sa = d?["signatures"];
                             if (sa != null) { partialSigs = new byte[sa.Count()][]; for (int i = 0; i < partialSigs.Length; i++) { var s = (string)sa[i]; partialSigs[i] = s != null ? Convert.FromBase64String(s) : null; } }
-                        } catch { }
+                        } catch (Exception ex) { Debug.LogWarning($"[MWA] Error parsing NotSubmitted data: {ex.Message}"); }
                         return new SignAndSendTxResult.NotSubmitted { PartialSignatures = partialSigs };
-                    case -6:
+                    case JsonRpcErrorCodes.TooManyPayloads:
                         uint? max = null;
-                        try { var d = jrpc.Data; if (d?["max_transactions_per_request"] != null) max = d["max_transactions_per_request"].ToObject<uint>(); } catch { }
+                        try { var d = jrpc.Data; if (d?["max_transactions_per_request"] != null) max = d["max_transactions_per_request"].ToObject<uint>(); } catch (Exception ex) { Debug.LogWarning($"[MWA] Error parsing TooManyPayloads data: {ex.Message}"); }
                         return new SignAndSendTxResult.TooManyPayloads { MaxTransactionsPerRequest = max };
-                    case -7:
+                    case JsonRpcErrorCodes.ChainNotSupported:
                         return new SignAndSendTxResult.ChainNotSupported();
                     default:
                         return new SignAndSendTxResult.WalletUnreachable();
                 }
             }
-            catch (Exception)
-            {
+
+            if (capturedError != null)
                 return new SignAndSendTxResult.WalletUnreachable();
-            }
+
+            if (raw == null)
+                return new SignAndSendTxResult.WalletUnreachable();
+
+            var signaturesToken = raw["signatures"];
+            if (signaturesToken == null)
+                return new SignAndSendTxResult.WalletUnreachable();
+
+            var sigs = new byte[signaturesToken.Count()][];
+            for (int i = 0; i < sigs.Length; i++)
+                sigs[i] = Convert.FromBase64String((string)signaturesToken[i]);
+
+            return new SignAndSendTxResult.Success { Signatures = sigs };
         }
 
         public async Task Disconnect()
         {
-            if (!await TryAcquireGate("Disconnect"))
+            if (!await TryAcquireGate(MwaOperation.Disconnect))
                 throw new OperationInFlightException(
                     $"{_currentOperation} is in flight; cannot start Disconnect");
             try { await DisconnectInternal(); }
@@ -493,15 +519,13 @@ namespace Solana.Unity.SDK
                 Debug.LogWarning($"[MWA] Auth cache clear failed during Disconnect: {e}");
             }
             _authToken = null;
-#pragma warning disable CS0618
-            Logout();
-#pragma warning restore CS0618
+            LogoutSuppressed();
             OnWalletDisconnected?.Invoke();
         }
 
         public async Task<ReconnectResult> Reconnect()
         {
-            if (!await TryAcquireGate("Reconnect"))
+            if (!await TryAcquireGate(MwaOperation.Reconnect))
                 throw new OperationInFlightException(
                     $"{_currentOperation} is in flight; cannot start Reconnect");
             try { return await ReconnectInternal(); }
@@ -523,49 +547,50 @@ namespace Solana.Unity.SDK
             if (record == null)
                 return new ReconnectResult.NoCachedSession();
 
-            try
-            {
-                AuthorizationResult authorization = null;
-                var chain = ToChainUri(RpcCluster);
-                var scenario = new LocalAssociationScenario();
-                var result = await scenario.StartAndExecute(
-                    new List<Action<IAdapterOperations>>
+            AuthorizationResult authorization = null;
+            Exception capturedAuthError = null;
+            var chain = ToChainUri(RpcCluster);
+            var scenario = new LocalAssociationScenario();
+            var result = await scenario.StartAndExecute(
+                new List<Action<IAdapterOperations>>
+                {
+                    async client =>
                     {
-                        async client =>
+                        try
                         {
                             authorization = await client.AuthorizeAsync(
-                                new Uri(_walletOptions.identityUri),
-                                new Uri(_walletOptions.iconUri, UriKind.Relative),
+                                _identityUri, _iconRelativeUri,
                                 _walletOptions.name, chain, record.AuthToken, CancellationToken.None);
                         }
+                        catch (Exception ex) { capturedAuthError = ex; }
                     }
-                );
+                }
+            );
 
-                if (!result.WasSuccessful)
-                    return new ReconnectResult.Failed
-                    {
-                        Error = new Exception(result.Error?.Message ?? "Wallet unreachable")
-                    };
-
-                _authToken = authorization.AuthToken;
-                CacheAuthorization(authorization);
-
-                var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
-                var account = new Account(string.Empty, publicKey);
-                Account = account;
-                OnWalletReconnected?.Invoke();
-                return new ReconnectResult.SilentSuccess { Account = account };
-            }
-            catch (JsonRpcException jrpc) when (jrpc.Code == -1)
+            if (capturedAuthError is JsonRpcException jrpc && jrpc.Code == JsonRpcErrorCodes.AuthorizationFailed)
             {
-                try { await _cache.ClearAsync(); } catch { }
+                try { await _cache.ClearAsync(); } catch (Exception ex) { Debug.LogWarning($"[MWA] Cache clear failed after auth revocation: {ex.Message}"); }
                 _authToken = null;
                 return new ReconnectResult.NoCachedSession();
             }
-            catch (Exception ex)
-            {
-                return new ReconnectResult.Failed { Error = ex };
-            }
+
+            if (capturedAuthError != null)
+                return new ReconnectResult.Failed { Error = capturedAuthError };
+
+            if (!result.WasSuccessful)
+                return new ReconnectResult.Failed
+                {
+                    Error = new Exception(result.Error?.Message ?? "Wallet unreachable")
+                };
+
+            _authToken = authorization.AuthToken;
+            await CacheAuthorizationAsync(authorization);
+
+            var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
+            var account = new Account(string.Empty, publicKey);
+            Account = account;
+            OnWalletReconnected?.Invoke();
+            return new ReconnectResult.SilentSuccess { Account = account };
         }
 
         [System.Obsolete("Use Disconnect() for local clear or Deauthorize() to revoke wallet-side. See docs/migration-v1-to-v2.md.")]
@@ -590,7 +615,7 @@ namespace Solana.Unity.SDK
                 }
                 else
                 {
-                    throw new Exception("ReconnectWallet failed: Login returned null");
+                    throw new InvalidOperationException("ReconnectWallet failed: Login returned null");
                 }
             }
             catch (Exception e)
@@ -614,16 +639,16 @@ namespace Solana.Unity.SDK
                 }
             );
             if (!result.WasSuccessful)
-                throw new Exception(result.Error?.Message ?? "GetCapabilities failed");
+                throw new InvalidOperationException(result.Error?.Message ?? "GetCapabilities failed");
             if (capabilities == null)
-                throw new Exception("GetCapabilities RPC succeeded but returned no data");
+                throw new InvalidOperationException("GetCapabilities RPC succeeded but returned no data");
             return capabilities;
         }
 
         public async Task<(Account Account, SignInResult SignInResult)> LoginWithSignIn(
             SignInPayload signInPayload)
         {
-            if (!await TryAcquireGate("LoginWithSignIn"))
+            if (!await TryAcquireGate(MwaOperation.LoginWithSignIn))
                 throw new OperationInFlightException(
                     $"{_currentOperation} is in flight; cannot start LoginWithSignIn");
             try { return await LoginWithSignInInternal(signInPayload); }
@@ -644,8 +669,7 @@ namespace Solana.Unity.SDK
                     async client =>
                     {
                         authorization = await client.AuthorizeAsync(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
+                            _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, null,
                             null, null, signInPayload,
                             CancellationToken.None);
@@ -653,12 +677,12 @@ namespace Solana.Unity.SDK
                 }
             );
             if (!result.WasSuccessful)
-                throw new Exception(result.Error?.Message ?? "Authorization with sign-in failed");
+                throw new InvalidOperationException(result.Error?.Message ?? "Authorization with sign-in failed");
             if (authorization == null)
-                throw new Exception("Authorization was not populated by wallet");
+                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
 
             _authToken = authorization.AuthToken;
-            CacheAuthorization(authorization);
+            await CacheAuthorizationAsync(authorization);
             var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
             var account = new Account(string.Empty, publicKey);
 
@@ -673,8 +697,7 @@ namespace Solana.Unity.SDK
                     async client =>
                     {
                         await client.AuthorizeAsync(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
+                            _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken,
                             CancellationToken.None);
                     },
@@ -695,7 +718,7 @@ namespace Solana.Unity.SDK
                 }
             );
             if (!fallbackResult.WasSuccessful)
-                throw new Exception(fallbackResult.Error?.Message ?? "SIWS fallback signing failed");
+                throw new InvalidOperationException(fallbackResult.Error?.Message ?? "SIWS fallback signing failed");
 
             if (siwsFallbackSig?.SignedPayloadsBytes?.Count > 0)
             {
@@ -714,12 +737,12 @@ namespace Solana.Unity.SDK
                 });
             }
 
-            throw new Exception("SIWS failed: wallet did not return sign_in_result and fallback signing failed");
+            throw new InvalidOperationException("SIWS failed: wallet did not return sign_in_result and fallback signing failed");
         }
 
         public async Task<string> CloneAuthorization()
         {
-            if (!await TryAcquireGate("CloneAuthorization"))
+            if (!await TryAcquireGate(MwaOperation.CloneAuthorization))
                 throw new OperationInFlightException(
                     $"{_currentOperation} is in flight; cannot start CloneAuthorization");
             try { return await CloneAuthorizationInternal(); }
@@ -741,8 +764,7 @@ namespace Solana.Unity.SDK
                     async client =>
                     {
                         await client.AuthorizeAsync(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
+                            _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken, CancellationToken.None);
                     },
                     async client =>
@@ -753,9 +775,9 @@ namespace Solana.Unity.SDK
                 }
             );
             if (!result.WasSuccessful)
-                throw new Exception(result.Error?.Message ?? "Clone authorization failed");
+                throw new InvalidOperationException(result.Error?.Message ?? "Clone authorization failed");
             if (string.IsNullOrEmpty(clonedToken))
-                throw new Exception("Clone authorization RPC succeeded but returned no token");
+                throw new InvalidOperationException("Clone authorization RPC succeeded but returned no token");
             return clonedToken;
         }
 
@@ -770,7 +792,7 @@ namespace Solana.Unity.SDK
                 cachedPk = record?.AccountAddress;
             }
             if (string.IsNullOrEmpty(cachedPk))
-                throw new Exception("Cannot sign message: no account available");
+                throw new InvalidOperationException("Cannot sign message: no account available");
 
             SignedResult signedMessages = null;
             AuthorizationResult authorization = null;
@@ -782,8 +804,7 @@ namespace Solana.Unity.SDK
                     async client =>
                     {
                         authorization = await client.AuthorizeAsync(
-                            new Uri(_walletOptions.identityUri),
-                            new Uri(_walletOptions.iconUri, UriKind.Relative),
+                            _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken, CancellationToken.None);
                     },
                     async client =>
@@ -796,14 +817,14 @@ namespace Solana.Unity.SDK
                 }
             );
             if (!result.WasSuccessful)
-                throw new Exception(result.Error?.Message ?? "Sign message failed");
+                throw new InvalidOperationException(result.Error?.Message ?? "Sign message failed");
             if (authorization == null)
-                throw new Exception("Authorization was not populated by wallet");
+                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
             if (signedMessages == null)
-                throw new Exception("Signed payloads were not populated by wallet");
+                throw new InvalidOperationException("Signed payloads were not populated by wallet");
 
             _authToken = authorization.AuthToken ?? _authToken;
-            CacheAuthorization(authorization);
+            await CacheAuthorizationAsync(authorization);
             return signedMessages.SignedPayloadsBytes[0];
         }
 

@@ -37,7 +37,9 @@ namespace SolanaMobileStack.Tests.EditMode
             var field = typeof(SolanaMobileWalletAdapter).GetField(
                 "_currentOperation", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, "_currentOperation field not found — was it renamed?");
-            Assert.That(field.FieldType, Is.EqualTo(typeof(string)));
+            Assert.That(field.FieldType.IsGenericType, Is.True, "_currentOperation should be Nullable<MwaOperation>");
+            Assert.That(System.Nullable.GetUnderlyingType(field.FieldType).IsEnum, Is.True,
+                "_currentOperation should be Nullable<MwaOperation>");
         }
 
         [Test]

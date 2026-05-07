@@ -24,7 +24,7 @@ namespace SolanaMobileStack.Tests.EditMode
             var req = new JsonRequest
             {
                 JsonRpc = "2.0",
-                Method = "sign_and_send_transactions",
+                Method = RpcMethodNames.SignAndSendTransactions,
                 Params = new JsonRequest.JsonRequestParams
                 {
                     Payloads = new List<string> { "AQID", "BAUG" }
@@ -45,7 +45,7 @@ namespace SolanaMobileStack.Tests.EditMode
             var req = new JsonRequest
             {
                 JsonRpc = "2.0",
-                Method = "sign_and_send_transactions",
+                Method = RpcMethodNames.SignAndSendTransactions,
                 Params = new JsonRequest.JsonRequestParams
                 {
                     Payloads = new List<string> { "AQID" }
@@ -70,7 +70,7 @@ namespace SolanaMobileStack.Tests.EditMode
             var req = new JsonRequest
             {
                 JsonRpc = "2.0",
-                Method = "sign_and_send_transactions",
+                Method = RpcMethodNames.SignAndSendTransactions,
                 Params = new JsonRequest.JsonRequestParams
                 {
                     Payloads = new List<string> { "AQID" },
