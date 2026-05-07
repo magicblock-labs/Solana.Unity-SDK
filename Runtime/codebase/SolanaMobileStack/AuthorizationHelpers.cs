@@ -4,7 +4,7 @@ namespace Solana.Unity.SolanaMobileStack
 {
     public static class AuthorizationHelpers
     {
-        private const int PublicKeyByteLength = 32;
+        public const int PublicKeyByteLength = 32;
 
         public static AccountInfo PrimaryAccount(this AuthorizationResult authorization)
         {

@@ -1,5 +1,8 @@
+using UnityEngine.Scripting;
+
 namespace Solana.Unity.SolanaMobileStack
 {
+    [Preserve]
     public sealed class AccountInfo
     {
         public string Address { get; set; }
