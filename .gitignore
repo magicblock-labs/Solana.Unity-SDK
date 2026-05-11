@@ -39,8 +39,6 @@ LICENSE.meta
 README.md.meta
 package.json.meta
 
-.claude/
-
 # Unity generated
 .utmp/
 **/[Ll]ibrary/
@@ -51,6 +49,3 @@ package.json.meta
 **/[Uu]ser[Ss]ettings/
 *.log
 
-# Added by LaiM install — runtime/secret files; do not commit
-.claude/.cache/
-.claude/settings.local.json
