@@ -25,15 +25,18 @@ namespace SolanaMobileStack.Tests.EditMode
         public void Guard()
         {
             Assert.That(CacheField, Is.Not.Null, "_cache not found");
+            Assert.That(GateField, Is.Not.Null, "_gate not found — was it renamed?");
             Assert.That(ReconnectMethod, Is.Not.Null, "Reconnect not found");
         }
+
+        private static readonly FieldInfo GateField =
+            typeof(SolanaMobileWalletAdapter).GetField("_gate", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static SolanaMobileWalletAdapter CreateAdapter(IAuthorizationCache cache)
         {
             var adapter = (SolanaMobileWalletAdapter)FormatterServices.GetUninitializedObject(typeof(SolanaMobileWalletAdapter));
             CacheField.SetValue(adapter, cache);
-            var gateField = typeof(SolanaMobileWalletAdapter).GetField("_gate", BindingFlags.Instance | BindingFlags.NonPublic);
-            gateField.SetValue(adapter, new System.Threading.SemaphoreSlim(1, 1));
+            GateField.SetValue(adapter, new System.Threading.SemaphoreSlim(1, 1));
             return adapter;
         }
 

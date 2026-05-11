@@ -26,7 +26,7 @@ namespace SolanaMobileStack.Tests.EditMode
             var req = BuildDeauthorizeRequest("test-auth-token-123");
             string json = JsonConvert.SerializeObject(req);
 
-            StringAssert.Contains("\"method\":\"deauthorize\"", json);
+            StringAssert.Contains($"\"method\":\"{RpcMethodNames.Deauthorize}\"", json);
             StringAssert.Contains("\"auth_token\":\"test-auth-token-123\"", json);
         }
 
