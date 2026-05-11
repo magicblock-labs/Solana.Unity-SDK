@@ -51,3 +51,7 @@ docs/
 **/[Ll]ogs/
 **/[Uu]ser[Ss]ettings/
 *.log
+
+# Added by LaiM install — runtime/secret files; do not commit
+.claude/.cache/
+.claude/settings.local.json
