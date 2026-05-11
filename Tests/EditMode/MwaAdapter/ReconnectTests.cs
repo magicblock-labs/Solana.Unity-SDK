@@ -59,11 +59,19 @@ namespace SolanaMobileStack.Tests.EditMode
             });
             var adapter = CreateAdapter(cache);
 
+            if (Application.platform != RuntimePlatform.Android)
+            {
+                var task = (Task<ReconnectResult>)ReconnectMethod.Invoke(adapter, null);
+                Assert.ThrowsAsync<System.Exception>(async () => await task,
+                    "Non-Android: LocalAssociationScenario requires Android JNI");
+                return;
+            }
+
             var result = await (Task<ReconnectResult>)ReconnectMethod.Invoke(adapter, null);
 
             Assert.That(result, Is.InstanceOf<ReconnectResult.NoCachedSession>()
                 .Or.InstanceOf<ReconnectResult.Failed>(),
-                "In EditMode (no Android), should be NoCachedSession or Failed");
+                "On Android, should be NoCachedSession or Failed");
         }
 
         [Test]

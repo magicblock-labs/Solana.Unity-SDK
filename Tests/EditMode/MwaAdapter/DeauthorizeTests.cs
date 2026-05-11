@@ -42,11 +42,16 @@ namespace SolanaMobileStack.Tests.EditMode
             Assert.That(DeauthorizeMethod, Is.Not.Null, "Deauthorize method not found — was it renamed?");
         }
 
+        private static readonly FieldInfo GateField =
+            typeof(SolanaMobileWalletAdapter).GetField(
+                "_gate", BindingFlags.Instance | BindingFlags.NonPublic);
+
         private static SolanaMobileWalletAdapter CreateAdapter(IAuthorizationCache cache, string authToken = null)
         {
             var adapter = (SolanaMobileWalletAdapter)FormatterServices.GetUninitializedObject(
                 typeof(SolanaMobileWalletAdapter));
             CacheField.SetValue(adapter, cache);
+            GateField.SetValue(adapter, new System.Threading.SemaphoreSlim(1, 1));
             if (authToken != null)
                 AuthTokenField.SetValue(adapter, authToken);
             return adapter;

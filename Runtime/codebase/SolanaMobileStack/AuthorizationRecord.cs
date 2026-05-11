@@ -5,7 +5,7 @@ namespace Solana.Unity.SolanaMobileStack
     [Preserve]
     public sealed class AuthorizationRecord
     {
-        public int SchemaVersion { get; set; } = 1;
+        public int SchemaVersion { get; set; } = 2;
 
         public string AuthToken { get; set; }
 

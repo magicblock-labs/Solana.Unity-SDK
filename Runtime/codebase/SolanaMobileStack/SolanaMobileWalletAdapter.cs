@@ -8,6 +8,7 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SolanaMobileStack;
 using Solana.Unity.Wallet;
+using Merkator.BitCoin;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
@@ -380,7 +381,7 @@ namespace Solana.Unity.SDK
 
                 if (result is SignAndSendTxResult.Success success && success.Signatures.Length > 0)
                 {
-                    var sig = Convert.ToBase64String(success.Signatures[0]);
+                    var sig = Base58Encoding.Encode(success.Signatures[0]);
                     return new RequestResult<string> { Result = sig, WasRequestSuccessfullyHandled = true };
                 }
 
@@ -732,6 +733,9 @@ namespace Solana.Unity.SDK
             if (siwsFallbackSig?.SignedPayloadsBytes?.Count > 0)
             {
                 var signedBytes = siwsFallbackSig.SignedPayloadsBytes[0];
+                if (signedBytes.Length < 64)
+                    throw new InvalidOperationException(
+                        $"SIWS signed payload too short ({signedBytes.Length} bytes, need at least 64)");
                 var sigBytes = new byte[64];
                 var msgBytes = new byte[signedBytes.Length - 64];
                 System.Array.Copy(signedBytes, 0, msgBytes, 0, msgBytes.Length);

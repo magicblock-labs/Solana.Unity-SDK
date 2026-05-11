@@ -86,18 +86,6 @@ namespace SolanaMobileStack.Tests.EditMode
         }
 
         [Test]
-        public void LegacyPk_DeletedOnConstruction()
-        {
-            PlayerPrefs.SetString("pk", "legacy-value");
-            PlayerPrefs.Save();
-            Assert.That(PlayerPrefs.HasKey("pk"), Is.True);
-
-            _ = new PlayerPrefsAuthorizationCache();
-
-            Assert.That(PlayerPrefs.HasKey("pk"), Is.False);
-        }
-
-        [Test]
         public async Task ClearAsync_IsIdempotent_OnEmpty()
         {
             var cache = new PlayerPrefsAuthorizationCache();

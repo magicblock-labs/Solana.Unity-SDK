@@ -39,7 +39,9 @@ namespace Solana.Unity.SDK
         protected Task<JToken> SendRequestRaw(JsonRequest jsonRequest)
         {
             var message = JsonConvert.SerializeObject(jsonRequest);
+#if UNITY_EDITOR || MWA_VERBOSE_WIRE
             UnityEngine.Debug.Log($"[MWA Wire] → {message}");
+#endif
             var messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
             _messageSender.Send(messageBytes);
             var rawTaskCompletionSource = new TaskCompletionSource<JToken>();

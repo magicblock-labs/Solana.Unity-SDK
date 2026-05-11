@@ -75,9 +75,6 @@ namespace Solana.Unity.SDK
             [JsonProperty("options", NullValueHandling = NullValueHandling.Ignore)]
             public JObject Options { get; set; }
 
-            [JsonProperty("sendOptions", NullValueHandling = NullValueHandling.Ignore)]
-            public JObject SendOptions { get; set; }
-
             [RequiredMember]
             public JsonRequestParams()
             {

@@ -155,8 +155,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
             Params = new JsonRequest.JsonRequestParams
             {
                 Payloads = new List<string>(base64Payloads),
-                Options = wireOptions,
-                SendOptions = wireOptions
+                Options = wireOptions
             },
             Id = NextMessageId()
         };

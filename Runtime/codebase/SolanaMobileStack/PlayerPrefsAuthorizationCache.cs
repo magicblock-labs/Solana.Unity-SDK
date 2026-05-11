@@ -11,9 +11,7 @@ namespace Solana.Unity.SolanaMobileStack
     {
         internal const string DefaultKey = "SolanaUnity.MWA.AuthorizationRecord.v1";
 
-        private const string LegacyPkKey = "pk";
-
-        private bool _warnedThisSession;
+        private static bool _warnedThisSession;
 
         private readonly string _key;
 
