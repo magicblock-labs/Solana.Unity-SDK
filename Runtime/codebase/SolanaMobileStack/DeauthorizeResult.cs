@@ -4,6 +4,8 @@ namespace Solana.Unity.SolanaMobileStack
 {
     public abstract class DeauthorizeResult
     {
+        private DeauthorizeResult() { }
+
         public sealed class FullyRevoked : DeauthorizeResult { }
 
         public sealed class LocalOnly : DeauthorizeResult

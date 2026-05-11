@@ -108,7 +108,11 @@ namespace Solana.Unity.SDK
                 }
                 else
                 {
-                    task.SetResult(envelope["result"]);
+                    var resultToken = envelope["result"];
+                    if (resultToken == null || resultToken.Type == JTokenType.Null)
+                        task.SetException(new JsonRpcException(0, "JSON-RPC response has null result", null));
+                    else
+                        task.SetResult(resultToken);
                 }
             }
             catch (JsonException e)

@@ -5,6 +5,8 @@ namespace Solana.Unity.SolanaMobileStack
 {
     public abstract class ReconnectResult
     {
+        private ReconnectResult() { }
+
         public sealed class SilentSuccess : ReconnectResult
         {
             public Account Account { get; set; }

@@ -17,6 +17,8 @@ namespace Solana.Unity.SolanaMobileStack
         public static byte[] PrimaryAccountPublicKeyBytes(this AuthorizationResult authorization)
         {
             AccountInfo primary = authorization.PrimaryAccount();
+            if (string.IsNullOrEmpty(primary.Address))
+                throw new InvalidAuthorizationException("accounts[0].address is null or empty");
             byte[] bytes;
             try
             {

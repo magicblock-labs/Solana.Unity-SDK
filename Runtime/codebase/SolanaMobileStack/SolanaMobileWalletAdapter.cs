@@ -430,9 +430,14 @@ namespace Solana.Unity.SDK
                 {
                     async client =>
                     {
-                        await client.AuthorizeAsync(
+                        var auth = await client.AuthorizeAsync(
                             _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken, CancellationToken.None);
+                        if (auth?.AuthToken != null && auth.AuthToken != _authToken)
+                        {
+                            _authToken = auth.AuthToken;
+                            await CacheAuthorizationAsync(auth);
+                        }
                     },
                     async client =>
                     {
@@ -456,6 +461,8 @@ namespace Solana.Unity.SDK
                     case JsonRpcErrorCodes.AuthorizationFailed:
                         try { await _cache.ClearAsync(); } catch (Exception ex) { Debug.LogWarning($"[MWA] Cache clear failed after auth revocation: {ex.Message}"); }
                         _authToken = null;
+                        LogoutSuppressed();
+                        OnWalletDisconnected?.Invoke();
                         return new SignAndSendTxResult.AuthRevoked();
                     case JsonRpcErrorCodes.InvalidPayloads:
                         bool[] valid = null;
@@ -571,6 +578,8 @@ namespace Solana.Unity.SDK
             {
                 try { await _cache.ClearAsync(); } catch (Exception ex) { Debug.LogWarning($"[MWA] Cache clear failed after auth revocation: {ex.Message}"); }
                 _authToken = null;
+                LogoutSuppressed();
+                OnWalletDisconnected?.Invoke();
                 return new ReconnectResult.NoCachedSession();
             }
 
@@ -763,9 +772,14 @@ namespace Solana.Unity.SDK
                 {
                     async client =>
                     {
-                        await client.AuthorizeAsync(
+                        var auth = await client.AuthorizeAsync(
                             _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken, CancellationToken.None);
+                        if (auth?.AuthToken != null && auth.AuthToken != _authToken)
+                        {
+                            _authToken = auth.AuthToken;
+                            await CacheAuthorizationAsync(auth);
+                        }
                     },
                     async client =>
                     {
