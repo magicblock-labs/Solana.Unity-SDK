@@ -706,10 +706,15 @@ namespace Solana.Unity.SDK
                 {
                     async client =>
                     {
-                        await client.AuthorizeAsync(
+                        var reauth = await client.AuthorizeAsync(
                             _identityUri, _iconRelativeUri,
                             _walletOptions.name, chain, _authToken,
                             CancellationToken.None);
+                        if (reauth?.AuthToken != null && reauth.AuthToken != _authToken)
+                        {
+                            _authToken = reauth.AuthToken;
+                            await CacheAuthorizationAsync(reauth);
+                        }
                     },
                     async client =>
                     {
