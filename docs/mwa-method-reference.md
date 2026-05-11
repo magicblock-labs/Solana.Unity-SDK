@@ -156,7 +156,7 @@ Task<RequestResult<string>> SignAndSendTransaction(
     Commitment commitment = Commitment.Confirmed)
 ```
 
-Single-transaction convenience wrapper. Returns `RequestResult<string>` with the base64 signature on success or an error reason.
+Single-transaction convenience wrapper. Returns `RequestResult<string>` with the base58-encoded transaction signature on success or an error reason.
 
 ---
 

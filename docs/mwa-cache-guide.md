@@ -47,7 +47,7 @@ var options = new SolanaMobileWalletAdapterOptions
 };
 ```
 
-### Example: In-Memory Cache
+### Example: Custom-Key PlayerPrefs Cache
 
 From the [demo app](https://github.com/Zurcusa/unity-solana-mwa-example):
 
