@@ -33,9 +33,13 @@ namespace Solana.Unity.SDK
     {
         private enum MwaOperation
         {
+            Login,
             Deauthorize,
             SignAndSendTransactions,
             SignAndSendTransaction,
+            SignTransactions,
+            SignMessage,
+            GetCapabilities,
             Disconnect,
             Reconnect,
             LoginWithSignIn,
@@ -192,43 +196,47 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Account> _Login(string password = null)
         {
-            // Migration runs here instead of the constructor because C# constructors cannot be
-            // async, and _cache.SetAsync must be awaited to support custom async IAuthorizationCache
-            // implementations (e.g. Android Keystore-backed caches).
-            if (!_migrationComplete)
+            if (!await TryAcquireGate(MwaOperation.Login))
+                throw new OperationInFlightException(
+                    $"{_currentOperation} is in flight; cannot start Login");
+            try
             {
-                await MigrateLegacyPrefKeysAsync();
-                _migrationComplete = true;
-            }
-
-            var chain = ToChainUri(RpcCluster);
-
-            var reconnect = await ReconnectInternal();
-            if (reconnect is ReconnectResult.SilentSuccess success)
-                return success.Account;
-
-            AuthorizationResult authorization = null;
-            var scenario = new LocalAssociationScenario();
-            var result = await scenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+                if (!_migrationComplete)
                 {
-                    async client =>
-                    {
-                        authorization = await client.AuthorizeAsync(
-                            _identityUri, _iconRelativeUri,
-                            _walletOptions.name, chain, null, CancellationToken.None);
-                    }
+                    await MigrateLegacyPrefKeysAsync();
+                    _migrationComplete = true;
                 }
-            );
-            if (!result.WasSuccessful)
-                throw new InvalidOperationException(result.Error?.Message ?? "Authorization failed");
-            if (authorization == null)
-                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
 
-            _authToken = authorization.AuthToken;
-            await CacheAuthorizationAsync(authorization);
-            var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
-            return new Account(string.Empty, publicKey);
+                var chain = ToChainUri(RpcCluster);
+
+                var reconnect = await ReconnectInternal();
+                if (reconnect is ReconnectResult.SilentSuccess success)
+                    return success.Account;
+
+                AuthorizationResult authorization = null;
+                var scenario = new LocalAssociationScenario();
+                var result = await scenario.StartAndExecute(
+                    new List<Action<IAdapterOperations>>
+                    {
+                        async client =>
+                        {
+                            authorization = await client.AuthorizeAsync(
+                                _identityUri, _iconRelativeUri,
+                                _walletOptions.name, chain, null, CancellationToken.None);
+                        }
+                    }
+                );
+                if (!result.WasSuccessful)
+                    throw new InvalidOperationException(result.Error?.Message ?? "Authorization failed");
+                if (authorization == null)
+                    throw new InvalidAuthorizationException("Authorization was not populated by wallet");
+
+                _authToken = authorization.AuthToken;
+                await CacheAuthorizationAsync(authorization);
+                var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
+                return new Account(string.Empty, publicKey);
+            }
+            finally { ReleaseGate(); }
         }
 
         protected override async Task<Transaction> _SignTransaction(Transaction transaction)
@@ -239,37 +247,44 @@ namespace Solana.Unity.SDK
 
         protected override async Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
-            await ReloadAuthTokenFromCacheIfNeeded();
-            var chain = ToChainUri(RpcCluster);
-            SignedResult res = null;
-            AuthorizationResult authorization = null;
-            var scenario = new LocalAssociationScenario();
-            var result = await scenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
-                {
-                    async client =>
+            if (!await TryAcquireGate(MwaOperation.SignTransactions))
+                throw new OperationInFlightException(
+                    $"{_currentOperation} is in flight; cannot start SignTransactions");
+            try
+            {
+                await ReloadAuthTokenFromCacheIfNeeded();
+                var chain = ToChainUri(RpcCluster);
+                SignedResult res = null;
+                AuthorizationResult authorization = null;
+                var scenario = new LocalAssociationScenario();
+                var result = await scenario.StartAndExecute(
+                    new List<Action<IAdapterOperations>>
                     {
-                        authorization = await client.AuthorizeAsync(
-                            _identityUri, _iconRelativeUri,
-                            _walletOptions.name, chain, _authToken, CancellationToken.None);
-                    },
-                    async client =>
-                    {
-                        res = await client.SignTransactions(
-                            transactions.Select(transaction => transaction.Serialize()).ToList());
+                        async client =>
+                        {
+                            authorization = await client.AuthorizeAsync(
+                                _identityUri, _iconRelativeUri,
+                                _walletOptions.name, chain, _authToken, CancellationToken.None);
+                        },
+                        async client =>
+                        {
+                            res = await client.SignTransactions(
+                                transactions.Select(transaction => transaction.Serialize()).ToList());
+                        }
                     }
-                }
-            );
-            if (!result.WasSuccessful)
-                throw new InvalidOperationException(result.Error?.Message ?? "Sign transactions failed");
-            if (authorization == null)
-                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
-            if (res == null)
-                throw new InvalidOperationException("Signed payloads were not populated by wallet");
+                );
+                if (!result.WasSuccessful)
+                    throw new InvalidOperationException(result.Error?.Message ?? "Sign transactions failed");
+                if (authorization == null)
+                    throw new InvalidAuthorizationException("Authorization was not populated by wallet");
+                if (res == null)
+                    throw new InvalidOperationException("Signed payloads were not populated by wallet");
 
-            _authToken = authorization.AuthToken ?? _authToken;
-            await CacheAuthorizationAsync(authorization);
-            return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
+                _authToken = authorization.AuthToken ?? _authToken;
+                await CacheAuthorizationAsync(authorization);
+                return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
+            }
+            finally { ReleaseGate(); }
         }
 
         public async Task<DeauthorizeResult> Deauthorize()
@@ -413,6 +428,7 @@ namespace Solana.Unity.SDK
                             SkipPreflight = options.SkipPreflight,
                             MaxRetries = options.MaxRetries,
                             MinContextSlot = blockHash.Result.Context.Slot,
+                            WaitForCommitmentToSendNextTransaction = options.WaitForCommitmentToSendNextTransaction,
                         };
                 }
                 catch (Exception ex) { Debug.LogWarning($"[MWA] MinContextSlot fetch failed: {ex.Message}"); }
@@ -643,22 +659,29 @@ namespace Solana.Unity.SDK
 
         public async Task<CapabilitiesResult> GetCapabilities()
         {
-            CapabilitiesResult capabilities = null;
-            var localAssociationScenario = new LocalAssociationScenario();
-            var result = await localAssociationScenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
-                {
-                    async client =>
+            if (!await TryAcquireGate(MwaOperation.GetCapabilities))
+                throw new OperationInFlightException(
+                    $"{_currentOperation} is in flight; cannot start GetCapabilities");
+            try
+            {
+                CapabilitiesResult capabilities = null;
+                var localAssociationScenario = new LocalAssociationScenario();
+                var result = await localAssociationScenario.StartAndExecute(
+                    new List<Action<IAdapterOperations>>
                     {
-                        capabilities = await client.GetCapabilities();
+                        async client =>
+                        {
+                            capabilities = await client.GetCapabilities();
+                        }
                     }
-                }
-            );
-            if (!result.WasSuccessful)
-                throw new InvalidOperationException(result.Error?.Message ?? "GetCapabilities failed");
-            if (capabilities == null)
-                throw new InvalidOperationException("GetCapabilities RPC succeeded but returned no data");
-            return capabilities;
+                );
+                if (!result.WasSuccessful)
+                    throw new InvalidOperationException(result.Error?.Message ?? "GetCapabilities failed");
+                if (capabilities == null)
+                    throw new InvalidOperationException("GetCapabilities RPC succeeded but returned no data");
+                return capabilities;
+            }
+            finally { ReleaseGate(); }
         }
 
         public async Task<(Account Account, SignInResult SignInResult)> LoginWithSignIn(
@@ -701,6 +724,7 @@ namespace Solana.Unity.SDK
             await CacheAuthorizationAsync(authorization);
             var publicKey = new PublicKey(authorization.PrimaryAccountPublicKeyBytes());
             var account = new Account(string.Empty, publicKey);
+            Account = account;
 
             if (authorization.SignInResult != null)
                 return (account, authorization.SignInResult);
@@ -812,49 +836,56 @@ namespace Solana.Unity.SDK
 
         public override async Task<byte[]> SignMessage(byte[] message)
         {
-            await ReloadAuthTokenFromCacheIfNeeded();
-
-            string cachedPk = Account?.PublicKey?.ToString();
-            if (string.IsNullOrEmpty(cachedPk))
+            if (!await TryAcquireGate(MwaOperation.SignMessage))
+                throw new OperationInFlightException(
+                    $"{_currentOperation} is in flight; cannot start SignMessage");
+            try
             {
-                var record = await _cache.GetAsync();
-                cachedPk = record?.AccountAddress;
-            }
-            if (string.IsNullOrEmpty(cachedPk))
-                throw new InvalidOperationException("Cannot sign message: no account available");
+                await ReloadAuthTokenFromCacheIfNeeded();
 
-            SignedResult signedMessages = null;
-            AuthorizationResult authorization = null;
-            var chain = ToChainUri(RpcCluster);
-            var scenario = new LocalAssociationScenario();
-            var result = await scenario.StartAndExecute(
-                new List<Action<IAdapterOperations>>
+                string cachedPk = Account?.PublicKey?.ToString();
+                if (string.IsNullOrEmpty(cachedPk))
                 {
-                    async client =>
-                    {
-                        authorization = await client.AuthorizeAsync(
-                            _identityUri, _iconRelativeUri,
-                            _walletOptions.name, chain, _authToken, CancellationToken.None);
-                    },
-                    async client =>
-                    {
-                        signedMessages = await client.SignMessages(
-                            messages: new List<byte[]> { message },
-                            addresses: new List<byte[]> { new PublicKey(cachedPk).KeyBytes }
-                        );
-                    }
+                    var record = await _cache.GetAsync();
+                    cachedPk = record?.AccountAddress;
                 }
-            );
-            if (!result.WasSuccessful)
-                throw new InvalidOperationException(result.Error?.Message ?? "Sign message failed");
-            if (authorization == null)
-                throw new InvalidAuthorizationException("Authorization was not populated by wallet");
-            if (signedMessages == null)
-                throw new InvalidOperationException("Signed payloads were not populated by wallet");
+                if (string.IsNullOrEmpty(cachedPk))
+                    throw new InvalidOperationException("Cannot sign message: no account available");
 
-            _authToken = authorization.AuthToken ?? _authToken;
-            await CacheAuthorizationAsync(authorization);
-            return signedMessages.SignedPayloadsBytes[0];
+                SignedResult signedMessages = null;
+                AuthorizationResult authorization = null;
+                var chain = ToChainUri(RpcCluster);
+                var scenario = new LocalAssociationScenario();
+                var result = await scenario.StartAndExecute(
+                    new List<Action<IAdapterOperations>>
+                    {
+                        async client =>
+                        {
+                            authorization = await client.AuthorizeAsync(
+                                _identityUri, _iconRelativeUri,
+                                _walletOptions.name, chain, _authToken, CancellationToken.None);
+                        },
+                        async client =>
+                        {
+                            signedMessages = await client.SignMessages(
+                                messages: new List<byte[]> { message },
+                                addresses: new List<byte[]> { new PublicKey(cachedPk).KeyBytes }
+                            );
+                        }
+                    }
+                );
+                if (!result.WasSuccessful)
+                    throw new InvalidOperationException(result.Error?.Message ?? "Sign message failed");
+                if (authorization == null)
+                    throw new InvalidAuthorizationException("Authorization was not populated by wallet");
+                if (signedMessages == null)
+                    throw new InvalidOperationException("Signed payloads were not populated by wallet");
+
+                _authToken = authorization.AuthToken ?? _authToken;
+                await CacheAuthorizationAsync(authorization);
+                return signedMessages.SignedPayloadsBytes[0];
+            }
+            finally { ReleaseGate(); }
         }
 
         public Task<byte[]> SignMessage(string message)

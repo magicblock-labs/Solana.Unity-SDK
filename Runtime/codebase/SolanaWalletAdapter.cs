@@ -28,8 +28,8 @@ namespace Solana.Unity.SDK
         {
             #if UNITY_ANDROID
             #pragma warning disable CS0618
-            var mwaOptions = options.solanaMobileWalletAdapterOptions;
-            if (authCache != null && mwaOptions != null)
+            var mwaOptions = options.solanaMobileWalletAdapterOptions ?? new SolanaMobileWalletAdapterOptions();
+            if (authCache != null)
                 mwaOptions.Cache ??= authCache;
             _internalWallet = new SolanaMobileWalletAdapter(mwaOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
             #elif UNITY_WEBGL
