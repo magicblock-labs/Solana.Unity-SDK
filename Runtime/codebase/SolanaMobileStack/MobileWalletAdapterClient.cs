@@ -126,6 +126,8 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
     {
         if (base64Payloads == null || base64Payloads.Length == 0)
             throw new ArgumentException("At least one payload is required", nameof(base64Payloads));
+        if (base64Payloads.Any(p => string.IsNullOrEmpty(p)))
+            throw new ArgumentException("Payload entries must not be null or empty", nameof(base64Payloads));
         ct.ThrowIfCancellationRequested();
         UnityEngine.Debug.Log($"[MWA Client] sign_and_send_transactions: {base64Payloads.Length} payload(s)");
 
@@ -225,7 +227,10 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         };
 
         JToken raw = await SendRequestRaw(request);
-        return (string)raw?["auth_token"];
+        var token = (string)raw?["auth_token"];
+        if (string.IsNullOrEmpty(token))
+            throw new JsonRpcException(0, "clone_authorization response missing auth_token", raw);
+        return token;
     }
 
     private JsonRequest PrepareDeauthorizeRequest(string authToken)

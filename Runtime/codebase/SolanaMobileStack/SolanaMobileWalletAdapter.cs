@@ -85,11 +85,11 @@ namespace Solana.Unity.SDK
             bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup
         )
         {
-            _walletOptions = solanaWalletOptions;
-            _cache = solanaWalletOptions?.Cache ?? new PlayerPrefsAuthorizationCache();
-            _verbosity = solanaWalletOptions?.Verbosity ?? LogVerbosity.Default;
-            _identityUri = new Uri(solanaWalletOptions.identityUri);
-            _iconRelativeUri = new Uri(solanaWalletOptions.iconUri, UriKind.Relative);
+            _walletOptions = solanaWalletOptions ?? new SolanaMobileWalletAdapterOptions();
+            _cache = _walletOptions.Cache ?? new PlayerPrefsAuthorizationCache();
+            _verbosity = _walletOptions.Verbosity;
+            _identityUri = new Uri(_walletOptions.identityUri);
+            _iconRelativeUri = new Uri(_walletOptions.iconUri, UriKind.Relative);
             if (Application.platform != RuntimePlatform.Android)
             {
                 throw new PlatformNotSupportedException("SolanaMobileWalletAdapter can only be used on Android");
@@ -185,7 +185,7 @@ namespace Solana.Unity.SDK
         {
             if (!string.IsNullOrEmpty(_authToken)) return;
             if (!(_walletOptions?.keepConnectionAlive ?? true)) return;
-            var record = await _cache.GetAsync();
+            var record = await LoadValidCachedRecordAsync();
             if (record != null && !string.IsNullOrEmpty(record.AuthToken))
                 _authToken = record.AuthToken;
         }
@@ -591,6 +591,12 @@ namespace Solana.Unity.SDK
                 return new ReconnectResult.Failed
                 {
                     Error = new Exception(result.Error?.Message ?? "Wallet unreachable")
+                };
+
+            if (authorization == null)
+                return new ReconnectResult.Failed
+                {
+                    Error = new InvalidAuthorizationException("Wallet did not return authorization data")
                 };
 
             _authToken = authorization.AuthToken;

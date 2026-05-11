@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Threading;
 using NUnit.Framework;
 using Solana.Unity.SDK;
