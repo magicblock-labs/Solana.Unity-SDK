@@ -38,8 +38,17 @@ namespace Solana.Unity.SDK
             new("NH3uX6FtVE2fNREAioP7hm5RaozotZxeL6khU1EHx51");
 
         private static readonly byte[] Zero32 = new byte[32];
-        private static readonly IRpcClient NameResolutionRpcClient =
-            ClientFactory.GetClient("https://api.mainnet-beta.solana.com");
+        private static IRpcClient _nameResolutionRpcClient;
+        private static IRpcClient NameResolutionRpcClient =>
+            _nameResolutionRpcClient ??= ClientFactory.GetClient("https://api.mainnet-beta.solana.com");
+
+        /// <summary>
+        /// Override the RPC endpoint used for domain resolution. Call before any resolution
+        /// occurs. A private RPC (e.g. Helius, QuickNode) is required for reverse lookup
+        /// since public endpoints restrict getProgramAccounts.
+        /// </summary>
+        public static void SetRpcUrl(string url) =>
+            _nameResolutionRpcClient = ClientFactory.GetClient(url);
         private static readonly object ReverseLookupLock = new();
         private static readonly Dictionary<string, ReverseLookupCacheEntry> ReverseLookupCache = new();
         private static readonly Dictionary<string, Task<string>> ReverseLookupInFlight = new();
@@ -154,7 +163,7 @@ namespace Solana.Unity.SDK
             if (expiresAt != 0 && expiresAt < now)
                 return null;
 
-            var ownerBytes = rawData.Skip(OwnerOffset).Take(32).ToArray();
+            var ownerBytes = SliceBytes(rawData, OwnerOffset, PublicKeyLength);
             if (ownerBytes.All(b => b == 0))
                 return null;
 
@@ -225,7 +234,7 @@ namespace Solana.Unity.SDK
                 if (expiresAt != 0 && expiresAt < now)
                     continue;
 
-                var recordOwnerBytes = nameRecordRaw.Skip(OwnerOffset).Take(PublicKeyLength).ToArray();
+                var recordOwnerBytes = SliceBytes(nameRecordRaw, OwnerOffset, PublicKeyLength);
                 if (recordOwnerBytes.All(b => b == 0))
                     continue;
 
@@ -256,7 +265,7 @@ namespace Solana.Unity.SDK
 
         private static string ExtractUtf8Label(byte[] rawData)
         {
-            var payload = rawData.Skip(NameRecordHeaderLength).ToArray();
+            var payload = SliceBytes(rawData, NameRecordHeaderLength, rawData.Length - NameRecordHeaderLength);
             var end = Array.IndexOf(payload, (byte)0);
             if (end < 0)
                 end = payload.Length;
@@ -353,19 +362,22 @@ namespace Solana.Unity.SDK
             if (ownerFromNameRecord.Key != nftRecordPda.Key)
                 return ownerFromNameRecord;
 
+            // Domain is NFT-wrapped: ownerFromNameRecord is the NFT record PDA, not a wallet.
+            // All error paths below must return null — returning ownerFromNameRecord here
+            // would resolve to a PDA and cause transfers to be sent to an invalid address.
             var nftRecordRaw = await GetRawAccountData(nftRecordPda).ConfigureAwait(false);
             if (nftRecordRaw.Length < NftRecordMintOffset + PublicKeyLength)
-                return ownerFromNameRecord;
+                return null;
 
             var tag = nftRecordRaw[NftRecordTagOffset];
             if (tag != 1) // Tag.ActiveRecord
-                return ownerFromNameRecord;
+                return null;
 
-            var mint = new PublicKey(nftRecordRaw.Skip(NftRecordMintOffset).Take(PublicKeyLength).ToArray());
+            var mint = new PublicKey(SliceBytes(nftRecordRaw, NftRecordMintOffset, PublicKeyLength));
             var largestAccounts = await NameResolutionRpcClient.GetTokenLargestAccountsAsync(mint, Commitment.Confirmed).ConfigureAwait(false);
             var largestTokenAccount = largestAccounts?.Result?.Value?.FirstOrDefault(a => a.AmountUlong > 0);
             if (largestTokenAccount == null)
-                return ownerFromNameRecord;
+                return null;
 
             PublicKey tokenAccount;
             try
@@ -374,14 +386,14 @@ namespace Solana.Unity.SDK
             }
             catch (Exception)
             {
-                return ownerFromNameRecord;
+                return null;
             }
 
             var tokenAccountRaw = await GetRawAccountData(tokenAccount).ConfigureAwait(false);
             if (tokenAccountRaw.Length < SplTokenOwnerOffset + PublicKeyLength)
-                return ownerFromNameRecord;
+                return null;
 
-            return new PublicKey(tokenAccountRaw.Skip(SplTokenOwnerOffset).Take(PublicKeyLength).ToArray());
+            return new PublicKey(SliceBytes(tokenAccountRaw, SplTokenOwnerOffset, PublicKeyLength));
         }
 
         private static ulong ReadUInt64LittleEndian(byte[] data, int offset)
@@ -433,6 +445,13 @@ namespace Solana.Unity.SDK
             label = parts[0];
             tld = parts[1];
             return !string.IsNullOrWhiteSpace(label) && !string.IsNullOrWhiteSpace(tld);
+        }
+
+        private static byte[] SliceBytes(byte[] source, int offset, int length)
+        {
+            var result = new byte[length];
+            Buffer.BlockCopy(source, offset, result, 0, length);
+            return result;
         }
     }
 }
