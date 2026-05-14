@@ -59,7 +59,7 @@ namespace Solana.Unity.SDK
 
             try
             {
-                return await ResolveDomainToAddressOnChain(domain);
+                return await ResolveDomainToAddressOnChain(domain).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -73,13 +73,11 @@ namespace Solana.Unity.SDK
                 return null;
 
             var normalizedAddress = address.Trim();
-            if (TryGetCachedReverseLookup(normalizedAddress, out var cachedDomain))
-                return cachedDomain;
 
             Task<string> lookupTask;
             lock (ReverseLookupLock)
             {
-                if (TryGetCachedReverseLookup(normalizedAddress, out cachedDomain))
+                if (TryGetCachedReverseLookup(normalizedAddress, out var cachedDomain))
                     return cachedDomain;
 
                 if (!ReverseLookupInFlight.TryGetValue(normalizedAddress, out lookupTask))
@@ -98,7 +96,7 @@ namespace Solana.Unity.SDK
                 }
             }
 
-            var resolvedDomain = await lookupTask;
+            var resolvedDomain = await lookupTask.ConfigureAwait(false);
             CacheReverseLookup(normalizedAddress, resolvedDomain);
             return resolvedDomain;
         }
@@ -107,7 +105,12 @@ namespace Solana.Unity.SDK
         {
             try
             {
-                return await ResolveAddressToDomainOnChain(address);
+                var resolveTask = ResolveAddressToDomainOnChain(address);
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+                var winner = await Task.WhenAny(resolveTask, timeoutTask).ConfigureAwait(false);
+                if (winner != resolveTask)
+                    return null;
+                return await resolveTask.ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -141,7 +144,7 @@ namespace Solana.Unity.SDK
                 return null;
             }
 
-            var rawData = await GetRawAccountData(domainAccount);
+            var rawData = await GetRawAccountData(domainAccount).ConfigureAwait(false);
 
             if (rawData.Length < NameRecordHeaderLength)
                 return null;
@@ -156,7 +159,7 @@ namespace Solana.Unity.SDK
                 return null;
 
             var owner = new PublicKey(ownerBytes);
-            var actualOwner = await ResolveWrappedDomainOwner(domainAccount, tldHouseAccount, owner);
+            var actualOwner = await ResolveWrappedDomainOwner(domainAccount, tldHouseAccount, owner).ConfigureAwait(false);
             return actualOwner?.Key;
         }
 
@@ -194,7 +197,7 @@ namespace Solana.Unity.SDK
             {
                 new() { Offset = 8, Bytes = tldParentAccount.ToString() }
             };
-            var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters);
+            var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters).ConfigureAwait(false);
             if (accounts?.Result == null || accounts.Result.Count == 0)
                 return null;
 
@@ -213,7 +216,7 @@ namespace Solana.Unity.SDK
                 if (!TryDeriveNameAccount(nameAccount.Key, null, out var reverseLookupAccount, tldHouseAccount))
                     continue;
 
-                var nameRecordRaw = await GetRawAccountData(nameAccount);
+                var nameRecordRaw = await GetRawAccountData(nameAccount).ConfigureAwait(false);
                 if (nameRecordRaw.Length < NameRecordHeaderLength)
                     continue;
 
@@ -227,11 +230,11 @@ namespace Solana.Unity.SDK
                     continue;
 
                 var recordOwner = new PublicKey(recordOwnerBytes);
-                var actualOwner = await ResolveWrappedDomainOwner(nameAccount, tldHouseAccount, recordOwner);
+                var actualOwner = await ResolveWrappedDomainOwner(nameAccount, tldHouseAccount, recordOwner).ConfigureAwait(false);
                 if (actualOwner?.Key != owner.Key)
                     continue;
 
-                var reverseLookupRaw = await GetRawAccountData(reverseLookupAccount);
+                var reverseLookupRaw = await GetRawAccountData(reverseLookupAccount).ConfigureAwait(false);
                 if (reverseLookupRaw.Length <= NameRecordHeaderLength)
                     continue;
 
@@ -297,7 +300,7 @@ namespace Solana.Unity.SDK
 
         private static async Task<byte[]> GetRawAccountData(PublicKey accountKey)
         {
-            var response = await NameResolutionRpcClient.GetAccountInfoAsync(accountKey, Commitment.Confirmed);
+            var response = await NameResolutionRpcClient.GetAccountInfoAsync(accountKey, Commitment.Confirmed).ConfigureAwait(false);
             var accountData = response?.Result?.Value?.Data;
             if (accountData == null || accountData.Count == 0)
                 return Array.Empty<byte>();
@@ -350,7 +353,7 @@ namespace Solana.Unity.SDK
             if (ownerFromNameRecord.Key != nftRecordPda.Key)
                 return ownerFromNameRecord;
 
-            var nftRecordRaw = await GetRawAccountData(nftRecordPda);
+            var nftRecordRaw = await GetRawAccountData(nftRecordPda).ConfigureAwait(false);
             if (nftRecordRaw.Length < NftRecordMintOffset + PublicKeyLength)
                 return ownerFromNameRecord;
 
@@ -359,7 +362,7 @@ namespace Solana.Unity.SDK
                 return ownerFromNameRecord;
 
             var mint = new PublicKey(nftRecordRaw.Skip(NftRecordMintOffset).Take(PublicKeyLength).ToArray());
-            var largestAccounts = await NameResolutionRpcClient.GetTokenLargestAccountsAsync(mint, Commitment.Confirmed);
+            var largestAccounts = await NameResolutionRpcClient.GetTokenLargestAccountsAsync(mint, Commitment.Confirmed).ConfigureAwait(false);
             var largestTokenAccount = largestAccounts?.Result?.Value?.FirstOrDefault(a => a.AmountUlong > 0);
             if (largestTokenAccount == null)
                 return ownerFromNameRecord;
@@ -374,7 +377,7 @@ namespace Solana.Unity.SDK
                 return ownerFromNameRecord;
             }
 
-            var tokenAccountRaw = await GetRawAccountData(tokenAccount);
+            var tokenAccountRaw = await GetRawAccountData(tokenAccount).ConfigureAwait(false);
             if (tokenAccountRaw.Length < SplTokenOwnerOffset + PublicKeyLength)
                 return ownerFromNameRecord;
 
