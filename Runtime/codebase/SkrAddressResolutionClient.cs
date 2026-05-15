@@ -202,9 +202,13 @@ namespace Solana.Unity.SDK
                 return null;
             }
 
+            // Second filter narrows to accounts directly owned by the target wallet (non-wrapped domains).
+            // NFT-wrapped domains store the nftRecordPda at OwnerOffset rather than a wallet address
+            // and will not be matched here — those require an on-chain reverse-lookup index.
             var filters = new List<MemCmp>
             {
-                new() { Offset = 8, Bytes = tldParentAccount.ToString() }
+                new() { Offset = 8, Bytes = tldParentAccount.ToString() },
+                new() { Offset = OwnerOffset, Bytes = owner.ToString() }
             };
             var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters).ConfigureAwait(false);
             if (accounts?.Result == null || accounts.Result.Count == 0)
