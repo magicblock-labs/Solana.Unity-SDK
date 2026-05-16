@@ -47,6 +47,19 @@ public class ReceiveScreen : SimpleScreen
         publicKey_txt.text = walletAddress;
         var requestVersion = ++_displayNameRequestVersion;
         _ = ResolveWalletDisplayName(walletAddress, requestVersion);
+
+        // DEBUG: test non-wrapped mainnet resolution for lopeselio.skr
+        _ = TestSkrResolution();
+    }
+
+    private async System.Threading.Tasks.Task TestSkrResolution()
+    {
+        const string testAddress = "7unNfWoNNdGrXthebTQKv64zLejwTEb1D8MwMr4Ajprm";
+        Debug.Log($"[SKR Test] Resolving {testAddress}...");
+        var result = await SkrAddressResolutionClient.ResolveAddressToDomain(testAddress);
+        Debug.Log(result != null
+            ? $"[SKR Test] SUCCESS: {testAddress} → {result}"
+            : $"[SKR Test] FAILED: no domain found for {testAddress}");
     }
 
     private async System.Threading.Tasks.Task ResolveWalletDisplayName(string walletAddress, int requestVersion)
