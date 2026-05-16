@@ -37,10 +37,18 @@ namespace Solana.Unity.SDK
         private static readonly PublicKey NameHouseProgramId =
             new("NH3uX6FtVE2fNREAioP7hm5RaozotZxeL6khU1EHx51");
 
+        // Reverse-lookup table program for NFT-wrapped domains (devnet-as.magicblock.app).
+        private const string WrappedLookupProgramAddress = "6eG7z75HG4FfNj4Zi83XKjZw1KYXmkAUMSVUH5C7VbrC";
+        private static readonly byte[] WrappedLookupDiscriminator = { 78, 47, 200, 226, 220, 71, 95, 55 };
+
         private static readonly byte[] Zero32 = new byte[32];
         private static IRpcClient _nameResolutionRpcClient;
         private static IRpcClient NameResolutionRpcClient =>
             _nameResolutionRpcClient ??= ClientFactory.GetClient("https://api.mainnet-beta.solana.com");
+
+        private static IRpcClient _lookupTableRpcClient;
+        private static IRpcClient LookupTableRpcClient =>
+            _lookupTableRpcClient ??= ClientFactory.GetClient("https://devnet-as.magicblock.app");
 
         /// <summary>
         /// Override the RPC endpoint used for domain resolution. Call before any resolution
@@ -49,6 +57,13 @@ namespace Solana.Unity.SDK
         /// </summary>
         public static void SetRpcUrl(string url) =>
             _nameResolutionRpcClient = ClientFactory.GetClient(url);
+
+        /// <summary>
+        /// Override the RPC endpoint used for the NFT-wrapped domain lookup table program.
+        /// Defaults to devnet-as.magicblock.app.
+        /// </summary>
+        public static void SetLookupRpcUrl(string url) =>
+            _lookupTableRpcClient = ClientFactory.GetClient(url);
         private static readonly object ReverseLookupLock = new();
         private static readonly Dictionary<string, ReverseLookupCacheEntry> ReverseLookupCache = new();
         private static readonly Dictionary<string, Task<string>> ReverseLookupInFlight = new();
@@ -203,16 +218,14 @@ namespace Solana.Unity.SDK
             }
 
             // Second filter narrows to accounts directly owned by the target wallet (non-wrapped domains).
-            // NFT-wrapped domains store the nftRecordPda at OwnerOffset rather than a wallet address
-            // and will not be matched here — those require an on-chain reverse-lookup index.
+            // NFT-wrapped domains store the nftRecordPda at OwnerOffset so they won't match here;
+            // they are handled below via the wrapped-domain lookup table program.
             var filters = new List<MemCmp>
             {
                 new() { Offset = 8, Bytes = tldParentAccount.ToString() },
                 new() { Offset = OwnerOffset, Bytes = owner.ToString() }
             };
             var accounts = await NameResolutionRpcClient.GetProgramAccountsAsync(AnsProgramId, memCmpList: filters).ConfigureAwait(false);
-            if (accounts?.Result == null || accounts.Result.Count == 0)
-                return null;
 
             foreach (var account in accounts.Result)
             {
@@ -264,7 +277,93 @@ namespace Solana.Unity.SDK
                 return $"{label}.{SuffixSkr}";
             }
 
-            return null;
+            return await ResolveWrappedDomainLabel(owner, tldParentAccount).ConfigureAwait(false);
+        }
+
+        private static async Task<string> ResolveWrappedDomainLabel(PublicKey owner, PublicKey tldParentAccount)
+        {
+            var reverseLookupAccount = await GetWrappedReverseLookupAccount(owner).ConfigureAwait(false);
+            if (reverseLookupAccount == null)
+                return null;
+
+            var reverseLookupRaw = await GetRawAccountData(reverseLookupAccount).ConfigureAwait(false);
+            if (reverseLookupRaw.Length <= NameRecordHeaderLength)
+                return null;
+
+            var label = ExtractUtf8Label(reverseLookupRaw);
+            if (string.IsNullOrWhiteSpace(label))
+                return null;
+
+            if (!TryDeriveNameAccount(label, tldParentAccount, out var forwardResolvedNameAccount))
+                return null;
+
+            var nameRecordRaw = await GetRawAccountData(forwardResolvedNameAccount).ConfigureAwait(false);
+            if (nameRecordRaw.Length < NameRecordHeaderLength)
+                return null;
+
+            var expiresAt = ReadUInt64LittleEndian(nameRecordRaw, ExpiresAtOffset);
+            var now = (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (expiresAt != 0 && expiresAt < now)
+                return null;
+
+            return $"{label}.{SuffixSkr}";
+        }
+
+        private static async Task<PublicKey> GetWrappedReverseLookupAccount(PublicKey pk)
+        {
+            var programKey = new PublicKey(WrappedLookupProgramAddress);
+
+            if (!PublicKey.TryFindProgramAddress(
+                    new[] { Encoding.UTF8.GetBytes("table"), new[] { pk.KeyBytes[0] } },
+                    programKey,
+                    out var tableAccount,
+                    out _))
+                return null;
+
+            var bhResult = await LookupTableRpcClient.GetLatestBlockHashAsync().ConfigureAwait(false);
+            if (bhResult?.Result?.Value?.Blockhash == null)
+                return null;
+
+            // Ephemeral keypair used only as fee-payer for simulation; signature validity is not checked.
+            var feePayer = new Account();
+
+            var transaction = new Transaction
+            {
+                FeePayer = feePayer.PublicKey,
+                Instructions = new List<TransactionInstruction>
+                {
+                    new()
+                    {
+                        ProgramId = programKey,
+                        Data = WrappedLookupDiscriminator.Concat(pk.KeyBytes).ToArray(),
+                        Keys = new List<AccountMeta>
+                        {
+                            AccountMeta.ReadOnly(tableAccount, false),
+                        }
+                    }
+                },
+                Signatures = new List<SignaturePubKeyPair>(),
+                RecentBlockHash = bhResult.Result.Value.Blockhash,
+            };
+
+            var rawTransaction = transaction.Build(feePayer);
+            var result = await LookupTableRpcClient.SimulateTransactionAsync(rawTransaction).ConfigureAwait(false);
+
+            var returnValue = result?.Result?.Value?.Logs?
+                .FirstOrDefault(l => l.StartsWith("Program return:"))
+                ?.Split(' ');
+
+            if (returnValue == null || returnValue.Length < 4)
+                return null;
+
+            try
+            {
+                return new PublicKey(Convert.FromBase64String(returnValue[3]));
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private static string ExtractUtf8Label(byte[] rawData)
