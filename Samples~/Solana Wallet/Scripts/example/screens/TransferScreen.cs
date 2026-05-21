@@ -1,6 +1,8 @@
 using System;
+using System.Globalization;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using TMPro;
 using UnityEngine;
@@ -24,6 +26,7 @@ namespace Solana.Unity.SDK.Example
         private TokenAccount _transferTokenAccount;
         private Nft.Nft _nft;
         private double _ownedSolAmount;
+        private ulong _ownedTokenAmount;
         
         private const long SolLamports = 1000000000;
 
@@ -37,82 +40,194 @@ namespace Solana.Unity.SDK.Example
             });
         }
 
-        private void TryTransfer()
+        private async void TryTransfer()
         {
+            var recipientAddress = await ResolveRecipientAddress();
+            if (string.IsNullOrEmpty(recipientAddress)) return;
+            if (!CheckRecipientAddress(recipientAddress)) return;
+
             if (_nft != null)
             {
-                TransferNft();
+                if (!CheckNftInput()) return;
+                TransferNft(recipientAddress);
             }
             else if (_transferTokenAccount == null)
             {
-                if (CheckInput())
-                    TransferSol();
+                if (CheckInput(out var transferAmount))
+                    TransferSol(recipientAddress, transferAmount);
             }
             else
             {
-                if (CheckInput())
-                    TransferToken();
+                if (CheckInput(out var transferAmount))
+                    TransferToken(recipientAddress, transferAmount);
             }
         }
 
-        private async void TransferSol()
+        private async void TransferSol(string recipientAddress, ulong lamports)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
-                new PublicKey(toPublicTxt.text),
-                Convert.ToUInt64(float.Parse(amountTxt.text)*SolLamports));
+                new PublicKey(recipientAddress),
+                lamports);
             HandleResponse(result);
         }
 
-        private async void TransferNft()
+        private async void TransferNft(string recipientAddress)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
-                new PublicKey(toPublicTxt.text),
+                new PublicKey(recipientAddress),
                 new PublicKey(_nft.metaplexData.data.mint),
                 1);
             HandleResponse(result);
         }
 
-        bool CheckInput()
+        private bool CheckRecipientAddress(string recipientAddress)
         {
+            if (string.IsNullOrEmpty(toPublicTxt.text))
+            {
+                errorTxt.text = "Please enter receiver public key or .skr domain";
+                return false;
+            }
+
+            try
+            {
+                _ = new PublicKey(recipientAddress);
+            }
+            catch (Exception)
+            {
+                errorTxt.text = "Receiver must be a valid public key or .skr domain";
+                return false;
+            }
+
+            errorTxt.text = "";
+            return true;
+        }
+
+        private bool CheckNftInput()
+        {
+            if (_nft == null)
+            {
+                errorTxt.text = "Invalid NFT selection";
+                return false;
+            }
+
             if (string.IsNullOrEmpty(amountTxt.text))
             {
                 errorTxt.text = "Please input transfer amount";
                 return false;
             }
 
-            if (string.IsNullOrEmpty(toPublicTxt.text))
+            if (ulong.TryParse(amountTxt.text, out var amount) && amount == 1)
             {
-                errorTxt.text = "Please enter receiver public key";
+                errorTxt.text = "";
+                return true;
+            }
+
+            errorTxt.text = "NFT transfer amount must be 1";
+            return false;
+        }
+
+        bool CheckInput(out ulong transferAmount)
+        {
+            transferAmount = 0;
+
+            if (string.IsNullOrEmpty(amountTxt.text))
+            {
+                errorTxt.text = "Please input transfer amount";
                 return false;
             }
 
+            var amountText = amountTxt.text.Trim();
             if (_transferTokenAccount == null)
             {
-                if (float.Parse(amountTxt.text) > _ownedSolAmount)
+                if (!decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amountSol))
+                {
+                    errorTxt.text = "Please input a valid amount";
+                    return false;
+                }
+
+                if (amountSol <= 0)
+                {
+                    errorTxt.text = "Transfer amount must be greater than zero";
+                    return false;
+                }
+
+                if (amountSol > (decimal)_ownedSolAmount)
                 {
                     errorTxt.text = "Not enough funds for transaction.";
                     return false;
                 }
+
+                var lamportsDecimal = amountSol * SolLamports;
+                if (lamportsDecimal < 1m)
+                {
+                    errorTxt.text = "Transfer amount is too small";
+                    return false;
+                }
+
+                if (lamportsDecimal > ulong.MaxValue)
+                {
+                    errorTxt.text = "Transfer amount is too large";
+                    return false;
+                }
+
+                transferAmount = decimal.ToUInt64(decimal.Truncate(lamportsDecimal));
             }
             else
             {
-                if (long.Parse(amountTxt.text) > long.Parse(ownedAmountTxt.text))
+                if (!ulong.TryParse(amountText, NumberStyles.None, CultureInfo.InvariantCulture, out var amountToken))
+                {
+                    errorTxt.text = "Please input a valid whole number amount";
+                    return false;
+                }
+
+                if (amountToken == 0)
+                {
+                    errorTxt.text = "Transfer amount must be greater than zero";
+                    return false;
+                }
+
+                if (amountToken > _ownedTokenAmount)
                 {
                     errorTxt.text = "Not enough funds for transaction.";
                     return false;
                 }
+
+                transferAmount = amountToken;
             }
             errorTxt.text = "";
             return true;
         }
 
-        private async void TransferToken()
+        private async void TransferToken(string recipientAddress, ulong amount)
         {
             RequestResult<string> result = await Web3.Instance.WalletBase.Transfer(
-                new PublicKey(toPublicTxt.text),
+                new PublicKey(recipientAddress),
                 new PublicKey(_transferTokenAccount.Account.Data.Parsed.Info.Mint),
-                ulong.Parse(amountTxt.text));
+                amount);
             HandleResponse(result);
+        }
+
+        private async System.Threading.Tasks.Task<string> ResolveRecipientAddress()
+        {
+            var destination = toPublicTxt.text?.Trim();
+            if (string.IsNullOrEmpty(destination))
+            {
+                errorTxt.text = "Please enter receiver public key or .skr domain";
+                return null;
+            }
+
+            if (!destination.EndsWith(".skr", StringComparison.OrdinalIgnoreCase))
+                return destination;
+
+            var resolvedAddress = await SkrAddressResolutionClient.ResolveDomainToAddress(destination);
+            if (string.IsNullOrEmpty(resolvedAddress))
+            {
+                errorTxt.text = $"Unable to resolve {destination}";
+                return null;
+            }
+
+            toPublicTxt.text = resolvedAddress;
+            return resolvedAddress;
         }
 
         private void HandleResponse(RequestResult<string> result)
@@ -148,6 +263,8 @@ namespace Solana.Unity.SDK.Example
             {
                 var (tokenAccount, tokenDef, texture) = (Tuple<TokenAccount, string, Texture2D>)data;
                 ownedAmountTxt.text = $"{tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount}";
+                if (!ulong.TryParse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount, NumberStyles.Integer, CultureInfo.InvariantCulture, out _ownedTokenAmount))
+                    _ownedTokenAmount = 0;
                 nftTitleTxt.gameObject.SetActive(true);
                 nftImage.gameObject.SetActive(true);
                 nftTitleTxt.text = $"{tokenDef}";
@@ -169,6 +286,7 @@ namespace Solana.Unity.SDK.Example
             {
                 _ownedSolAmount = await Web3.Instance.WalletBase.GetBalance();
                 ownedAmountTxt.text = $"{_ownedSolAmount}";
+                _ownedTokenAmount = 0;
             }
         }
 
@@ -178,6 +296,7 @@ namespace Solana.Unity.SDK.Example
             amountTxt.text = "";
             toPublicTxt.text = "";
             amountTxt.interactable = true;
+            _ownedTokenAmount = 0;
         }
 
         public override void HideScreen()

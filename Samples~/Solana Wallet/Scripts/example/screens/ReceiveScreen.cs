@@ -15,6 +15,7 @@ public class ReceiveScreen : SimpleScreen
 
     public TextMeshProUGUI publicKey_txt;
     public RawImage qrCode_img;
+    private int _displayNameRequestVersion;
 
     private void Start()
     {
@@ -42,7 +43,49 @@ public class ReceiveScreen : SimpleScreen
         CheckAndToggleAirdrop();
 
         GenerateQr();
-        publicKey_txt.text = Web3.Instance.WalletBase.Account.PublicKey;
+        var walletAddress = Web3.Instance.WalletBase.Account.PublicKey.ToString();
+        publicKey_txt.text = walletAddress;
+        var requestVersion = ++_displayNameRequestVersion;
+        _ = ResolveWalletDisplayName(walletAddress, requestVersion);
+
+        // DEBUG: test non-wrapped mainnet resolution for lopeselio.skr
+        _ = TestSkrResolution();
+    }
+
+    private async System.Threading.Tasks.Task TestSkrResolution()
+    {
+        const string testAddress = "7unNfWoNNdGrXthebTQKv64zLejwTEb1D8MwMr4Ajprm";
+        Debug.Log($"[SKR Test] Resolving {testAddress}...");
+        var result = await SkrAddressResolutionClient.ResolveAddressToDomain(testAddress);
+        Debug.Log(result != null
+            ? $"[SKR Test] SUCCESS: {testAddress} → {result}"
+            : $"[SKR Test] FAILED: no domain found for {testAddress}");
+    }
+
+    private async System.Threading.Tasks.Task ResolveWalletDisplayName(string walletAddress, int requestVersion)
+    {
+        var requestedAddress = walletAddress;
+        string domain;
+        try
+        {
+            domain = await SkrAddressResolutionClient.ResolveAddressToDomain(requestedAddress);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[SKR] Reverse lookup failed: {ex.Message}");
+            return;
+        }
+
+        if (requestVersion != _displayNameRequestVersion)
+            return;
+
+        if (!gameObject.activeInHierarchy || publicKey_txt.text != requestedAddress)
+            return;
+
+        if (!string.IsNullOrEmpty(domain))
+        {
+            publicKey_txt.text = domain;
+        }
     }
 
     private void CheckAndToggleAirdrop()
@@ -88,6 +131,7 @@ public class ReceiveScreen : SimpleScreen
     public override void HideScreen()
     {
         base.HideScreen();
+        _displayNameRequestVersion++;
         gameObject.SetActive(false);
     }
 
