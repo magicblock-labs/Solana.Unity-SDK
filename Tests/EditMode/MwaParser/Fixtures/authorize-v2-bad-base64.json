@@ -1,0 +1,6 @@
+{
+  "auth_token": "auth-token-bad-base64",
+  "accounts": [{
+    "address": "not!valid!base64!!!"
+  }]
+}

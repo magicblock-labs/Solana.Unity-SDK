@@ -36,32 +36,19 @@ namespace Solana.Unity.SDK.Tests.EditMode.Contracts
             return true;
         }
 
-        
-        // Authorize
+
+        // AuthorizeAsync (v2: merged Authorize + Reauthorize)
         [Test]
-        public void Interface_Has_Authorize_WithExpectedSignature()
+        public void Interface_Has_AuthorizeAsync_WithExpectedSignature()
         {
-            var method = GetMethod(nameof(IAdapterOperations.Authorize));
+            var methods = typeof(IAdapterOperations)
+                .GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .Where(m => m.Name == "AuthorizeAsync").ToArray();
 
-            Assert.IsNotNull(method, "IAdapterOperations.Authorize must exist");
-            Assert.AreEqual(typeof(Task<AuthorizationResult>), method.ReturnType,
-                "Authorize must return Task<AuthorizationResult>");
-            Assert.IsTrue(HasParams(method, typeof(Uri), typeof(Uri), typeof(string), typeof(string)),
-                "Authorize params must be (Uri identityUri, Uri iconUri, string identityName, string rpcCluster)");
-        }
-
-        
-        // Reauthorize
-        [Test]
-        public void Interface_Has_Reauthorize_WithExpectedSignature()
-        {
-            var method = GetMethod(nameof(IAdapterOperations.Reauthorize));
-
-            Assert.IsNotNull(method, "IAdapterOperations.Reauthorize must exist");
-            Assert.AreEqual(typeof(Task<AuthorizationResult>), method.ReturnType,
-                "Reauthorize must return Task<AuthorizationResult>");
-            Assert.IsTrue(HasParams(method, typeof(Uri), typeof(Uri), typeof(string), typeof(string)),
-                "Reauthorize params must be (Uri identityUri, Uri iconUri, string identityName, string authToken)");
+            Assert.AreEqual(2, methods.Length, "IAdapterOperations must have two AuthorizeAsync overloads");
+            foreach (var m in methods)
+                Assert.AreEqual(typeof(Task<AuthorizationResult>), m.ReturnType,
+                    "AuthorizeAsync must return Task<AuthorizationResult>");
         }
 
         
@@ -175,14 +162,11 @@ namespace Solana.Unity.SDK.Tests.EditMode.Contracts
         [Test]
         public void InterfaceMethodCount_MatchesExpectedSurface()
         {
-            // Deauthorize, GetCapabilities, SignTransactions, SignMessages.
-            // If this number changes, the contract tests above must be
-            // updated to cover any new members.
             var methods = typeof(IAdapterOperations)
                 .GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
-            Assert.AreEqual(6, methods.Length,
-                "IAdapterOperations must expose exactly 6 methods; update contract tests when this changes");
+            Assert.AreEqual(9, methods.Length,
+                "IAdapterOperations must expose exactly 9 methods; update contract tests when this changes");
         }
     }
 }

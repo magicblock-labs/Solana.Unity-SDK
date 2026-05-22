@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine.Scripting;
 
 
@@ -44,8 +45,11 @@ namespace Solana.Unity.SDK
             [RequiredMember]
             public JsonRequestIdentity Identity { get; set; }
 
-            [JsonProperty("cluster", NullValueHandling = NullValueHandling.Ignore)]
+            [JsonProperty("chain", NullValueHandling = NullValueHandling.Ignore)]
             [RequiredMember]
+            public string Chain { get; set; }
+
+            [JsonProperty("cluster", NullValueHandling = NullValueHandling.Ignore)]
             public string Cluster { get; set; }
 
             [JsonProperty("auth_token", NullValueHandling = NullValueHandling.Ignore)]
@@ -60,6 +64,16 @@ namespace Solana.Unity.SDK
             [JsonProperty("addresses", NullValueHandling = NullValueHandling.Ignore)]
             [RequiredMember]
             public List<string> Addresses { get; set; }
+
+            [JsonProperty("features", NullValueHandling = NullValueHandling.Ignore)]
+            [RequiredMember]
+            public List<string> Features { get; set; }
+
+            [JsonProperty("sign_in_payload", NullValueHandling = NullValueHandling.Ignore)]
+            public Solana.Unity.SolanaMobileStack.SignInPayload SignInPayload { get; set; }
+
+            [JsonProperty("options", NullValueHandling = NullValueHandling.Ignore)]
+            public JObject Options { get; set; }
 
             [RequiredMember]
             public JsonRequestParams()

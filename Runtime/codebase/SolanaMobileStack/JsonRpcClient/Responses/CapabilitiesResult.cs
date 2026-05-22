@@ -17,4 +17,10 @@ public class CapabilitiesResult
 
     [JsonProperty("supported_transaction_versions")]
     public string[] SupportedTransactionVersions { get; set; }
+
+    [JsonProperty("features")]
+    public string[] Features { get; set; }
+
+    [JsonProperty("supports_sign_and_send_transactions")]
+    public bool? SupportsSignAndSendTransactions { get; set; }
 }

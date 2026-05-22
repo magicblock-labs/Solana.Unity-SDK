@@ -264,7 +264,7 @@ namespace Solana.Unity.SDK.Tests.EditMode.MwaClient
             var identityUri = new System.Uri("https://example.com");
 
             // Act, intermix three different RPCs
-            _ = _client.Authorize(identityUri, null, "TestApp", "mainnet-beta");
+            _ = _client.AuthorizeAsync(identityUri, null, "TestApp", "mainnet-beta", null, System.Threading.CancellationToken.None);
             _ = _client.Deauthorize("auth-token");
             _ = _client.GetCapabilities();
 

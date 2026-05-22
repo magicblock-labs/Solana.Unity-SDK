@@ -1,0 +1,6 @@
+{
+  "auth_token": "auth-token-wrong-length",
+  "accounts": [{
+    "address": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  }]
+}

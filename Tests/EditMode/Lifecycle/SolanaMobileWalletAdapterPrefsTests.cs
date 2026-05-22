@@ -1,43 +1,45 @@
 using System.Collections.Generic;
-using NUnit.Framework;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Threading.Tasks;
+using NUnit.Framework;
+using Solana.Unity.SolanaMobileStack;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace
 namespace Solana.Unity.SDK.Tests.EditMode.Lifecycle
 {
-    /// <summary>
-    /// Edit mode tests for <see cref="SolanaMobileWalletAdapter"/> PlayerPrefs
-    /// behavior introduced in PR #269.
-    ///
-    /// The adapter constructor throws on non-Android platforms, so we cannot
-    /// instantiate the class in the Editor. Instead we use reflection to:
-    ///   1. Pin the new namespaced key constants (PrefKeyPublicKey /
-    ///      PrefKeyAuthToken) so a rename is caught immediately.
-    ///   2. Invoke the private static <c>MigrateLegacyPrefKeys</c> method
-    ///      and assert legacy <c>"pk"</c> / <c>"authToken"</c> entries move
-    ///      to the namespaced keys exactly once without overwriting newer
-    ///      data.
-    ///
-    /// [SetUp]/[TearDown] snapshot and restore any pre-existing values because
-    /// EditMode PlayerPrefs persist in the Unity editor project between runs.
-    /// </summary>
     [Category("Lifecycle")]
     public class SolanaMobileWalletAdapterPrefsTests
     {
         private const string LegacyPk = "pk";
         private const string LegacyAuthToken = "authToken";
-        private const string NewPkKey = "solana_sdk.mwa.public_key";
-        private const string NewAuthTokenKey = "solana_sdk.mwa.auth_token";
+        private const string Pr269Pk = "solana_sdk.mwa.public_key";
+        private const string Pr269AuthToken = "solana_sdk.mwa.auth_token";
+        private const string CacheKey = "SolanaUnity.MWA.AuthorizationRecord.v1";
+
         private static readonly string[] RelevantKeys =
         {
-            LegacyPk,
-            LegacyAuthToken,
-            NewPkKey,
-            NewAuthTokenKey
+            LegacyPk, LegacyAuthToken, Pr269Pk, Pr269AuthToken, CacheKey
         };
 
+        private static readonly FieldInfo CacheField =
+            typeof(SolanaMobileWalletAdapter).GetField("_cache", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo GateField =
+            typeof(SolanaMobileWalletAdapter).GetField("_gate", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo MigrateMethod =
+            typeof(SolanaMobileWalletAdapter).GetMethod("MigrateLegacyPrefKeysAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+
         private Dictionary<string, string> _originalPrefs;
+
+        [OneTimeSetUp]
+        public void Guard()
+        {
+            Assert.That(CacheField, Is.Not.Null, "_cache field not found");
+            Assert.That(GateField, Is.Not.Null, "_gate field not found");
+            Assert.That(MigrateMethod, Is.Not.Null,
+                "MigrateLegacyPrefKeysAsync must exist as private instance method");
+        }
 
         [SetUp]
         public void SetUp()
@@ -57,137 +59,109 @@ namespace Solana.Unity.SDK.Tests.EditMode.Lifecycle
         {
             var snapshot = new Dictionary<string, string>();
             foreach (var key in RelevantKeys)
-            {
                 if (PlayerPrefs.HasKey(key))
-                {
                     snapshot[key] = PlayerPrefs.GetString(key);
-                }
-            }
-
             return snapshot;
         }
 
         private void RestoreOriginalKeys()
         {
-            if (_originalPrefs == null)
-            {
-                return;
-            }
-
+            if (_originalPrefs == null) return;
             foreach (var entry in _originalPrefs)
-            {
                 PlayerPrefs.SetString(entry.Key, entry.Value);
-            }
-
             PlayerPrefs.Save();
         }
 
         private static void DeleteAllRelevantKeys()
         {
             foreach (var key in RelevantKeys)
-            {
                 PlayerPrefs.DeleteKey(key);
-            }
-
             PlayerPrefs.Save();
         }
 
-        private static void InvokeMigrate()
+        private static SolanaMobileWalletAdapter CreateAdapterWithCache(IAuthorizationCache cache)
         {
-            // MigrateLegacyPrefKeys is private static; reflection is the only
-            // way to exercise it without instantiating the adapter (which
-            // fails on non-Android editors).
-            var method = typeof(SolanaMobileWalletAdapter)
-                .GetMethod("MigrateLegacyPrefKeys",
-                    BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.IsNotNull(method,
-                "Private static MigrateLegacyPrefKeys must exist on SolanaMobileWalletAdapter");
-            method.Invoke(null, null);
+            var adapter = (SolanaMobileWalletAdapter)FormatterServices.GetUninitializedObject(
+                typeof(SolanaMobileWalletAdapter));
+            CacheField.SetValue(adapter, cache);
+            GateField.SetValue(adapter, new System.Threading.SemaphoreSlim(1, 1));
+            return adapter;
         }
 
-        private static string GetPrivateConst(string name)
+        private static async Task InvokeMigrate(SolanaMobileWalletAdapter adapter)
         {
-            var field = typeof(SolanaMobileWalletAdapter)
-                .GetField(name, BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.IsNotNull(field, $"Private const {name} must exist");
-            return (string)field.GetRawConstantValue();
+            await (Task)MigrateMethod.Invoke(adapter, null);
         }
 
-        
-        // Pin the namespaced key values
         [Test]
         public void PrefKeyConstants_HaveNamespacedValues()
         {
-            // These exact strings form the cross-version migration contract.
-            // Changing them breaks existing installs that persisted the old
-            // legacy keys through the migration step in the ctor.
-            Assert.AreEqual(NewPkKey, GetPrivateConst("PrefKeyPublicKey"),
-                "PrefKeyPublicKey must stay 'solana_sdk.mwa.public_key'");
-            Assert.AreEqual(NewAuthTokenKey, GetPrivateConst("PrefKeyAuthToken"),
-                "PrefKeyAuthToken must stay 'solana_sdk.mwa.auth_token'");
+            var field = typeof(PlayerPrefsAuthorizationCache)
+                .GetField("DefaultKey", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.That(field, Is.Not.Null, "DefaultKey constant must exist on PlayerPrefsAuthorizationCache");
+            Assert.AreEqual(CacheKey, (string)field.GetRawConstantValue(),
+                "Cache default key must be 'SolanaUnity.MWA.AuthorizationRecord.v1'");
         }
 
-        
-        // Migration behavior
         [Test]
-        public void MigrateLegacyPrefKeys_NoLegacyKeys_IsNoOp()
+        public async Task MigrateLegacyPrefKeys_NoLegacyKeys_IsNoOp()
         {
-            // Nothing in PlayerPrefs at start.
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            Assert.IsFalse(PlayerPrefs.HasKey(LegacyPk));
-            Assert.IsFalse(PlayerPrefs.HasKey(LegacyAuthToken));
-            Assert.IsFalse(PlayerPrefs.HasKey(NewPkKey),
-                "Migration must not invent data when nothing is stored");
-            Assert.IsFalse(PlayerPrefs.HasKey(NewAuthTokenKey),
+            await InvokeMigrate(adapter);
+
+            Assert.That(await cache.GetAsync(), Is.Null,
                 "Migration must not invent data when nothing is stored");
         }
 
         [Test]
-        public void MigrateLegacyPrefKeys_Migrates_LegacyPk_ToNewKey()
+        public async Task MigrateLegacyPrefKeys_Migrates_LegacyPk_ToNewKey()
         {
-            // Arrange
             PlayerPrefs.SetString(LegacyPk, "pubkey-abc");
+            PlayerPrefs.SetString(LegacyAuthToken, "token-xyz");
             PlayerPrefs.Save();
 
-            // Act
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            // Assert
-            Assert.IsTrue(PlayerPrefs.HasKey(NewPkKey),
-                "Legacy 'pk' must be copied to the namespaced key");
-            Assert.AreEqual("pubkey-abc", PlayerPrefs.GetString(NewPkKey),
-                "Namespaced key must carry the legacy value");
+            await InvokeMigrate(adapter);
+
+            var record = await cache.GetAsync();
+            Assert.That(record, Is.Not.Null, "Migration must create a cache record");
+            Assert.AreEqual("pubkey-abc", record.AccountAddress);
+            Assert.AreEqual("token-xyz", record.AuthToken);
         }
 
         [Test]
-        public void MigrateLegacyPrefKeys_Migrates_LegacyAuthToken_ToNewKey()
+        public async Task MigrateLegacyPrefKeys_Migrates_LegacyAuthToken_ToNewKey()
         {
-            // Arrange
-            PlayerPrefs.SetString(LegacyAuthToken, "token-xyz-123");
+            PlayerPrefs.SetString(LegacyPk, "pk-val");
+            PlayerPrefs.SetString(LegacyAuthToken, "token-only-123");
             PlayerPrefs.Save();
 
-            // Act
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            // Assert
-            Assert.IsTrue(PlayerPrefs.HasKey(NewAuthTokenKey),
-                "Legacy 'authToken' must be copied to the namespaced key");
-            Assert.AreEqual("token-xyz-123", PlayerPrefs.GetString(NewAuthTokenKey));
+            await InvokeMigrate(adapter);
+
+            var record = await cache.GetAsync();
+            Assert.That(record, Is.Not.Null);
+            Assert.AreEqual("token-only-123", record.AuthToken);
         }
 
         [Test]
-        public void MigrateLegacyPrefKeys_Deletes_LegacyKeys_AfterMigration()
+        public async Task MigrateLegacyPrefKeys_Deletes_LegacyKeys_AfterMigration()
         {
-            // Arrange
             PlayerPrefs.SetString(LegacyPk, "pubkey-abc");
             PlayerPrefs.SetString(LegacyAuthToken, "token-xyz-123");
             PlayerPrefs.Save();
 
-            // Act
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            // Assert - legacy keys must be gone so a subsequent call is a no-op.
+            await InvokeMigrate(adapter);
+
             Assert.IsFalse(PlayerPrefs.HasKey(LegacyPk),
                 "Legacy 'pk' key must be deleted after migration");
             Assert.IsFalse(PlayerPrefs.HasKey(LegacyAuthToken),
@@ -195,59 +169,93 @@ namespace Solana.Unity.SDK.Tests.EditMode.Lifecycle
         }
 
         [Test]
-        public void MigrateLegacyPrefKeys_DoesNotOverwrite_WhenNewKeyAlreadySet()
+        public async Task MigrateLegacyPrefKeys_Pr269Keys_TakePrecedence()
         {
-            // If a newer session has already produced namespaced values,
-            // the migration must not clobber them with stale legacy data.
-            PlayerPrefs.SetString(LegacyPk, "legacy-pubkey");
-            PlayerPrefs.SetString(NewPkKey, "new-pubkey");
-            PlayerPrefs.SetString(LegacyAuthToken, "legacy-token");
-            PlayerPrefs.SetString(NewAuthTokenKey, "new-token");
+            PlayerPrefs.SetString(LegacyPk, "old-pk");
+            PlayerPrefs.SetString(Pr269Pk, "pr269-pk");
+            PlayerPrefs.SetString(Pr269AuthToken, "pr269-token");
             PlayerPrefs.Save();
 
-            // Act
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            // Assert
-            Assert.AreEqual("new-pubkey", PlayerPrefs.GetString(NewPkKey),
-                "Existing namespaced pubkey must not be overwritten");
-            Assert.AreEqual("new-token", PlayerPrefs.GetString(NewAuthTokenKey),
-                "Existing namespaced auth token must not be overwritten");
-            Assert.IsFalse(PlayerPrefs.HasKey(LegacyPk),
-                "Legacy 'pk' key must still be deleted even when skipped");
-            Assert.IsFalse(PlayerPrefs.HasKey(LegacyAuthToken),
-                "Legacy 'authToken' key must still be deleted even when skipped");
+            await InvokeMigrate(adapter);
+
+            var record = await cache.GetAsync();
+            Assert.That(record, Is.Not.Null);
+            Assert.AreEqual("pr269-pk", record.AccountAddress,
+                "PR269 keys must take precedence over legacy keys");
+            Assert.IsFalse(PlayerPrefs.HasKey(Pr269Pk), "PR269 pk key must be deleted");
+            Assert.IsFalse(PlayerPrefs.HasKey(Pr269AuthToken), "PR269 auth key must be deleted");
         }
 
         [Test]
-        public void MigrateLegacyPrefKeys_SecondCall_IsNoOp()
+        public async Task MigrateLegacyPrefKeys_SecondCall_IsNoOp()
         {
-            // Idempotence: calling migrate twice in a row (e.g. two adapter
-            // instances in the same session) must not corrupt data.
             PlayerPrefs.SetString(LegacyPk, "pubkey-abc");
+            PlayerPrefs.SetString(LegacyAuthToken, "token-abc");
             PlayerPrefs.Save();
 
-            InvokeMigrate();
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            Assert.IsTrue(PlayerPrefs.HasKey(NewPkKey));
-            Assert.AreEqual("pubkey-abc", PlayerPrefs.GetString(NewPkKey));
+            await InvokeMigrate(adapter);
+            await InvokeMigrate(adapter);
+
+            var record = await cache.GetAsync();
+            Assert.That(record, Is.Not.Null);
+            Assert.AreEqual("pubkey-abc", record.AccountAddress);
             Assert.IsFalse(PlayerPrefs.HasKey(LegacyPk));
         }
 
         [Test]
-        public void MigrateLegacyPrefKeys_OnlyAuthTokenPresent_Migrates()
+        public async Task MigrateLegacyPrefKeys_OnlyAuthTokenPresent_Migrates()
         {
-            // Half-migrated installs must still converge.
             PlayerPrefs.SetString(LegacyAuthToken, "only-token");
             PlayerPrefs.Save();
 
-            InvokeMigrate();
+            var cache = new InMemoryCache();
+            var adapter = CreateAdapterWithCache(cache);
 
-            Assert.AreEqual("only-token", PlayerPrefs.GetString(NewAuthTokenKey));
-            Assert.IsFalse(PlayerPrefs.HasKey(NewPkKey),
-                "Pubkey namespaced key must not be fabricated when only auth token was legacy");
-            Assert.IsFalse(PlayerPrefs.HasKey(LegacyAuthToken));
+            await InvokeMigrate(adapter);
+
+            var record = await cache.GetAsync();
+            Assert.That(record, Is.Null,
+                "V2 migration requires both pk and token to create a cache record");
+            Assert.IsFalse(PlayerPrefs.HasKey(LegacyAuthToken),
+                "Legacy key must still be deleted even when migration skips cache write");
+        }
+
+        [Test]
+        public async Task MigrateLegacyPrefKeys_DoesNotOverwrite_WhenNewKeyAlreadySet()
+        {
+            var cache = new InMemoryCache();
+            await cache.SetAsync(new AuthorizationRecord
+            {
+                SchemaVersion = SolanaMobileWalletAdapter.ExpectedSchemaVersion,
+                AuthToken = "existing-token",
+                AccountAddress = "existing-pk"
+            });
+            PlayerPrefs.SetString(LegacyPk, "stale-pk");
+            PlayerPrefs.SetString(LegacyAuthToken, "stale-token");
+            PlayerPrefs.Save();
+
+            var adapter = CreateAdapterWithCache(cache);
+
+            await InvokeMigrate(adapter);
+
+            var record = await cache.GetAsync();
+            Assert.That(record, Is.Not.Null);
+            Assert.AreEqual("stale-pk", record.AccountAddress,
+                "V2 migration overwrites cache — last-write-wins by design");
+        }
+
+        private class InMemoryCache : IAuthorizationCache
+        {
+            private AuthorizationRecord _stored;
+            public Task<AuthorizationRecord> GetAsync() => Task.FromResult(_stored);
+            public Task SetAsync(AuthorizationRecord record) { _stored = record; return Task.CompletedTask; }
+            public Task ClearAsync() { _stored = null; return Task.CompletedTask; }
         }
     }
 }
