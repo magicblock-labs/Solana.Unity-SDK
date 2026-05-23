@@ -26,7 +26,11 @@ namespace Solana.Unity.SDK
     public class SolanaMobileWalletAdapter : WalletBase
     {
         private const string PrefKeyPublicKey = "solana_sdk.mwa.public_key";
-        private const string PrefKeyAuthToken = "solana_sdk.mwa.auth_token";
+        // Single source of truth lives in PlayerPrefsAuthCache.DefaultKey.
+        // Kept here as a private alias because the legacy key migration
+        // below still touches PlayerPrefs directly. Live reads and writes
+        // for the auth token go through _authCache (see IMwaAuthCache).
+        private const string PrefKeyAuthToken = PlayerPrefsAuthCache.DefaultKey;
         
         private readonly SolanaMobileWalletAdapterOptions _walletOptions;
         
@@ -35,6 +39,7 @@ namespace Solana.Unity.SDK
         private TaskCompletionSource<Account> _loginTaskCompletionSource;
         private TaskCompletionSource<Transaction> _signedTransactionTaskCompletionSource;
         private readonly WalletBase _internalWallet;
+        private readonly IMwaAuthCache _authCache;
         private string _authToken;
 
         public event Action OnWalletDisconnected;
@@ -45,7 +50,8 @@ namespace Solana.Unity.SDK
             RpcCluster rpcCluster = RpcCluster.DevNet, 
             string customRpcUri = null, 
             string customStreamingRpcUri = null, 
-            bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup
+            bool autoConnectOnStartup = false,
+            IMwaAuthCache authCache = null) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup
         )
         {
             _walletOptions = solanaWalletOptions;
@@ -53,6 +59,7 @@ namespace Solana.Unity.SDK
             {
                 throw new Exception("SolanaMobileWalletAdapter can only be used on Android");
             }
+            _authCache = authCache ?? new PlayerPrefsAuthCache();
             MigrateLegacyPrefKeys();
         }
 
@@ -80,7 +87,7 @@ namespace Solana.Unity.SDK
             if (_walletOptions.keepConnectionAlive)
             {
                 string pk = PlayerPrefs.GetString(PrefKeyPublicKey, null);
-                string authToken = PlayerPrefs.GetString(PrefKeyAuthToken, null);
+                string authToken = await _authCache.Get();
                 if (!pk.IsNullOrEmpty() && !authToken.IsNullOrEmpty())
                 {
                     string reauthPublicKey = null;
@@ -114,19 +121,25 @@ namespace Solana.Unity.SDK
                         }
                         else
                         {
-                            PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
-                            PlayerPrefs.Save();
+                            await _authCache.Set(_authToken);
                             var resolvedKey = !string.IsNullOrEmpty(reauthPublicKey) ? reauthPublicKey : pk;
                             return new Account(string.Empty, new PublicKey(resolvedKey));
                         }
                     }
-                    // Reauthorize failed or returned empty token - clear cached credentials
+                    // Reauthorize failed or returned empty token - clear cached credentials.
+                    // Drop _authToken too; the reauthorize lambda may have populated it from
+                    // a stale wallet response, and leaving it set would push the next call
+                    // down the Reauthorize() branch with a token we already know is bad.
+                    _authToken = null;
                     PlayerPrefs.DeleteKey(PrefKeyPublicKey);
-                    PlayerPrefs.DeleteKey(PrefKeyAuthToken);
                     PlayerPrefs.Save();
+                    await _authCache.Clear();
                 }
                 else if (!pk.IsNullOrEmpty())
                 {
+                    // Inconsistent state: pk persisted but no auth token. Wipe memory too
+                    // so a re-entrant Login on the same instance cannot reuse a stale token.
+                    _authToken = null;
                     PlayerPrefs.DeleteKey(PrefKeyPublicKey);
                     PlayerPrefs.Save();
                 }
@@ -162,8 +175,8 @@ namespace Solana.Unity.SDK
                 if (_walletOptions.keepConnectionAlive)
                 {
                     PlayerPrefs.SetString(PrefKeyPublicKey, publicKey.ToString());
-                    PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
                     PlayerPrefs.Save();
+                    await _authCache.Set(_authToken);
                 }
             }
             return new Account(string.Empty, publicKey);
@@ -179,7 +192,7 @@ namespace Solana.Unity.SDK
         protected override async Task<Transaction[]> _SignAllTransactions(Transaction[] transactions)
         {
             if (_authToken.IsNullOrEmpty() && _walletOptions.keepConnectionAlive)
-                _authToken = PlayerPrefs.GetString(PrefKeyAuthToken, null);
+                _authToken = await _authCache.Get();
 
             var cluster = RPCNameMap[(int)RpcCluster];
             SignedResult res = null;
@@ -229,28 +242,49 @@ namespace Solana.Unity.SDK
                 _authToken = authorization.AuthToken;
                 if (_walletOptions.keepConnectionAlive)
                 {
-                    PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
-                    PlayerPrefs.Save();
+                    await _authCache.Set(_authToken);
                 }
             }
             return res.SignedPayloads.Select(transaction => Transaction.Deserialize(transaction)).ToArray();
         }
 
 
+        /// <summary>
+        /// Clears the in-memory token, the cached public key in PlayerPrefs,
+        /// and the auth token stored in <see cref="IMwaAuthCache"/>. Does
+        /// NOT call <c>deauthorize</c> on the wallet side. Use
+        /// <see cref="DisconnectWallet"/> when the wallet-side session also
+        /// needs to be revoked.
+        ///
+        /// Stays synchronous to keep the <see cref="WalletBase"/> override
+        /// signature stable. The cache <see cref="IMwaAuthCache.Clear"/>
+        /// call is awaited synchronously, so custom cache impls must not
+        /// block on UI or network here.
+        /// </summary>
         public override void Logout()
         {
             base.Logout();
             PlayerPrefs.DeleteKey(PrefKeyPublicKey);
-            _authToken = null;
-            PlayerPrefs.DeleteKey(PrefKeyAuthToken);
             PlayerPrefs.Save();
+            _authToken = null;
+            try
+            {
+                // Custom IMwaAuthCache impls (Keystore, EncryptedSharedPreferences, etc.) can
+                // throw on backend errors. Swallow here so DisconnectWallet still fires
+                // OnWalletDisconnected and the rest of the logout sequence completes.
+                _authCache.Clear().GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[MWA] Auth cache clear failed during Logout: {e}");
+            }
         }
 
         public async Task DisconnectWallet()
         {
             string authToken = _authToken;
             if (authToken.IsNullOrEmpty())
-                authToken = PlayerPrefs.GetString(PrefKeyAuthToken, null);
+                authToken = await _authCache.Get();
 
             if (!authToken.IsNullOrEmpty())
             {
@@ -333,7 +367,7 @@ namespace Solana.Unity.SDK
         public override async Task<byte[]> SignMessage(byte[] message)
         {
             if (_authToken.IsNullOrEmpty() && _walletOptions.keepConnectionAlive)
-                _authToken = PlayerPrefs.GetString(PrefKeyAuthToken, null);
+                _authToken = await _authCache.Get();
 
             string cachedPk = Account?.PublicKey?.ToString()
                 ?? PlayerPrefs.GetString(PrefKeyPublicKey, null);
@@ -391,8 +425,7 @@ namespace Solana.Unity.SDK
                 _authToken = authorization.AuthToken;
                 if (_walletOptions.keepConnectionAlive)
                 {
-                    PlayerPrefs.SetString(PrefKeyAuthToken, _authToken);
-                    PlayerPrefs.Save();
+                    await _authCache.Set(_authToken);
                 }
             }
             return signedMessages.SignedPayloadsBytes[0];

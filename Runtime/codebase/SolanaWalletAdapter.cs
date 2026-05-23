@@ -23,11 +23,24 @@ namespace Solana.Unity.SDK
         public event Action OnWalletDisconnected;
         public event Action OnWalletReconnected;
 
-        public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
+        /// <summary>
+        /// Creates a cross-platform wallet adapter.
+        /// </summary>
+        /// <param name="authCache">
+        /// Optional Mobile Wallet Adapter auth-token cache. Forwarded to the
+        /// Android <see cref="SolanaMobileWalletAdapter"/>. Ignored on WebGL
+        /// and iOS since those platforms do not use MWA bearer tokens. When
+        /// left <c>null</c> the SDK falls back to
+        /// <see cref="PlayerPrefsAuthCache"/>. Pass a custom
+        /// <see cref="IMwaAuthCache"/> (e.g. Android Keystore /
+        /// EncryptedSharedPreferences) for production builds that need
+        /// encryption at rest.
+        /// </param>
+        public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false, IMwaAuthCache authCache = null) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             #if UNITY_ANDROID
             #pragma warning disable CS0618
-            _internalWallet = new SolanaMobileWalletAdapter(options.solanaMobileWalletAdapterOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
+            _internalWallet = new SolanaMobileWalletAdapter(options.solanaMobileWalletAdapterOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup, authCache);
             #elif UNITY_WEBGL
             #pragma warning disable CS0618
             _internalWallet = new SolanaWalletAdapterWebGL(options.solanaWalletAdapterWebGLOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);
