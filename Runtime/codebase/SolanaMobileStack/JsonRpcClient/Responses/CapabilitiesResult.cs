@@ -17,4 +17,7 @@ public class CapabilitiesResult
 
     [JsonProperty("supported_transaction_versions")]
     public string[] SupportedTransactionVersions { get; set; }
+
+    [JsonProperty("features", NullValueHandling = NullValueHandling.Ignore)]
+    public string[] Features { get; set; }
 }
