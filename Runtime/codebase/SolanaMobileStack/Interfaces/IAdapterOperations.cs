@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Solana.Unity.SDK;
 using UnityEngine.Scripting;
 
 // ReSharper disable once CheckNamespace
@@ -20,4 +21,6 @@ public interface IAdapterOperations
     public Task<SignedResult> SignTransactions(IEnumerable<byte[]> transactions);
     [Preserve]
     public Task<SignedResult> SignMessages(IEnumerable<byte[]> messages, IEnumerable<byte[]> addresses);
+    [Preserve]
+    public Task<SignAndSendResult> SignAndSendTransactions(IEnumerable<byte[]> transactions, JsonRequest.SignAndSendOptions options);
 }

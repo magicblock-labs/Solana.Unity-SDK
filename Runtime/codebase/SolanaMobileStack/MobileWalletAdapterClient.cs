@@ -71,6 +71,23 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         return SendRequest<SignedResult>(request);
     }
 
+    public Task<SignAndSendResult> SignAndSendTransactions(IEnumerable<byte[]> transactions, JsonRequest.SignAndSendOptions options)
+    {
+        var request = new JsonRequest
+        {
+            JsonRpc = "2.0",
+            Method = "sign_and_send_transactions",
+            Params = new JsonRequest.JsonRequestParams
+            {
+                Payloads = transactions.Select(Convert.ToBase64String).ToList(),
+                Options = options
+            },
+            Id = NextMessageId()
+        };
+
+        return SendRequest<SignAndSendResult>(request);
+    }
+
     private JsonRequest PrepareAuthRequest(Uri uriIdentity, Uri icon, string name, string cluster, string method)
     {
         if (uriIdentity != null && !uriIdentity.IsAbsoluteUri)
