@@ -112,6 +112,21 @@ namespace Solana.Unity.SDK
         }
 
         /// <summary>
+        /// The current MWA auth token, or null if unauthorized or the platform
+        /// is not Android. Exposed so callers can persist the token in their
+        /// own auth cache and restore MWA sessions across app launches without
+        /// relying solely on the built-in PlayerPrefs store.
+        /// </summary>
+        public string AuthToken
+        {
+            get
+            {
+                var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+                return mobileAdapter?.AuthToken;
+            }
+        }
+
+        /// <summary>
         /// Queries the connected wallet's supported features and limits.
         /// </summary>
         /// <returns>

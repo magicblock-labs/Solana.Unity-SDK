@@ -37,6 +37,8 @@ namespace Solana.Unity.SDK
         private readonly WalletBase _internalWallet;
         private string _authToken;
 
+        public string AuthToken => _authToken;
+
         public event Action OnWalletDisconnected;
         public event Action OnWalletReconnected;
 
