@@ -304,7 +304,7 @@ namespace Solana.Unity.SDK
             _solAmount = 0;
             if(_nfts != null) _nfts.Clear();
         }
-        
+
         #region Helpers
 
         /// <summary>

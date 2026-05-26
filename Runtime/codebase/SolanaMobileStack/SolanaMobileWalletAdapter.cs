@@ -25,6 +25,16 @@ namespace Solana.Unity.SDK
     [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
     public class SolanaMobileWalletAdapter : WalletBase
     {
+        private sealed class MobileWalletAdapterLifecycleHook : MonoBehaviour
+        {
+            public event Action<bool> ApplicationFocusChanged;
+
+            private void OnApplicationFocus(bool hasFocus)
+            {
+                ApplicationFocusChanged?.Invoke(hasFocus);
+            }
+        }
+
         private const string PrefKeyPublicKey = "solana_sdk.mwa.public_key";
         // Single source of truth lives in PlayerPrefsAuthCache.DefaultKey.
         // Kept here as a private alias because the legacy key migration
@@ -41,6 +51,7 @@ namespace Solana.Unity.SDK
         private readonly WalletBase _internalWallet;
         private readonly IMwaAuthCache _authCache;
         private string _authToken;
+        private static MobileWalletAdapterLifecycleHook _lifecycleHook;
 
         public event Action OnWalletDisconnected;
         public event Action OnWalletReconnected;
@@ -61,6 +72,34 @@ namespace Solana.Unity.SDK
             }
             _authCache = authCache ?? new PlayerPrefsAuthCache();
             MigrateLegacyPrefKeys();
+            EnsureLifecycleHook();
+            _lifecycleHook.ApplicationFocusChanged -= OnApplicationFocusChanged;
+            _lifecycleHook.ApplicationFocusChanged += OnApplicationFocusChanged;
+        }
+
+        private static void EnsureLifecycleHook()
+        {
+            if (_lifecycleHook != null)
+            {
+                return;
+            }
+
+            var hookObject = new GameObject("[SolanaMobileWalletAdapterLifecycle]");
+            hookObject.hideFlags = HideFlags.HideAndDontSave;
+            UnityEngine.Object.DontDestroyOnLoad(hookObject);
+            _lifecycleHook = hookObject.AddComponent<MobileWalletAdapterLifecycleHook>();
+        }
+
+        private async void OnApplicationFocusChanged(bool hasFocus)
+        {
+            try
+            {
+                await HandleApplicationFocus(hasFocus);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[MWA] OnApplicationFocus handler failed: {e.Message}");
+            }
         }
 
         private static void MigrateLegacyPrefKeys()
@@ -335,6 +374,36 @@ namespace Solana.Unity.SDK
             {
                 Debug.LogError($"[MWA] ReconnectWallet failed: {e}");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Handles app focus resume for Android MWA flows.
+        /// Call this from a MonoBehaviour's OnApplicationFocus callback.
+        /// When focus returns and cached credentials exist, attempts a silent
+        /// reconnect only if no account is currently set.
+        /// </summary>
+        public async Task HandleApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus || !_walletOptions.keepConnectionAlive || Account != null)
+            {
+                return;
+            }
+
+            var cachedPublicKey = PlayerPrefs.GetString(PrefKeyPublicKey, null);
+            var cachedAuthToken = await _authCache.Get();
+            if (cachedPublicKey.IsNullOrEmpty() || cachedAuthToken.IsNullOrEmpty())
+            {
+                return;
+            }
+
+            try
+            {
+                await ReconnectWallet();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[MWA] HandleApplicationFocus reconnect failed: {e.Message}");
             }
         }
 

@@ -125,6 +125,19 @@ namespace Solana.Unity.SDK
         }
 
         /// <summary>
+        /// Forwards app-focus lifecycle to platform adapters that need it.
+        /// Currently used by Android MWA for silent resume checks.
+        /// </summary>
+        public async Task HandleApplicationFocus(bool hasFocus)
+        {
+            var mobileAdapter = _internalWallet as SolanaMobileWalletAdapter;
+            if (mobileAdapter != null)
+            {
+                await mobileAdapter.HandleApplicationFocus(hasFocus);
+            }
+        }
+
+        /// <summary>
         /// Queries the connected wallet's supported features and limits.
         /// </summary>
         /// <returns>

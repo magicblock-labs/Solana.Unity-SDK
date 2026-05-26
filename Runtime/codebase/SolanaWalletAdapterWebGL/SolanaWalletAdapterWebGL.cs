@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using AOT;
+using Newtonsoft.Json;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using UnityEngine;
@@ -53,6 +54,26 @@ namespace Solana.Unity.SDK
         private static WalletSpecs _currentWallet;
 
         private static string _clusterName;
+        private static string _subscribedWalletName;
+        private static bool _walletEventsSubscribed;
+
+        [Serializable]
+        private class WalletAdapterEventPayload
+        {
+            public string @event;
+            public string publicKey;
+            public string account;
+            public string[] accounts;
+            public string walletName;
+            public string error;
+        }
+
+        /// <summary>
+        /// Fired when the WebGL wallet provider emits lifecycle/account events.
+        /// Payload comes from the JS bridge and can include:
+        /// event, walletName, publicKey/account/accounts, error.
+        /// </summary>
+        public static event Action<string> OnWalletAdapterEvent;
             
 
         [Obsolete("Use SolanaWalletAdapter class instead, which is the cross platform wrapper.")]
@@ -173,6 +194,12 @@ namespace Solana.Unity.SDK
             ExternSignMessageWallet(_currentWallet.name, base64MessageStr, OnMessageSigned);
             return _signedMessageTaskCompletionSource.Task;
         }
+        public override void Logout()
+        {
+            base.Logout();
+            _account = null;
+            TryUnsubscribeWalletEvents();
+        }
 
         protected override Task<Account> _CreateAccount(string mnemonic = null, string password = null)
         {
@@ -208,6 +235,7 @@ namespace Solana.Unity.SDK
             }
             Debug.Log($"Wallet {walletPubKey} connected!");
             _account = new Account("", walletPubKey);
+            TrySubscribeWalletEvents();
             _loginTaskCompletionSource.TrySetResult(_account);
         }
 
@@ -286,6 +314,77 @@ namespace Solana.Unity.SDK
             _getWalletsTaskCompletionSource.SetResult(walletsData);
         }
 
+        [MonoPInvokeCallback(typeof(Action<string>))]
+        private static void OnWalletEvent(string payload)
+        {
+            if (string.IsNullOrEmpty(payload))
+            {
+                return;
+            }
+
+            OnWalletAdapterEvent?.Invoke(payload);
+
+            try
+            {
+                var evt = JsonConvert.DeserializeObject<WalletAdapterEventPayload>(payload);
+                if (evt == null)
+                {
+                    return;
+                }
+
+                string eventName = evt.@event ?? string.Empty;
+                if (eventName.Equals("disconnect", StringComparison.OrdinalIgnoreCase))
+                {
+                    _account = null;
+                    return;
+                }
+
+                if (eventName.Equals("accountsChanged", StringComparison.OrdinalIgnoreCase) ||
+                    eventName.Equals("accountChanged", StringComparison.OrdinalIgnoreCase) ||
+                    eventName.Equals("change", StringComparison.OrdinalIgnoreCase))
+                {
+                    var nextPk = evt.publicKey ?? evt.account;
+                    if (!string.IsNullOrEmpty(nextPk))
+                    {
+                        _account = new Account("", nextPk);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[WebGL] Failed to parse wallet event payload: {e.Message}");
+            }
+        }
+
+        private static void TrySubscribeWalletEvents()
+        {
+            if (_currentWallet == null || string.IsNullOrEmpty(_currentWallet.name))
+            {
+                return;
+            }
+
+            if (_walletEventsSubscribed && string.Equals(_subscribedWalletName, _currentWallet.name, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            TryUnsubscribeWalletEvents();
+            ExternSubscribeWalletEvents(_currentWallet.name, OnWalletEvent);
+            _subscribedWalletName = _currentWallet.name;
+            _walletEventsSubscribed = true;
+        }
+
+        private static void TryUnsubscribeWalletEvents()
+        {
+            if (!_walletEventsSubscribed || string.IsNullOrEmpty(_subscribedWalletName))
+            {
+                return;
+            }
+
+            ExternUnsubscribeWalletEvents(_subscribedWalletName);
+            _subscribedWalletName = null;
+            _walletEventsSubscribed = false;
+        }
         #endregion
 
         #if UNITY_WEBGL
@@ -308,6 +407,12 @@ namespace Solana.Unity.SDK
 
                 [DllImport("__Internal")]
                 private static extern void InitWalletAdapter(Action<bool> callback, string clusterName);
+
+                [DllImport("__Internal")]
+                private static extern void ExternSubscribeWalletEvents(string walletName, Action<string> callback);
+
+                [DllImport("__Internal")]
+                private static extern void ExternUnsubscribeWalletEvents(string walletName);
                 
                 
         #else
@@ -317,7 +422,19 @@ namespace Solana.Unity.SDK
                 private static void ExternSignMessageWallet(string walletName, string messageBase64, Action<string> callback){}
                 private static string ExternGetWallets(Action<string> callback){return null;}
                 private static void InitWalletAdapter(Action<bool> callback, string clusterName){}
+                private static void ExternSubscribeWalletEvents(string walletName, Action<string> callback){}
+                private static void ExternUnsubscribeWalletEvents(string walletName){}
                 
         #endif
     }
 }
+
+
+
+
+
+
+
+
+
+

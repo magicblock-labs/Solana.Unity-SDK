@@ -28,14 +28,12 @@ namespace Solana.Unity.SDK
             string customRpcUri = null, string customStreamingRpcUri = null,
             bool autoConnectOnStartup = false) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
-            if (Instance == null)
+            if (Instance != null)
             {
-                Instance = this;
+                Debug.LogWarning($"there are more than one {nameof(SessionWallet)} in the scene");
             }
-            else
-            {
-                throw new Exception("SessionWallet already exists");
-            }
+
+            Instance = this;
         }
 
         /// <summary>
@@ -65,6 +63,24 @@ namespace Solana.Unity.SDK
         {
             tx.PartialSign(new[] { _externalWallet.Account, Account });
         }
+        
+        public static SessionWallet GetSessionWallet(string publicKey, string privateKey, PublicKey targetProgram)
+        {
+            _externalWallet = Web3.Wallet;
+
+            var sessionAccount = new Account(privateKey, publicKey); 
+            
+            // TODO: ActiveRpcClient can be null, get node address some other way
+            var sessionWallet = new SessionWallet(_externalWallet.RpcCluster, _externalWallet.ActiveRpcClient.NodeAddress.ToString())
+            {
+                TargetProgram = targetProgram,
+                EncryptedKeystoreKey = $"{_externalWallet.Account.PublicKey}_SessionKeyStore",
+                SessionTokenPDA = FindSessionToken(targetProgram, sessionAccount, _externalWallet.Account),
+                Account = sessionAccount,
+            };
+
+            return sessionWallet;
+        }
 
         /// <summary>
         /// Creates a new SessionWallet instance based on the signature we get from signing a specific message.
@@ -75,9 +91,6 @@ namespace Solana.Unity.SDK
         /// <returns>A SessionWallet instance.</returns>
         public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, WalletBase externalWallet = null, string seed = "MagicBlock.SessionKey")
         {
-            // TODO: This class behaves like a singleton, what if I want multiple session wallets active at the same time?
-            if (Instance != null) return Instance;
-            
             externalWallet ??= Web3.Wallet;
             _externalWallet = externalWallet;
             
@@ -108,8 +121,6 @@ namespace Solana.Unity.SDK
         /// <returns>A SessionWallet instance.</returns>
         public static async Task<SessionWallet> GetSessionWallet(PublicKey targetProgram, string password, WalletBase externalWallet = null)
         {
-            if (Instance != null) return Instance;
-            
             externalWallet ??= Web3.Wallet;
             _externalWallet = externalWallet;
             
@@ -131,6 +142,7 @@ namespace Solana.Unity.SDK
                     sessionWallet.DeleteSessionWallet();
                     sessionWallet.Logout();
                     Instance = null;
+                    
                     return await GetSessionWallet(targetProgram, password, externalWallet);
                 }
 

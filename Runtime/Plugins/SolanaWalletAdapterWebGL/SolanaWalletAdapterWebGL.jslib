@@ -168,4 +168,124 @@ mergeInto(LibraryManager.library, {
       {{{ makeDynCall('vi', 'callback') }}}(null);
     }
   },
+  ExternSubscribeWalletEvents: function (walletNamePtr, callback) {
+    try {
+      const walletName = UTF8ToString(walletNamePtr);
+      window.unityWalletEventUnsubs = window.unityWalletEventUnsubs || {};
+
+      if (window.unityWalletEventUnsubs[walletName]) {
+        window.unityWalletEventUnsubs[walletName]();
+        delete window.unityWalletEventUnsubs[walletName];
+      }
+
+      const toPkString = (v) => {
+        try {
+          if (!v) return null;
+          if (typeof v === "string") return v;
+          if (Array.isArray(v) && v.length > 0) {
+            const first = v[0];
+            if (!first) return null;
+            return typeof first === "string" ? first : (first.toString ? first.toString() : null);
+          }
+          return v.toString ? v.toString() : null;
+        } catch (_) {
+          return null;
+        }
+      };
+
+      const emit = (evt, data) => {
+        const payload = {
+          event: evt,
+          walletName: walletName,
+          publicKey: data && data.publicKey ? toPkString(data.publicKey) : toPkString(data),
+          account: data && data.account ? toPkString(data.account) : null,
+          accounts: data && data.accounts ? data.accounts.map(toPkString).filter(Boolean) : null,
+          error: data && data.message ? String(data.message) : null,
+        };
+        const json = JSON.stringify(payload);
+        const ptr = _malloc(lengthBytesUTF8(json) + 1);
+        stringToUTF8(json, ptr, lengthBytesUTF8(json) + 1);
+        {{{ makeDynCall('vi', 'callback') }}}(ptr);
+      };
+
+      const tryResolveProvider = () => {
+        if (walletName === "XNFT" && window.xnft && window.xnft.solana) {
+          return window.xnft.solana;
+        }
+
+        if (window.walletAdapterLib) {
+          if (typeof window.walletAdapterLib.getWalletAdapter === "function") {
+            const a = window.walletAdapterLib.getWalletAdapter(walletName);
+            if (a) return a;
+          }
+          if (typeof window.walletAdapterLib.getWalletByName === "function") {
+            const w = window.walletAdapterLib.getWalletByName(walletName);
+            if (w && w.adapter) return w.adapter;
+            if (w) return w;
+          }
+          const pools = [window.walletAdapterLib.walletAdapters, window.walletAdapterLib.wallets];
+          for (const pool of pools) {
+            if (!Array.isArray(pool)) continue;
+            for (const item of pool) {
+              if (!item) continue;
+              if (item.name === walletName) return item.adapter || item;
+              if (item.adapter && item.adapter.name === walletName) return item.adapter;
+              if (item.wallet && item.wallet.name === walletName) return item.wallet.adapter || item.wallet;
+            }
+          }
+        }
+
+        if (window.solana && walletName.toLowerCase().includes("phantom")) {
+          return window.solana;
+        }
+
+        return null;
+      };
+
+      const provider = tryResolveProvider();
+      if (!provider || typeof provider.on !== "function") {
+        return;
+      }
+
+      const subscriptions = [];
+      const on = (evt, fn) => {
+        try {
+          provider.on(evt, fn);
+          subscriptions.push([evt, fn]);
+        } catch (_) {}
+      };
+
+      on("accountsChanged", (accounts) => emit("accountsChanged", { accounts }));
+      on("accountChanged", (account) => emit("accountChanged", { account }));
+      on("disconnect", (info) => emit("disconnect", info));
+      on("connect", (info) => emit("connect", info));
+      on("change", (info) => emit("change", info));
+
+      window.unityWalletEventUnsubs[walletName] = () => {
+        if (typeof provider.off === "function") {
+          subscriptions.forEach(([evt, fn]) => {
+            try {
+              provider.off(evt, fn);
+            } catch (_) {}
+          });
+        }
+      };
+    } catch (err) {
+      console.error(err && err.message ? err.message : err);
+    }
+  },
+
+  ExternUnsubscribeWalletEvents: function (walletNamePtr) {
+    try {
+      const walletName = UTF8ToString(walletNamePtr);
+      if (!window.unityWalletEventUnsubs || !window.unityWalletEventUnsubs[walletName]) {
+        return;
+      }
+      window.unityWalletEventUnsubs[walletName]();
+      delete window.unityWalletEventUnsubs[walletName];
+    } catch (err) {
+      console.error(err && err.message ? err.message : err);
+    }
+  },
 });
+
