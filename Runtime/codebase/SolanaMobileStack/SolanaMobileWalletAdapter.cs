@@ -51,6 +51,7 @@ namespace Solana.Unity.SDK
         private readonly WalletBase _internalWallet;
         private readonly IMwaAuthCache _authCache;
         private string _authToken;
+        private bool _loginInProgress;
         private static MobileWalletAdapterLifecycleHook _lifecycleHook;
 
         public event Action OnWalletDisconnected;
@@ -122,6 +123,19 @@ namespace Solana.Unity.SDK
         }
 
         protected override async Task<Account> _Login(string password = null)
+        {
+            _loginInProgress = true;
+            try
+            {
+                return await _LoginInternal(password);
+            }
+            finally
+            {
+                _loginInProgress = false;
+            }
+        }
+
+        private async Task<Account> _LoginInternal(string password = null)
         {
             if (_walletOptions.keepConnectionAlive)
             {
@@ -385,7 +399,7 @@ namespace Solana.Unity.SDK
         /// </summary>
         public async Task HandleApplicationFocus(bool hasFocus)
         {
-            if (!hasFocus || !_walletOptions.keepConnectionAlive || Account != null)
+            if (!hasFocus || !_walletOptions.keepConnectionAlive || Account != null || _loginInProgress)
             {
                 return;
             }
