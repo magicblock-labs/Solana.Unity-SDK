@@ -36,11 +36,17 @@ namespace Solana.Unity.SDK
         /// EncryptedSharedPreferences) for production builds that need
         /// encryption at rest.
         /// </param>
-        public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false, IMwaAuthCache authCache = null) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
+        /// <param name="walletSelectionCache">
+        /// Optional cache for the user's wallet package selection. Forwarded to
+        /// the Android <see cref="SolanaMobileWalletAdapter"/>. Ignored on
+        /// other platforms. When left <c>null</c> the SDK falls back to
+        /// <see cref="PlayerPrefsMwaWalletSelectionCache"/>.
+        /// </param>
+        public SolanaWalletAdapter(SolanaWalletAdapterOptions options, RpcCluster rpcCluster = RpcCluster.DevNet, string customRpcUri = null, string customStreamingRpcUri = null, bool autoConnectOnStartup = false, IMwaAuthCache authCache = null, IMwaWalletSelectionCache walletSelectionCache = null) : base(rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup)
         {
             #if UNITY_ANDROID
             #pragma warning disable CS0618
-            _internalWallet = new SolanaMobileWalletAdapter(options.solanaMobileWalletAdapterOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup, authCache);
+            _internalWallet = new SolanaMobileWalletAdapter(options.solanaMobileWalletAdapterOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup, authCache, walletSelectionCache);
             #elif UNITY_WEBGL
             #pragma warning disable CS0618
             _internalWallet = new SolanaWalletAdapterWebGL(options.solanaWalletAdapterWebGLOptions, rpcCluster, customRpcUri, customStreamingRpcUri, autoConnectOnStartup);

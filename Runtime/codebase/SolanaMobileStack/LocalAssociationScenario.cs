@@ -20,8 +20,10 @@ public class LocalAssociationScenario : IDisposable
     private readonly AndroidJavaObject _currentActivity = GetCurrentActivity();
     private readonly int _port = RandomPort();
     private readonly MobileWalletAdapterSession _session = new();
+    private readonly string _targetPackage;
     private IWebSocket _webSocket;
     private MobileWalletAdapterClient _client;
+
 
     private bool _isConnecting;
     private bool _disposed;
@@ -30,6 +32,14 @@ public class LocalAssociationScenario : IDisposable
     private TaskCompletionSource<Response<object>> _responseTcs;
     private TaskCompletionSource<Response<object>> _tcs;
     private CancellationToken _cancellationToken;
+    private CancellationTokenSource _runCts;
+    private bool _seenFocusLossAfterLaunch;
+    private bool _focusReturnedBeforeConnect;
+
+    public LocalAssociationScenario(string targetPackage = null)
+    {
+        _targetPackage = targetPackage;
+    }
 
     private static AndroidJavaObject GetCurrentActivity()
     {
@@ -44,10 +54,14 @@ public class LocalAssociationScenario : IDisposable
             throw new ArgumentException("Actions required");
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(_overallTimeout);
+        _runCts = cts;
+        _runCts.CancelAfter(_overallTimeout);
 
-        _cancellationToken = cts.Token;
+        _cancellationToken = _runCts.Token;
         _tcs = new TaskCompletionSource<Response<object>>();
+        _seenFocusLossAfterLaunch = false;
+        _focusReturnedBeforeConnect = false;
+        Application.focusChanged += OnApplicationFocusChanged;
 
         StartActivityForAssociation(_session.AssociationToken, _port);
 
@@ -63,7 +77,7 @@ public class LocalAssociationScenario : IDisposable
             
                 Debug.Log("[MWA Connect Thread] Completed");
                 _isConnecting = false;
-            
+
                 var helloReq = _session.CreateHelloReq();
                 await _webSocket.Send(helloReq);
 
@@ -94,9 +108,12 @@ public class LocalAssociationScenario : IDisposable
             }
             catch (OperationCanceledException)
             {
+                var msg = _focusReturnedBeforeConnect
+                    ? "Association aborted: returned to app before wallet websocket connected"
+                    : "Timeout or cancelled";
                 _tcs.TrySetResult(new Response<object>
                 {
-                    Error = new Response<object>.ResponseError { Message = "Timeout or cancelled" } 
+                    Error = new Response<object>.ResponseError { Message = msg } 
                 });
             }
             catch (Exception ex)
@@ -108,9 +125,30 @@ public class LocalAssociationScenario : IDisposable
             {
                 await CleanupAsync();
             }
-        }, cts.Token);
+        }, _runCts.Token);
         
         return await _tcs.Task;
+    }
+
+    private void OnApplicationFocusChanged(bool hasFocus)
+    {
+        if (!hasFocus)
+        {
+            _seenFocusLossAfterLaunch = true;
+            return;
+        }
+
+        if (!_seenFocusLossAfterLaunch)
+        {
+            return;
+        }
+
+        if (_isConnecting && (_webSocket == null || _webSocket.State != WebSocketState.Open))
+        {
+            _focusReturnedBeforeConnect = true;
+            Debug.LogWarning("[MWA] Focus returned before WS connected; aborting association attempt early.");
+            _runCts?.Cancel();
+        }
     }
 
     private static int RandomPort()
@@ -131,9 +169,11 @@ public class LocalAssociationScenario : IDisposable
 
     private void StartActivityForAssociation(string associationToken, int port)
     {
-        var intent = LocalAssociationIntentCreator.CreateAssociationIntent(associationToken, port);
+        var intent = LocalAssociationIntentCreator.CreateAssociationIntent(
+            associationToken, port, _targetPackage);
         _currentActivity.Call("startActivityForResult", intent, 0);
-        Debug.Log($"[MWA] Launched intent for port {port}");
+        Debug.Log($"[MWA] Launched intent for port {port}" +
+                  (string.IsNullOrEmpty(_targetPackage) ? "" : $" targeting {_targetPackage}"));
     }
 
     private async Task ConnectWithBackoffAsync()
@@ -146,10 +186,8 @@ public class LocalAssociationScenario : IDisposable
         var delayMs = delayStart;
 
         // Short delay to give wallet time to start websocket
-        Debug.Log($"[MWA] Start delay");
         await Task.Delay(500, _cancellationToken);
-        Debug.Log($"[MWA] Delay over");
-        
+
         do
         {
             if (_webSocket != null)
@@ -280,6 +318,8 @@ public class LocalAssociationScenario : IDisposable
 
     private async Task CleanupAsync()
     {
+        Application.focusChanged -= OnApplicationFocusChanged;
+
         if (_webSocket is { State: WebSocketState.Open })
             await _webSocket.Close();
 
@@ -293,6 +333,7 @@ public class LocalAssociationScenario : IDisposable
         }
         
         _client = null;
+        _runCts = null;
         _disposed = true;
     }
 

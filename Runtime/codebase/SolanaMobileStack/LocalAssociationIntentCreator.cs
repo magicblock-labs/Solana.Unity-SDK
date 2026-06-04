@@ -5,7 +5,8 @@ using UnityEngine;
 public static class LocalAssociationIntentCreator
 {
     
-    public static AndroidJavaObject CreateAssociationIntent(string associationToken, int port)
+    public static AndroidJavaObject CreateAssociationIntent(
+        string associationToken, int port, string targetPackage = null)
     {
         var intent = new AndroidJavaObject("android.content.Intent");
         intent.Call<AndroidJavaObject>("setAction", "android.intent.action.VIEW");
@@ -13,9 +14,15 @@ public static class LocalAssociationIntentCreator
         var url = $"{AssociationContract.SchemeMobileWalletAdapter}:/" +
                   $"{AssociationContract.LocalPathSuffix}?association={associationToken}&port={port}";
         var uriClass = new AndroidJavaClass("android.net.Uri");
-        var uriData = uriClass.CallStatic<AndroidJavaObject>("parse", url);     
+        var uriData = uriClass.CallStatic<AndroidJavaObject>("parse", url);
         intent.Call<AndroidJavaObject>("setData", uriData);
-        //intent.Call<AndroidJavaObject>("addFlags", 0x14000000);
+
+        if (!string.IsNullOrEmpty(targetPackage))
+        {
+            intent.Call<AndroidJavaObject>("setPackage", targetPackage);
+            UnityEngine.Debug.Log($"[MWA] Intent targeting package: {targetPackage}");
+        }
+
         return intent;
     }
 }
