@@ -166,7 +166,7 @@ public class MobileWalletAdapterClient: JsonRpc20Client, IAdapterOperations, IMe
         };
         return request;
     }
-    
+
     private int NextMessageId()
     {
         return _mNextMessageId++;
