@@ -78,6 +78,7 @@ public class JupiterSwapManager : MonoBehaviour
     private JObject currentQuote; 
     private Dictionary<string, TokenBalance> tokenBalances = new Dictionary<string, TokenBalance>();
     private bool isUpdatingQuote = false;
+    private int latestQuoteRequestId = 0;
 
     private void Start()
     {
@@ -169,7 +170,7 @@ public class JupiterSwapManager : MonoBehaviour
             else
             {
                 var result = await Web3.Rpc.GetTokenAccountsByOwnerAsync(Web3.Account.PublicKey, mint, null);
-                if (result.WasSuccessful && result.Result.Value.Count > 0)
+                if (result.WasSuccessful && result.Result != null && result.Result.Value.Count > 0)
                 {
                     var tokenAccount = result.Result.Value[0];
                     double balance = double.Parse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.UiAmountString);
@@ -178,7 +179,8 @@ public class JupiterSwapManager : MonoBehaviour
                 }
                 else
                 {
-                     tokenBalances[symbol] = new TokenBalance { mint = mint, balance = 0, decimals = 9 };
+                    int knownDecimals = tokenBalances.TryGetValue(symbol, out var existing) ? existing.decimals : 9;
+                    tokenBalances[symbol] = new TokenBalance { mint = mint, balance = 0, decimals = knownDecimals };
                 }
             }
         }
@@ -202,9 +204,8 @@ public class JupiterSwapManager : MonoBehaviour
     private void OnInputAmountChanged(string value)
     {
         UpdateButtonState(); 
-        if (isUpdatingQuote) return;
         if (IsValidInput(out float amount)) UpdateQuote();
-        else ClearQuoteInfo(); 
+        else { ++latestQuoteRequestId; ClearQuoteInfo(); } 
     }
 
     private void OnTokenSelectionChanged()
@@ -212,7 +213,7 @@ public class JupiterSwapManager : MonoBehaviour
         UpdateBalanceDisplays();
         UpdateButtonState();
         if (IsValidInput(out float amount)) UpdateQuote();
-        else ClearQuoteInfo();
+        else { ++latestQuoteRequestId; ClearQuoteInfo(); }
     }
 
     private void SetMaxAmount()
@@ -221,16 +222,23 @@ public class JupiterSwapManager : MonoBehaviour
         if (tokenBalances.TryGetValue(inputToken, out TokenBalance tokenData))
         {
             double maxAmount = tokenData.balance;
-            double requiredBuffer = CalculateRequiredBuffer(inputToken);
-            
-            if (maxAmount <= requiredBuffer) 
+            if (inputToken == "SOL")
             {
-                maxAmount = 0;
-                ShowPopup("Insufficient SOL", $"Need {requiredBuffer:F4} SOL minimum", Color.red);
+                double requiredBuffer = CalculateRequiredBuffer(inputToken);
+                if (maxAmount <= requiredBuffer)
+                {
+                    maxAmount = 0;
+                    ShowPopup("Insufficient SOL", $"Need {requiredBuffer:F4} SOL minimum", Color.red);
+                }
+                else
+                {
+                    maxAmount -= requiredBuffer;
+                }
             }
-            else 
+            else if (!HasSufficientSolForFees(inputToken, 0))
             {
-                maxAmount = maxAmount - requiredBuffer;
+                ShowPopup("Insufficient SOL", $"Need {CalculateRequiredBuffer(inputToken):F4} SOL minimum", Color.red);
+                return;
             }
 
             string format = "0." + new string('#', tokenData.decimals);
@@ -314,7 +322,7 @@ public class JupiterSwapManager : MonoBehaviour
     #region QUOTE & SWAP
     private async void UpdateQuote()
     {
-        if (isUpdatingQuote) return;
+        int currentRequestId = ++latestQuoteRequestId;
         isUpdatingQuote = true;
 
         try
@@ -324,7 +332,12 @@ public class JupiterSwapManager : MonoBehaviour
             
             if (inputToken == outputToken || !float.TryParse(inputAmountField.text, out float amount) || amount <= 0)
             {
-                isUpdatingQuote = false; ClearQuoteInfo(); return;
+                if (currentRequestId == latestQuoteRequestId)
+                {
+                    ClearQuoteInfo();
+                    isUpdatingQuote = false;
+                }
+                return;
             }
 
             string inputMint = GetTokenMint(inputToken);
@@ -334,7 +347,11 @@ public class JupiterSwapManager : MonoBehaviour
             ulong amountRaw = (ulong)(amount * Math.Pow(10, decimals));
 
             if(debugMode) Debug.Log($"[Jupiter] Fetching Quote: {amount} {inputToken} -> {outputToken}");
-            currentQuote = await GetQuoteWithRetry(inputMint, outputMint, amountRaw);
+            var quoteResponse = await GetQuoteWithRetry(inputMint, outputMint, amountRaw);
+
+            if (currentRequestId != latestQuoteRequestId) return;
+
+            currentQuote = quoteResponse;
 
             if (currentQuote != null) await DisplayQuoteInfo();
             else 
@@ -345,10 +362,19 @@ public class JupiterSwapManager : MonoBehaviour
         }
         catch (Exception e) 
         { 
-            Debug.LogError($"[Jupiter] Quote Error: {e.Message}");
-            ClearQuoteInfo(); 
+            if (currentRequestId == latestQuoteRequestId)
+            {
+                Debug.LogError($"[Jupiter] Quote Error: {e.Message}");
+                ClearQuoteInfo(); 
+            }
         }
-        finally { isUpdatingQuote = false; }
+        finally 
+        { 
+            if (currentRequestId == latestQuoteRequestId) 
+            {
+                isUpdatingQuote = false; 
+            }
+        }
     }
 
     private async Task<JObject> GetQuoteWithRetry(string inputMint, string outputMint, ulong amountRaw)
