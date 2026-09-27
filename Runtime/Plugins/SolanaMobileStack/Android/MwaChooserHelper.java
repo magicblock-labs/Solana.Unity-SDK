@@ -66,6 +66,9 @@ public final class MwaChooserHelper {
                     return;
                 }
                 ComponentName chosen = intent.getParcelableExtra(Intent.EXTRA_CHOSEN_COMPONENT);
+                if (chosen == null && Build.VERSION.SDK_INT >= 33) {
+                    chosen = intent.getParcelableExtra(Intent.EXTRA_CHOSEN_COMPONENT, ComponentName.class);
+                }
                 if (chosen != null) {
                     sChosenPackage = chosen.getPackageName();
                 }
